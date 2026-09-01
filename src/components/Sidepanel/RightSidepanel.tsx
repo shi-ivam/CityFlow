@@ -50,11 +50,11 @@ export const RightSidepanel: React.FC<RightSidepanelProps> = ({
   return (
     <aside className="w-full h-full flex flex-col justify-between p-6 md:p-8 bg-card border-l border-border select-none overflow-y-auto font-sans">
       {/* Top Context Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">
+      <div className="space-y-1.5">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground font-sans">
           CityFlow
         </h1>
-        <p className="text-xs text-muted-foreground font-mono">
+        <p className="text-sm font-medium text-muted-foreground">
           Intelligent Urban Transit Control
         </p>
       </div>
