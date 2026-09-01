@@ -41,17 +41,10 @@ export default function CommandPaletteModal({
     }
   }, [isOpen]);
 
-  // Global Ctrl + K listener
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        if (isOpen) onClose();
-        else onClose(false); // toggle trigger
-      }
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -92,7 +85,7 @@ export default function CommandPaletteModal({
       id: 'cmd-div-central',
       title: 'Switch to Delhi Central Division',
       icon: Layers,
-      color: 'text-indigo-400',
+      color: 'text-[#8693AB]',
       action: () => {
         onSelectDivision('delhi_central');
         onClose();
@@ -103,7 +96,7 @@ export default function CommandPaletteModal({
       id: 'cmd-div-south',
       title: 'Switch to Delhi South Division',
       icon: Layers,
-      color: 'text-indigo-400',
+      color: 'text-[#8693AB]',
       action: () => {
         onSelectDivision('delhi_south');
         onClose();
@@ -113,30 +106,46 @@ export default function CommandPaletteModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-start justify-center pt-20 px-4 animate-in fade-in select-none font-sans">
-      <div className="w-full max-w-xl bg-[#111827] border border-[#1f2937] rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
-        
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-xs flex items-start justify-center pt-20 px-4 animate-in fade-in select-none font-sans"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{ backgroundColor: '#212227' }}
+        className="w-full max-w-xl bg-[#212227] border-2 border-[#8693AB] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
+      >
         {/* Search Input Bar */}
-        <div className="p-3.5 border-b border-[#1f2937] flex items-center space-x-3 bg-[#0e1422]">
-          <Search className="w-4 h-4 text-slate-400" />
+        <div className="p-3.5 border-b border-[#8693AB]/40 flex items-center space-x-3 bg-[#AAB9CF]">
+          <Search className="w-5 h-5 text-[#212227] shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search buses, drivers, routes, duties, or quick commands..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-white placeholder:text-slate-500 text-sm outline-none font-sans"
+            placeholder="Search fleet, crew, routes, duties, or commands..."
+            className="flex-1 bg-transparent text-[#212227] placeholder-[#212227]/70 text-sm font-semibold outline-hidden"
           />
-          <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1f2937] text-slate-400 border border-slate-700">ESC</kbd>
+          {query && (
+            <button 
+              onClick={() => setQuery('')}
+              className="text-[#212227] hover:opacity-75 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+          <kbd className="px-2 py-0.5 rounded bg-[#212227] text-[#AAB9CF] text-[10px] font-mono font-bold">
+            ESC
+          </kbd>
         </div>
 
-        {/* Results Stream */}
-        <div className="max-h-96 overflow-y-auto p-2 space-y-3 text-xs">
+        {/* Results List */}
+        <div className="max-h-96 overflow-y-auto p-2 space-y-3 divide-y divide-[#8693AB]/20 text-xs">
           
-          {/* Quick Commands */}
-          {(!query || 'simulation conflicts division'.includes(q)) && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">
+          {/* Quick Operations Commands */}
+          {!query && (
+            <div className="pt-1">
+              <div className="text-[10px] font-mono uppercase text-[#8693AB] font-bold px-2 mb-1.5 tracking-wider">
                 Quick Operations Commands
               </div>
               <div className="space-y-0.5">
@@ -146,10 +155,13 @@ export default function CommandPaletteModal({
                     <button
                       key={cmd.id}
                       onClick={cmd.action}
-                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-left text-slate-200 hover:bg-[#1a2333] hover:text-white transition"
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#8693AB]/20 text-left transition group"
                     >
-                      <Icon className={`w-3.5 h-3.5 ${cmd.color}`} />
-                      <span>{cmd.title}</span>
+                      <div className="flex items-center space-x-2.5">
+                        <Icon className={`w-4 h-4 ${cmd.color}`} />
+                        <span className="font-medium text-[#F1F5F9] group-hover:text-white">{cmd.title}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-[#8693AB]">EXECUTE</span>
                     </button>
                   );
                 })}
@@ -159,27 +171,27 @@ export default function CommandPaletteModal({
 
           {/* Matched Buses */}
           {matchedBuses.length > 0 && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">
-                Fleet Buses ({matchedBuses.length})
+            <div className="pt-2">
+              <div className="text-[10px] font-mono uppercase text-[#8693AB] font-bold px-2 mb-1.5 tracking-wider">
+                Vehicles &amp; Fleet ({matchedBuses.length})
               </div>
               <div className="space-y-0.5">
-                {matchedBuses.map(b => (
+                {matchedBuses.map(bus => (
                   <button
-                    key={b.id}
+                    key={bus.id}
                     onClick={() => {
-                      onSelectBus(b.id);
+                      if (onSelectBus) onSelectBus(bus.id);
                       onClose();
-                      onShowToast(`Focused on Bus ${b.id}`);
+                      onShowToast(`Focusing vehicle telemetry on ${bus.id}`);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-[#1a2333] transition"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#8693AB]/20 text-left transition group"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Bus className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="font-mono font-bold text-white">{b.id}</span>
-                      <span className="text-slate-400 text-[11px]">({b.regNumber})</span>
+                    <div className="flex items-center space-x-2.5">
+                      <Bus className="w-4 h-4 text-[#8693AB]" />
+                      <span className="font-bold font-mono text-[#F1F5F9]">{bus.id}</span>
+                      <span className="text-[#8693AB] truncate">{bus.model}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-500">{b.status}</span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">{bus.status}</span>
                   </button>
                 ))}
               </div>
@@ -188,26 +200,26 @@ export default function CommandPaletteModal({
 
           {/* Matched Drivers */}
           {matchedDrivers.length > 0 && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">
-                Crew & Drivers ({matchedDrivers.length})
+            <div className="pt-2">
+              <div className="text-[10px] font-mono uppercase text-[#8693AB] font-bold px-2 mb-1.5 tracking-wider">
+                Crew &amp; Drivers ({matchedDrivers.length})
               </div>
               <div className="space-y-0.5">
-                {matchedDrivers.map(d => (
+                {matchedDrivers.map(driver => (
                   <button
-                    key={d.id}
+                    key={driver.id}
                     onClick={() => {
                       onClose();
-                      onShowToast(`Selected Driver ${d.name} (${d.id})`);
+                      onShowToast(`Driver ${driver.name} selected. Shift duty active.`);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-[#1a2333] transition"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#8693AB]/20 text-left transition group"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-3.5 h-3.5 text-indigo-400" />
-                      <span className="font-bold text-white">{d.name}</span>
-                      <span className="text-[10px] font-mono text-slate-400">({d.id})</span>
+                    <div className="flex items-center space-x-2.5">
+                      <Users className="w-4 h-4 text-[#8693AB]" />
+                      <span className="font-bold text-[#F1F5F9]">{driver.name}</span>
+                      <span className="text-[#8693AB] font-mono text-[10px]">({driver.id})</span>
                     </div>
-                    <span className="text-[10px] font-mono text-cyan-400 font-bold">{d.status}</span>
+                    <span className="text-[10px] font-mono text-[#8693AB]">{driver.status}</span>
                   </button>
                 ))}
               </div>
@@ -216,26 +228,26 @@ export default function CommandPaletteModal({
 
           {/* Matched Routes */}
           {matchedRoutes.length > 0 && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">
-                Corridor Routes ({matchedRoutes.length})
+            <div className="pt-2">
+              <div className="text-[10px] font-mono uppercase text-[#8693AB] font-bold px-2 mb-1.5 tracking-wider">
+                Routes &amp; Corridors ({matchedRoutes.length})
               </div>
               <div className="space-y-0.5">
-                {matchedRoutes.map(r => (
+                {matchedRoutes.map(route => (
                   <button
-                    key={r.id}
+                    key={route.id}
                     onClick={() => {
-                      onSelectRoute(r.id);
+                      if (onSelectRoute) onSelectRoute(route.id);
                       onClose();
-                      onShowToast(`Selected Route ${r.name}`);
+                      onShowToast(`Focusing corridor on ${route.name}`);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-[#1a2333] transition"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#8693AB]/20 text-left transition group"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Route className="w-3.5 h-3.5" style={{ color: r.color }} />
-                      <span className="font-bold text-white">{r.name}</span>
+                    <div className="flex items-center space-x-2.5">
+                      <Route className="w-4 h-4" style={{ color: route.color }} />
+                      <span className="font-bold text-[#F1F5F9]">{route.name}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-slate-400">{r.lengthKm} km</span>
+                    <span className="text-[10px] font-mono text-[#8693AB]">{route.lengthKm} km</span>
                   </button>
                 ))}
               </div>
@@ -244,27 +256,27 @@ export default function CommandPaletteModal({
 
           {/* Matched Duties */}
           {matchedDuties.length > 0 && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">
-                Duty Rosters ({matchedDuties.length})
+            <div className="pt-2">
+              <div className="text-[10px] font-mono uppercase text-[#8693AB] font-bold px-2 mb-1.5 tracking-wider">
+                Duty Assignments ({matchedDuties.length})
               </div>
               <div className="space-y-0.5">
-                {matchedDuties.map(d => (
+                {matchedDuties.map(duty => (
                   <button
-                    key={d.id}
+                    key={duty.id}
                     onClick={() => {
-                      onSelectDuty(d);
+                      if (onSelectDuty) onSelectDuty(duty);
                       onClose();
-                      onShowToast(`Inspected duty ${d.dutyCode}`);
+                      onShowToast(`Selected duty ${duty.dutyCode} (${duty.startTime} - ${duty.endTime})`);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left hover:bg-[#1a2333] transition"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[#8693AB]/20 text-left transition group"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="font-mono font-bold text-white">{d.dutyCode}</span>
-                      <span className="text-[11px] text-slate-400">({d.startTime} – {d.endTime})</span>
+                    <div className="flex items-center space-x-2.5">
+                      <Calendar className="w-4 h-4 text-[#8693AB]" />
+                      <span className="font-bold font-mono text-[#F1F5F9]">{duty.dutyCode}</span>
+                      <span className="text-[#8693AB] font-mono text-[10px]">{duty.startTime} - {duty.endTime}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-indigo-300">{d.busId} • {d.driverId}</span>
+                    <span className="text-[10px] font-mono font-bold text-amber-400">{duty.driverId}</span>
                   </button>
                 ))}
               </div>
@@ -273,19 +285,20 @@ export default function CommandPaletteModal({
 
           {/* No results */}
           {query && matchedBuses.length === 0 && matchedDrivers.length === 0 && matchedRoutes.length === 0 && matchedDuties.length === 0 && (
-            <div className="p-8 text-center text-slate-500 text-xs">
-              No operational records found matching "{query}"
+            <div className="p-8 text-center text-[#8693AB]">
+              <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="font-medium text-sm text-[#F1F5F9]">No operational assets matching "{query}"</p>
+              <p className="text-[11px] mt-1 text-[#8693AB]">Try searching for "104", "Verma", "Route 42", or "DT-104"</p>
             </div>
           )}
 
         </div>
 
-        {/* Footer */}
-        <div className="p-2.5 bg-[#0e1422] border-t border-[#1f2937] text-[10px] font-mono text-slate-500 flex items-center justify-between">
-          <span>Navigate: ↑ ↓ • Select: Enter • Close: ESC</span>
-          <span>CityFlow Operations HUD</span>
+        {/* Modal Footer */}
+        <div className="p-2.5 bg-[#212227] border-t border-[#8693AB]/30 flex items-center justify-between text-[10px] font-mono text-[#8693AB]">
+          <span>CityFlow Command Palette</span>
+          <span>Press ESC to close</span>
         </div>
-
       </div>
     </div>
   );

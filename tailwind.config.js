@@ -82,9 +82,10 @@ export default {
           opal: '#A6CFD5',
           periwinkle: '#AAB9CF',
           gunmetal: '#212227',
+          steel: '#8693AB',
           charcoal: '#18191D',
           surface: '#27282F',
-          border: '#32353E',
+          border: '#8693AB',
         },
       },
       borderRadius: {

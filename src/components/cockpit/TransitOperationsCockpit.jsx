@@ -58,6 +58,18 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
     }, 4000);
   };
 
+  // Global Ctrl + K search palette shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsSearchPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Simulation Timer Hook (Section 7)
   useEffect(() => {
     if (!isSimulating) return;

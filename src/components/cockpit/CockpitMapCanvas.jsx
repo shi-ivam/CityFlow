@@ -325,7 +325,7 @@ export default function CockpitMapCanvas({
       <div ref={mapContainerRef} className="w-full h-full cockpit-map" />
 
       {/* Floating Map Drawing Toolbar */}
-      <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1 rounded-lg bg-[#212227]/95 backdrop-blur-md border border-[#32353E] shadow-xl text-xs font-sans">
+      <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1.5 rounded-2xl bg-[#212227] border-2 border-[#8693AB] shadow-xl text-xs font-sans">
         <button
           onClick={() => {
             const nextMode = !isDrawingMode;
@@ -334,10 +334,10 @@ export default function CockpitMapCanvas({
               onShowToast('Route Variant Drawing Active: Click map to place waypoints.');
             }
           }}
-          className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
             isDrawingMode 
-              ? 'bg-[#AAB9CF] text-[#18191D] font-bold shadow-xs' 
-              : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
+              ? 'bg-[#8693AB] text-[#212227] font-black shadow-sm' 
+              : 'bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] shadow-xs'
           }`}
           title="Simulate drawing a new route variant"
         >
@@ -350,10 +350,10 @@ export default function CockpitMapCanvas({
             setSnapToRoad(!snapToRoad);
             onShowToast(`Road Snapping: ${!snapToRoad ? 'ENABLED' : 'DISABLED'}`);
           }}
-          className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
             snapToRoad 
-              ? 'bg-[#AAB9CF]/20 text-[#AAB9CF] border border-[#AAB9CF]/40' 
-              : 'text-[#8E9BAE] hover:text-white hover:bg-[#282A31]'
+              ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs' 
+              : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 border border-[#8693AB]/40'
           }`}
           title="Toggle corridor road-snapping algorithm"
         >
@@ -366,10 +366,10 @@ export default function CockpitMapCanvas({
             setShowOverlapHUD(true);
             onShowToast('Corridor Overlap: Simulated 23.4% overlap on Central Arterial corridor.');
           }}
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#AAB9CF] hover:text-white hover:bg-[#282A31] transition"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] transition-all shadow-xs active:scale-95 cursor-pointer"
           title="Calculate spatial overlap against active network"
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#AAB9CF]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#212227]" />
           <span>Calc Overlap</span>
         </button>
 
@@ -380,7 +380,7 @@ export default function CockpitMapCanvas({
               setIsDrawingMode(false);
               onShowToast('Cleared temporary route variant.');
             }}
-            className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium text-rose-400 hover:text-white hover:bg-rose-500/20 transition"
+            className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-all active:scale-95 cursor-pointer shadow-xs"
             title="Clear drawn waypoints"
           >
             <RotateCcw className="w-3 h-3" />

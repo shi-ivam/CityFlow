@@ -78,19 +78,19 @@ export default function DutyEngine({
   const resolvedConflicts = conflicts.filter(c => c.status === 'RESOLVED');
 
   return (
-    <div className="flex flex-col h-full bg-[#18191D] border-l border-[#2B2D35] overflow-hidden select-none font-sans text-[#F1F5F9]">
+    <div className="flex flex-col h-full bg-[#18191D] border-l-2 border-[#8693AB]/40 overflow-hidden select-none font-sans text-[#F1F5F9]">
       
       {/* Top Header: Tabs & Mode Toggles */}
-      <div className="h-12 px-4 bg-[#212227] border-b border-[#2B2D35] flex items-center justify-between shrink-0">
+      <div className="h-12 px-4 bg-[#212227] border-b-2 border-[#8693AB]/40 flex items-center justify-between shrink-0">
         
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-2">
           <button
             onClick={() => onTabChange('gantt')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer ${
               activeTab === 'gantt'
-                ? 'bg-[#AAB9CF] text-[#18191D] shadow-xs'
-                : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
+                ? 'bg-[#8693AB] text-[#212227] shadow-sm'
+                : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 hover:text-white border border-[#8693AB]/30'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -99,10 +99,10 @@ export default function DutyEngine({
 
           <button
             onClick={() => onTabChange('conflicts')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition relative ${
+            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer relative ${
               activeTab === 'conflicts'
-                ? 'bg-rose-600 text-white shadow-xs'
-                : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 hover:text-white border border-[#8693AB]/30'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -117,27 +117,27 @@ export default function DutyEngine({
 
         {/* View Mode Toggle: Bus vs Driver (Visible in Gantt tab) */}
         {activeTab === 'gantt' && (
-          <div className="flex items-center space-x-1 bg-[#18191D] p-0.5 rounded-lg border border-[#2B2D35] text-xs">
+          <div className="flex items-center space-x-1 bg-[#212227] p-0.5 rounded-xl border border-[#8693AB]/50 text-xs">
             <button
               onClick={() => setViewMode('bus')}
-              className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+              className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-[11px] font-mono transition-all active:scale-95 cursor-pointer ${
                 viewMode === 'bus'
-                  ? 'bg-[#212227] text-[#F1F5F9] font-bold border border-[#32353E] shadow-xs'
-                  : 'text-[#8E9BAE] hover:text-white'
+                  ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs'
+                  : 'text-[#AAB9CF] hover:text-white'
               }`}
             >
-              <Bus className="w-3 h-3 text-[#AAB9CF]" />
+              <Bus className="w-3.5 h-3.5 text-[#212227]" />
               <span>Bus View</span>
             </button>
             <button
               onClick={() => setViewMode('driver')}
-              className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+              className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-[11px] font-mono transition-all active:scale-95 cursor-pointer ${
                 viewMode === 'driver'
-                  ? 'bg-[#212227] text-[#F1F5F9] font-bold border border-[#32353E] shadow-xs'
-                  : 'text-[#8E9BAE] hover:text-white'
+                  ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs'
+                  : 'text-[#AAB9CF] hover:text-white'
               }`}
             >
-              <Users className="w-3 h-3 text-[#AAB9CF]" />
+              <Users className="w-3.5 h-3.5 text-[#212227]" />
               <span>Driver View</span>
             </button>
           </div>
@@ -383,28 +383,28 @@ export default function DutyEngine({
                 </div>
 
                 {/* Duty Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#1f2937]">
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#8693AB]/40">
                   <button
                     onClick={() => setIsDriverPickerOpen(!isDriverPickerOpen)}
-                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
                   >
-                    <Users className="w-3 h-3" />
+                    <Users className="w-3.5 h-3.5 text-[#212227]" />
                     <span>Reassign Driver</span>
                   </button>
 
                   <button
                     onClick={() => setIsBusPickerOpen(!isBusPickerOpen)}
-                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#1a2333] hover:bg-[#232f45] border border-[#1f2937] text-white text-xs font-semibold transition"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
                   >
-                    <Bus className="w-3 h-3 text-emerald-400" />
+                    <Bus className="w-3.5 h-3.5 text-[#212227]" />
                     <span>Swap Bus</span>
                   </button>
 
                   <button
                     onClick={() => onToggleLockDuty(selectedDuty.id)}
-                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#1a2333] hover:bg-[#232f45] border border-[#1f2937] text-slate-300 text-xs font-semibold transition"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
                   >
-                    {selectedDuty.isLocked ? <Unlock className="w-3 h-3 text-amber-400" /> : <Lock className="w-3 h-3 text-indigo-400" />}
+                    {selectedDuty.isLocked ? <Unlock className="w-3.5 h-3.5 text-amber-900" /> : <Lock className="w-3.5 h-3.5 text-[#212227]" />}
                     <span>{selectedDuty.isLocked ? 'Unlock Duty' : 'Lock Assignment'}</span>
                   </button>
 
@@ -414,9 +414,9 @@ export default function DutyEngine({
                       setRescheduleEnd(selectedDuty.endTime);
                       setIsRescheduleModalOpen(true);
                     }}
-                    className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-[#1a2333] hover:bg-[#232f45] border border-[#1f2937] text-slate-300 text-xs font-semibold transition"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
                   >
-                    <Clock className="w-3 h-3 text-cyan-400" />
+                    <Clock className="w-3.5 h-3.5 text-[#212227]" />
                     <span>Reschedule</span>
                   </button>
                 </div>
@@ -547,12 +547,12 @@ export default function DutyEngine({
                     </div>
 
                     {/* FALLBACK ACTIONS THAT ACTUALLY WORK (Section 21) */}
-                    <div className="pt-2 border-t border-[#32353E] flex flex-wrap gap-2">
+                    <div className="pt-2.5 border-t-2 border-[#8693AB]/40 flex flex-wrap gap-2">
                       {conflict.id === 'CF-204' && (
                         <>
                           <button
                             onClick={() => onAssignStandbyCrew(conflict.id, 'SHARMA-18', conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition shadow-xs active:scale-95"
+                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Users className="w-3.5 h-3.5" />
                             <span>Assign Standby Crew</span>
@@ -560,7 +560,7 @@ export default function DutyEngine({
 
                           <button
                             onClick={() => onTriggerOvertimeProtocol(conflict.id, conflict.driverId, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs font-bold transition shadow-xs active:scale-95"
+                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Zap className="w-3.5 h-3.5" />
                             <span>Overtime Protocol</span>
@@ -568,7 +568,7 @@ export default function DutyEngine({
 
                           <button
                             onClick={() => onSplitShiftFallback(conflict.id, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#2B3C56] hover:bg-[#364B6B] text-[#F1F5F9] border border-[#AAB9CF]/50 font-mono text-xs font-bold transition shadow-xs active:scale-95"
+                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Footprints className="w-3.5 h-3.5" />
                             <span>Split-Shift Fallback</span>
@@ -580,7 +580,7 @@ export default function DutyEngine({
                         <>
                           <button
                             onClick={() => onAdjustDeparture(conflict.id, conflict.affectedDutyId, 8)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition shadow-md active:scale-95"
+                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Clock className="w-3.5 h-3.5" />
                             <span>Adjust Departure +8 min</span>
@@ -588,7 +588,7 @@ export default function DutyEngine({
 
                           <button
                             onClick={() => onRerouteVariant(conflict.id, 'R17')}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition shadow-md active:scale-95"
+                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
                           >
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>Reroute Variant</span>

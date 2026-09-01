@@ -10,25 +10,30 @@ export default function ActivityAlertDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in select-none font-sans">
-      <div className="w-full max-w-sm bg-[#111827] border-l border-[#1f2937] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-        
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-[9999] overflow-hidden bg-black/70 backdrop-blur-xs flex justify-end animate-in fade-in select-none font-sans"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-[#212227] border-l-2 border-[#8693AB] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+      >
         {/* Drawer Header */}
-        <div className="p-4 bg-[#0e1422] border-b border-[#1f2937] flex items-center justify-between">
+        <div className="p-4 bg-[#212227] border-b-2 border-[#8693AB]/40 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Bell className="w-4 h-4 text-indigo-400" />
-            <h3 className="font-bold text-sm text-white">Operational Activity Feed</h3>
+            <Bell className="w-4 h-4 text-[#AAB9CF]" />
+            <h3 className="font-bold text-sm text-[#F1F5F9]">Operational Activity Feed</h3>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={onClearEvents}
-              className="text-[10px] font-mono text-slate-400 hover:text-white px-2 py-0.5 rounded bg-[#1f2937]"
+              className="text-[10px] font-mono text-[#212227] font-bold hover:bg-[#96A3BC] px-2.5 py-1 rounded-lg bg-[#8693AB] transition active:scale-95 cursor-pointer"
             >
               Clear
             </button>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1 rounded hover:bg-[#1f2937]"
+              className="text-[#AAB9CF] hover:text-white p-1 rounded-lg hover:bg-[#8693AB]/20 transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -39,35 +44,40 @@ export default function ActivityAlertDrawer({
         <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
           {events.length > 0 ? (
             events.map((ev) => (
-              <div
-                key={ev.id}
-                className="p-3 rounded-lg bg-[#0b0f19] border border-[#1f2937] space-y-1 text-xs transition-colors hover:border-slate-600"
+              <div 
+                key={ev.id} 
+                className="p-2.5 rounded-xl bg-[#282A31] border border-[#8693AB]/40 text-xs space-y-1 hover:border-[#8693AB] transition shadow-xs"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-[10px] font-mono">
                   <div className="flex items-center space-x-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      ev.severity === 'critical' ? 'bg-rose-500 animate-ping' : 
-                      ev.severity === 'warning' ? 'bg-amber-400' : 'bg-emerald-400'
-                    }`} />
-                    <span className="font-mono text-[10px] text-slate-400 uppercase font-bold">{ev.type}</span>
+                    {ev.severity === 'critical' ? (
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                    ) : ev.severity === 'warning' ? (
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    )}
+                    <span className="font-bold text-[#AAB9CF]">{ev.type}</span>
                   </div>
-                  <span className="font-mono text-[10px] text-slate-500">{ev.timestamp}</span>
+                  <span className="text-[#8693AB]">{ev.timestamp}</span>
                 </div>
-                <p className="text-slate-200 text-[11px] leading-relaxed font-sans">{ev.message}</p>
+                <p className="text-[#F1F5F9] font-medium leading-tight">{ev.message}</p>
               </div>
             ))
           ) : (
-            <div className="p-6 text-center text-xs text-slate-500">
-              No recent activity logged.
+            <div className="h-full flex flex-col items-center justify-center text-[#8693AB] space-y-2 p-6 text-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 opacity-60" />
+              <p className="font-semibold text-xs text-[#F1F5F9]">All telemetry streams nominal</p>
+              <p className="text-[11px] text-[#8693AB]">No critical dispatches or violations flagged.</p>
             </div>
           )}
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-3 bg-[#0e1422] border-t border-[#1f2937] text-center text-[10px] font-mono text-slate-400">
-          Telemetry Stream • 124 pings/sec
+        <div className="p-3 bg-[#212227] border-t-2 border-[#8693AB]/40 flex items-center justify-between text-[10px] font-mono text-[#8693AB]">
+          <span>CityFlow Dispatch Telemetry</span>
+          <span>Buffer: 50 events</span>
         </div>
-
       </div>
     </div>
   );
