@@ -101,7 +101,7 @@ export default function DutyEngine({
 
   const displayRows = viewMode === 'bus' ? busRows : driverRows;
 
-  // Status color resolver (Section 12: subtle tints)
+  // Status and Route color resolver (Section 20: Gantt + Map Color Consistency)
   const getDutyColorClasses = (duty) => {
     const isSelected = selectedDuty?.id === duty.id;
     const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedDutyId === duty.id || c.affectedBusId === duty.busId));
@@ -118,16 +118,28 @@ export default function DutyEngine({
         : 'bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 hover:bg-amber-500/25';
     }
 
-    if (duty.type === 'UNLINKED') {
+    // Section 20: Match route color family
+    const routeId = duty.routeId || '';
+    if (routeId.includes('103') || routeId.includes('570')) {
       return isSelected
-        ? 'bg-purple-500/25 border-2 border-purple-600 text-purple-900 dark:text-purple-200 ring-2 ring-purple-400/40'
-        : 'bg-purple-500/15 border border-purple-500/40 text-purple-900 dark:text-purple-200 hover:bg-purple-500/25';
+        ? 'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-400/40'
+        : 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-500/25';
+    }
+    if (routeId.includes('17') || routeId.includes('21G')) {
+      return isSelected
+        ? 'bg-blue-500/25 border-2 border-blue-600 text-blue-950 dark:text-blue-200 ring-2 ring-blue-400/40'
+        : 'bg-blue-500/15 border border-blue-500/40 text-blue-900 dark:text-blue-200 hover:bg-blue-500/25';
+    }
+    if (routeId.includes('204') || routeId.includes('23C')) {
+      return isSelected
+        ? 'bg-cyan-500/25 border-2 border-cyan-600 text-cyan-950 dark:text-cyan-200 ring-2 ring-cyan-400/40'
+        : 'bg-cyan-500/15 border border-cyan-500/40 text-cyan-900 dark:text-cyan-200 hover:bg-cyan-500/25';
     }
 
-    // Default Normal Linked Duty
+    // Default Purple family (R42 / R55 / 19B)
     return isSelected
-      ? 'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-400/40'
-      : 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-500/25';
+      ? 'bg-purple-500/25 border-2 border-purple-600 text-purple-950 dark:text-purple-200 ring-2 ring-purple-400/40'
+      : 'bg-purple-500/15 border border-purple-500/40 text-purple-900 dark:text-purple-200 hover:bg-purple-500/25';
   };
 
   return (

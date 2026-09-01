@@ -360,8 +360,18 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
   // Setup layers helper
   const setupMapLayers = (map: MapLibreMap) => {
-    // Add Routes GeoJSON source
+    // Add Routes GeoJSON source with strong, distinct transit colors (Section 2, 3)
     if (!map.getSource('transit-routes')) {
+      const getRouteColor = (code: string) => {
+        switch (code) {
+          case '570': return '#16A34A'; // Active Green
+          case '21G': return '#2563EB'; // Royal Blue
+          case '19B': return '#5B3CC4'; // Primary Rich Violet
+          case '23C': return '#0891B2'; // Deep Cyan/Teal
+          default: return '#5B3CC4';
+        }
+      };
+
       const routeFeatures = routes.map((r) => ({
         type: 'Feature' as const,
         properties: {
@@ -369,6 +379,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
           code: r.code,
           name: r.name,
           category: r.category,
+          color: getRouteColor(r.code),
         },
         geometry: {
           type: 'LineString' as const,
@@ -385,14 +396,14 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       });
     }
 
-    // Buffer / Corridor Halo Layer (Monochrome 50m buffer)
+    // Buffer / Corridor Halo Layer
     if (!map.getLayer('route-buffers')) {
       map.addLayer({
         id: 'route-buffers',
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': theme === 'dark' ? '#ffffff' : '#000000',
+          'line-color': theme === 'dark' ? '#7C3AED' : '#5B3CC4',
           'line-width': 22,
           'line-opacity': theme === 'dark' ? 0.12 : 0.08,
           'line-dasharray': [2, 2],
@@ -403,31 +414,59 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       });
     }
 
-    // Route Casing Layer (Monochrome outline)
+    // Route Casing Layer (Section 3: White halo in light mode separates route from light map tiles)
     if (!map.getLayer('route-casing')) {
       map.addLayer({
         id: 'route-casing',
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': theme === 'dark' ? '#ffffff' : '#000000',
-          'line-width': 6,
-          'line-opacity': 0.4,
+          'line-color': theme === 'dark' ? '#000000' : '#FFFFFF',
+          'line-width': [
+            'case',
+            ['==', ['get', 'id'], selectedRouteId || ''],
+            9,
+            7.5
+          ],
+          'line-opacity': theme === 'dark' ? 0.4 : 0.95,
         },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        }
       });
     }
 
-    // Route Main Line (High contrast solid vector)
+    // Route Main Line (Section 2, 3: 5px saturated transit colors, round caps/joins)
     if (!map.getLayer('route-main')) {
       map.addLayer({
         id: 'route-main',
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': theme === 'dark' ? '#ffffff' : '#171717',
-          'line-width': 3.5,
-          'line-opacity': 0.95,
+          'line-color': [
+            'case',
+            ['==', ['get', 'id'], selectedRouteId || ''],
+            '#7C3AED',
+            ['get', 'color']
+          ],
+          'line-width': [
+            'case',
+            ['==', ['get', 'id'], selectedRouteId || ''],
+            6,
+            4.8
+          ],
+          'line-opacity': [
+            'case',
+            ['==', ['get', 'id'], selectedRouteId || ''],
+            1.0,
+            selectedRouteId ? 0.25 : 0.95
+          ]
         },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        }
       });
     }
 
@@ -797,11 +836,21 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               const bodyMesh = group.getObjectByName('bus-body') as THREE.Mesh;
               if (bodyMesh && bodyMesh.material) {
                 const mat = bodyMesh.material as THREE.MeshStandardMaterial;
+                // Section 4: Match bus color with route color
+                const routeColorHex = bus.routeCode === '570' ? 0x16a34a : // Green
+                                     bus.routeCode === '21G' ? 0x2563eb : // Blue
+                                     bus.routeCode === '19B' ? 0x5b3cc4 : // Purple
+                                     bus.routeCode === '23C' ? 0x0891b2 : // Teal
+                                     0x5b3cc4;
+
                 if (isSelected || isCinematic) {
-                  mat.color.set(0x2563eb); // Solid Rich Transit Blue
-                  mat.emissive.set(0x1d4ed8);
+                  mat.color.set(0x7c3aed); // Bold Purple Selected
+                  mat.emissive.set(0x6d28d9);
+                } else if (bus.status === 'DELAYED' || bus.delayMinutes > 0) {
+                  mat.color.set(0xf59e0b); // Amber Delayed
+                  mat.emissive.set(0x78350f);
                 } else {
-                  mat.color.set(0x2563eb); // Solid rich blue
+                  mat.color.set(routeColorHex);
                   mat.emissive.set(0x000000);
                 }
               }
@@ -1002,134 +1051,71 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
         </div>
       </div>
 
-      {/* Bottom Left Live Telemetry Ribbon */}
-      <div className="absolute bottom-3 left-3 z-20 flex items-center gap-3 p-2 bg-card/90 backdrop-blur-md border border-border rounded-md shadow-lg font-mono text-[11px] text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-foreground"></span>
-          </span>
-          <span className="text-foreground font-semibold">CHENNAI GIS GRID</span>
-        </div>
-        <div className="h-3 w-px bg-border"></div>
-        <div>
-          LNG: <span className="text-foreground tabular-nums">{hoveredCoord[0]}</span> LAT:{' '}
-          <span className="text-foreground tabular-nums">{hoveredCoord[1]}</span>
-        </div>
-        <div className="hidden md:flex items-center gap-1">
-          <div className="h-3 w-px bg-border mr-2"></div>
-          <span>PROVIDER:</span>
-          <span className="text-foreground font-bold uppercase">{mapProvider}</span>
-        </div>
+      {/* Bottom Left Minimal Route Legend (Section 9) */}
+      <div className="absolute bottom-3 left-3 z-20 flex items-center space-x-3 px-3 py-1.5 bg-card/90 backdrop-blur-xs border border-border rounded-lg shadow-xs font-mono text-[10px] text-muted-foreground select-none">
+        <span className="flex items-center space-x-1">
+          <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
+          <span className="text-foreground font-semibold">570</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+          <span className="text-foreground font-semibold">21G</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <span className="w-2 h-2 rounded-full bg-[#5B3CC4]" />
+          <span className="text-foreground font-semibold">19B</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <span className="w-2 h-2 rounded-full bg-[#0891B2]" />
+          <span className="text-foreground font-semibold">23C</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
+          <span className="text-foreground font-semibold">Selected</span>
+        </span>
       </div>
 
-      {/* Interactive Active Bus Tactical Overlay Popup (When a bus is selected) */}
+      {/* Minimal Bus Popover on Selection (Section 5: Summary First, Details on Demand) */}
       {activeSelectedBus && !cinematicBusId && (
-        <div className="absolute top-16 left-3 z-30 w-80 bg-card/95 backdrop-blur-md border-2 border-primary rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 font-sans">
-          <div className="flex items-center justify-between px-3.5 py-2.5 bg-primary text-primary-foreground font-mono text-xs font-bold">
-            <span className="tracking-wide">{activeSelectedBus.id}</span>
+        <div className="absolute top-14 left-3 z-30 w-64 bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-xl p-3 text-xs font-sans animate-in fade-in select-none">
+          <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2">
+            <div className="flex items-center space-x-2">
+              <span 
+                className="w-2.5 h-2.5 rounded-full shrink-0" 
+                style={{ 
+                  backgroundColor: activeSelectedBus.routeCode === '570' ? '#16A34A' : 
+                                  activeSelectedBus.routeCode === '21G' ? '#2563EB' : 
+                                  activeSelectedBus.routeCode === '19B' ? '#5B3CC4' : '#0891B2' 
+                }} 
+              />
+              <strong className="text-foreground font-mono">{activeSelectedBus.id}</strong>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-bold">
+                {activeSelectedBus.routeCode}
+              </span>
+            </div>
             <button
               onClick={resetToInitialView}
-              className="hover:opacity-80 text-sm leading-none cursor-pointer"
-              title="Close and zoom out (Esc)"
+              className="text-muted-foreground hover:text-foreground text-sm cursor-pointer p-0.5 leading-none"
+              title="Close (Esc)"
             >
               ✕
             </button>
           </div>
 
-          <div className="p-3.5 space-y-3 font-sans">
-            {/* Route & Vehicle Header */}
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-[11px] font-mono text-muted-foreground uppercase">
-                  ROUTE {activeSelectedBus.routeCode}
-                </div>
-                <div className="text-sm font-bold text-foreground">
-                  {routes.find((r) => r.id === activeSelectedBus.routeId)?.name || 'MTC Chennai'}
-                </div>
-                <div className="font-mono text-xs text-muted-foreground">
-                  Plate: {activeSelectedBus.vehicleNumber}
-                </div>
-              </div>
-              <span
-                className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded ${
-                  activeSelectedBus.status === 'ON_TIME'
-                    ? 'border border-border bg-accent text-foreground'
-                    : activeSelectedBus.status === 'EXPRESS'
-                    ? 'bg-foreground text-background'
-                    : 'border border-dashed border-foreground/60 text-foreground'
-                }`}
-              >
-                {activeSelectedBus.status.replace('_', ' ')}
+          <div className="space-y-1 font-mono text-[11px]">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Driver:</span>
+              <strong className="text-foreground">{activeSelectedBus.driverName}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Duty:</span>
+              <strong className="text-foreground">08:30 → 12:30</strong>
+            </div>
+            <div className="flex justify-between items-center pt-1 border-t border-border/40">
+              <span className="text-muted-foreground">Status:</span>
+              <span className={`font-bold ${activeSelectedBus.delayMinutes > 0 ? 'text-amber-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                {activeSelectedBus.delayMinutes > 0 ? `Delayed (+${activeSelectedBus.delayMinutes}m)` : 'On Time'}
               </span>
-            </div>
-
-            {/* Telemetry Metrics Grid */}
-            <div className="grid grid-cols-3 gap-2 p-2 bg-secondary/50 rounded border border-border font-mono text-center">
-              <div>
-                <div className="text-[10px] text-muted-foreground">SPEED</div>
-                <div className="text-sm font-bold text-foreground tabular-nums">
-                  {activeSelectedBus.speedKmH}{' '}
-                  <span className="text-[10px] font-normal">km/h</span>
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground">OCCUPANCY</div>
-                <div className="text-sm font-bold text-foreground tabular-nums">
-                  {activeSelectedBus.occupancyPercent}%
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] text-muted-foreground">SCHEDULE</div>
-                <div className="text-sm font-bold text-foreground tabular-nums">
-                  {activeSelectedBus.delayMinutes >= 0
-                    ? `+${activeSelectedBus.delayMinutes}m`
-                    : `${activeSelectedBus.delayMinutes}m`}
-                </div>
-              </div>
-            </div>
-
-            {/* Next Stop & Driver Info */}
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Navigation2 className="w-3 h-3" /> Next Stop:
-                </span>
-                <span className="font-medium text-foreground">
-                  {activeSelectedBus.nextStopName}
-                </span>
-              </div>
-              <div className="flex items-center justify-between font-mono text-[11px]">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> ETA:
-                </span>
-                <span className="text-foreground font-semibold">
-                  {activeSelectedBus.nextStopEtaMinutes} mins ({activeSelectedBus.distanceToNextStopM}m)
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground pt-1 border-t border-border/50">
-                <span className="flex items-center gap-1">
-                  <User className="w-3 h-3" /> Pilot:
-                </span>
-                <span className="text-foreground font-medium">
-                  {activeSelectedBus.driverName} ({activeSelectedBus.driverId})
-                </span>
-              </div>
-            </div>
-
-            {/* Status Footer */}
-            <div className="pt-2 border-t border-border/50 flex items-center justify-between text-muted-foreground font-mono text-[10px]">
-              <div className="flex items-center gap-1 text-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-foreground animate-ping"></span>
-                <span className="font-bold">LIVE RADAR TRACKING</span>
-              </div>
-              <button
-                onClick={resetToInitialView}
-                className="px-2 py-0.5 rounded border border-border hover:bg-secondary text-foreground text-[10px] cursor-pointer"
-                title="Deselect and zoom out to full overview"
-              >
-                DESELECT & ZOOM OUT
-              </button>
             </div>
           </div>
         </div>

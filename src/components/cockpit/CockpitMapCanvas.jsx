@@ -92,11 +92,25 @@ export default function CockpitMapCanvas({
         const isSelected = selectedRouteId === route.id || (selectedDuty && selectedDuty.routeId === route.id);
         const isHovered = hoveredRouteId === route.id;
         const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedRouteId === route.id || c.overlappingRouteId === route.id));
+        const routeColor = hasConflict ? '#DC2626' : (isSelected ? '#7C3AED' : route.color || '#5B3CC4');
 
+        // Section 3: White casing halo ensures 100% visibility on light neutral base map
+        const casing = L.polyline(route.coordinates, {
+          color: '#FFFFFF',
+          weight: isSelected ? 9.5 : 7.5,
+          opacity: isSelected ? 0.95 : (selectedRouteId ? 0.25 : 0.9),
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+        layersRef.current.routesLayer.addLayer(casing);
+
+        // Section 2, 3: 4.8–6px saturated transit line
         const polyline = L.polyline(route.coordinates, {
-          color: hasConflict ? '#EF4444' : (isSelected ? '#7C69A5' : route.color || '#4F46E5'),
-          weight: isSelected ? 5.5 : (isHovered ? 4.5 : 3),
-          opacity: isSelected || isHovered ? 1 : 0.7,
+          color: routeColor,
+          weight: isSelected ? 6 : (isHovered ? 5.5 : 4.8),
+          opacity: isSelected || isHovered ? 1 : (selectedRouteId ? 0.28 : 0.95),
+          lineCap: 'round',
+          lineJoin: 'round',
           className: 'transition-all duration-150'
         });
 
@@ -111,8 +125,8 @@ export default function CockpitMapCanvas({
 
         polyline.bindTooltip(`
           <div class="px-2.5 py-1.5 bg-white text-slate-800 text-xs border border-slate-200 rounded-lg font-mono shadow-md">
-            <strong>${route.code || route.id}</strong>: ${route.name}
-            <div class="text-[10px] text-slate-500 mt-0.5">${route.activeBuses || 3} buses • ${route.distanceKm || 28.5} km</div>
+            <strong style="color: ${routeColor}">${route.code || route.id}</strong>: ${route.name}
+            <div class="text-[10px] text-slate-500 mt-0.5">${route.activeBuses || 2} buses • ${route.lengthKm || 15} km</div>
           </div>
         `, { sticky: true });
 
@@ -130,10 +144,11 @@ export default function CockpitMapCanvas({
       ];
 
       const overlapLine = L.polyline(overlapCoords, {
-        color: '#EF4444',
+        color: '#DC2626',
         weight: 6,
         opacity: 0.9,
-        dashArray: '6, 6'
+        dashArray: '6, 6',
+        lineCap: 'round'
       });
 
       overlapLine.on('click', () => {
@@ -204,7 +219,7 @@ export default function CockpitMapCanvas({
     });
   }, []);
 
-  // Render Compact Bus Markers (Section 9: Green, Amber, Red, Purple Selected)
+  // Render Bus Markers Matched with Route Color (Section 4)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !layersRef.current.busesLayer) return;
@@ -215,9 +230,11 @@ export default function CockpitMapCanvas({
       const isSelected = selectedBusId === bus.id || (selectedDuty && selectedDuty.busId === bus.id);
       const isDelayed = bus.status === 'DELAYED' || bus.delayMinutes > 0;
       const isCritical = conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === bus.id);
-
-      // Section 9 Colors
-      const markerColor = isCritical ? '#EF4444' : isDelayed ? '#F59E0B' : '#10B981';
+      
+      // Section 4: Match bus marker color to its assigned route color
+      const assignedRoute = routes.find(r => r.id === bus.routeId);
+      const routeColor = assignedRoute?.color || '#5B3CC4';
+      const markerColor = isCritical ? '#DC2626' : (isDelayed ? '#F59E0B' : (isSelected ? '#7C3AED' : routeColor));
       const labelText = bus.id.replace('BUS-', '');
 
       const icon = L.divIcon({
@@ -228,9 +245,9 @@ export default function CockpitMapCanvas({
               class="w-7 h-7 rounded-full shadow-md flex items-center justify-center font-mono font-bold text-[10px]"
               style="
                 background-color: #FFFFFF;
-                border: ${isSelected ? '3px solid #7C69A5' : `2px solid ${markerColor}`};
+                border: 2.5px solid ${markerColor};
                 color: #1E1B26;
-                box-shadow: ${isSelected ? '0 0 0 3px rgba(124, 105, 165, 0.35)' : '0 2px 4px rgba(0,0,0,0.1)'};
+                box-shadow: ${isSelected ? `0 0 0 3px rgba(124, 58, 237, 0.4)` : '0 1px 3px rgba(0,0,0,0.15)'};
               "
             >
               ${labelText}
@@ -248,27 +265,26 @@ export default function CockpitMapCanvas({
         if (onSelectBus) onSelectBus(bus.id);
       });
 
+      // Section 5: Minimal popover: Bus, Route, Driver, Duty
       marker.bindTooltip(`
-        <div class="p-2.5 bg-white text-slate-800 text-xs border border-slate-200 rounded-xl font-mono shadow-xl min-w-[170px]">
+        <div class="p-2 bg-white text-slate-800 text-xs border border-slate-200 rounded-lg font-mono shadow-md min-w-[140px]">
           <div class="flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
             <strong class="text-slate-900">${bus.id}</strong>
-            <span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${
-              isCritical ? 'bg-rose-100 text-rose-700' : isDelayed ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-            }">
-              ${isCritical ? 'CRITICAL' : isDelayed ? 'DELAYED' : 'IN_SERVICE'}
+            <span class="text-[9px] px-1 py-0.2 rounded font-bold" style="background-color: ${markerColor}20; color: ${markerColor}">
+              ${bus.routeId || 'R42'}
             </span>
           </div>
           <div class="space-y-0.5 text-[11px] text-slate-600">
-            <div>Driver: <span class="text-slate-900 font-bold">${bus.driverId || 'Rajesh K.'}</span></div>
-            <div>Route: <span class="text-indigo-600 font-bold">${bus.routeId || 'R534'}</span></div>
-            <div>Speed: <span class="text-slate-900 font-bold">${bus.speedKmh || 28} km/h</span></div>
+            <div>Driver: <strong class="text-slate-900">${bus.driverId || 'Rajesh K.'}</strong></div>
+            <div>Duty: <strong class="text-slate-900">08:30 → 12:30</strong></div>
+            <div>Status: <strong style="color: ${markerColor}">${isCritical ? 'Conflict' : isDelayed ? 'Delayed' : 'On Time'}</strong></div>
           </div>
         </div>
       `, { sticky: true });
 
       layersRef.current.busesLayer.addLayer(marker);
     });
-  }, [buses, selectedBusId, selectedDuty, conflicts]);
+  }, [buses, selectedBusId, selectedDuty, conflicts, routes]);
 
   // Map Controls
   const handleZoomIn = () => {
