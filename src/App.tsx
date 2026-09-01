@@ -5,6 +5,7 @@ import { interpolateRoutePosition, getDistanceMeters } from './utils/geoUtils';
 import { TopNavbar } from './components/Navigation/TopNavbar';
 import { ChennaiTransitMap } from './components/Map/ChennaiTransitMap';
 import { RightSidepanel } from './components/Sidepanel/RightSidepanel';
+import { DriverPortal } from './components/Driver/DriverPortal';
 
 function computeBusTelemetry(
   bus: ActiveBus,
@@ -62,6 +63,7 @@ function initializeBuses(initialBuses: ActiveBus[], routes: TransitRoute[]): Act
 }
 
 export const App: React.FC = () => {
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [mapProvider, setMapProvider] = useState<MapProviderId>('carto');
   const [maptilerKey, setMaptilerKey] = useState<string>('');
@@ -78,6 +80,20 @@ export const App: React.FC = () => {
 
   const lastTickRef = useRef<number>(Date.now());
 
+  // Listen to browser navigation (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
+
   // Apply dark mode class to html element
   useEffect(() => {
     const root = document.documentElement;
@@ -88,7 +104,7 @@ export const App: React.FC = () => {
     }
   }, [theme]);
 
-  // Real-Time Bus Animation & Telemetry Loop
+  // Real-Time Bus Animation & Telemetry Loop (for homepage)
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -146,6 +162,18 @@ export const App: React.FC = () => {
     setBuses(initializeBuses(INITIAL_BUSES, routes));
   };
 
+  // If path is /driver, render the dedicated Driver Portal
+  if (currentPath.startsWith('/driver')) {
+    return (
+      <DriverPortal
+        onNavigateHome={() => navigateTo('/')}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        maptilerKey={maptilerKey}
+      />
+    );
+  }
+
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* Top Navbar */}
@@ -173,7 +201,10 @@ export const App: React.FC = () => {
 
           {/* Right Options Sidepanel */}
           <aside className="w-full lg:w-[32%] xl:w-[28%] h-[40%] lg:h-full overflow-hidden">
-            <RightSidepanel />
+            <RightSidepanel
+              onNavigateDriver={() => navigateTo('/driver')}
+              onNavigateAdmin={() => navigateTo('/admin')}
+            />
           </aside>
         </div>
       </div>

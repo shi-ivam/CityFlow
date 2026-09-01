@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "backend": "python3 -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload",
     "build:css": "tailwindcss -i ./src/index.css -o ./public/tailwind.css",
     "build": "npm run build:css && tsc && vite build",
     "preview": "vite preview"

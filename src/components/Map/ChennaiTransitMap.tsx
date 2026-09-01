@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { ActiveBus, TransitRoute, MapProviderId, MAP_PROVIDERS } from '../../types/transit';
 import { CHENNAI_CENTER, CHENNAI_HUBS } from '../../data/chennaiRoutes';
-import { Compass, ShieldAlert, Navigation2, Zap, User, Clock, Layers } from 'lucide-react';
+import { Compass, ShieldAlert, Navigation2, Zap, User, Clock, Layers, ZoomOut } from 'lucide-react';
 
 interface ChennaiTransitMapProps {
   routes: TransitRoute[];
@@ -213,21 +213,77 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
     }
   }, [activeBuses, mapLoaded]);
 
-  // Handle selected bus camera focus
+  const isInitialFlyingRef = useRef<boolean>(false);
+
+  // Initial approach flight on bus selection
   useEffect(() => {
-    if (!mapRef.current || !selectedBusId) return;
-    const bus = activeBuses.find((b) => b.id === selectedBusId);
-    if (bus) {
-      mapRef.current.flyTo({
-        center: bus.currentCoord,
-        zoom: 14.8,
-        pitch: is3D ? 55 : 0,
-        bearing: bus.heading - 15,
-        speed: 1.2,
-        curve: 1.4,
-      });
+    if (!mapRef.current || !selectedBusId) {
+      isInitialFlyingRef.current = false;
+      return;
     }
-  }, [selectedBusId, activeBuses, is3D]);
+    const bus = busesRef.current.find((b) => b.id === selectedBusId);
+    if (!bus) return;
+
+    isInitialFlyingRef.current = true;
+    mapRef.current.flyTo({
+      center: bus.currentCoord,
+      zoom: 15.0,
+      pitch: is3D ? 55 : 0,
+      bearing: is3D ? bus.heading - 15 : 0,
+      speed: 1.1,
+      curve: 1.4,
+      essential: true,
+    });
+
+    const timer = setTimeout(() => {
+      isInitialFlyingRef.current = false;
+    }, 1100);
+
+    return () => clearTimeout(timer);
+  }, [selectedBusId]);
+
+  // Buttery-smooth 60fps continuous camera tracking loop
+  useEffect(() => {
+    if (!selectedBusId) return;
+    let animId: number;
+
+    const followLoop = () => {
+      const map = mapRef.current;
+      if (map && selectedBusIdRef.current && !isInitialFlyingRef.current) {
+        const bus = busesRef.current.find((b) => b.id === selectedBusIdRef.current);
+        if (bus) {
+          const currentCenter = map.getCenter();
+          const targetLng = bus.currentCoord[0];
+          const targetLat = bus.currentCoord[1];
+
+          const diffLng = targetLng - currentCenter.lng;
+          const diffLat = targetLat - currentCenter.lat;
+
+          // Follow smoothly if in range
+          if (Math.abs(diffLng) < 0.1 && Math.abs(diffLat) < 0.1) {
+            const nextLng = currentCenter.lng + diffLng * 0.08;
+            const nextLat = currentCenter.lat + diffLat * 0.08;
+
+            let nextBearing = map.getBearing();
+            if (is3DRef.current) {
+              const targetBearing = bus.heading - 15;
+              const angleDiff = ((targetBearing - nextBearing + 540) % 360) - 180;
+              nextBearing = nextBearing + angleDiff * 0.03; // Smooth stabilized rotation
+            }
+
+            map.jumpTo({
+              center: [nextLng, nextLat],
+              bearing: is3DRef.current ? nextBearing : 0,
+            });
+          }
+        }
+      }
+      animId = requestAnimationFrame(followLoop);
+    };
+
+    animId = requestAnimationFrame(followLoop);
+    return () => cancelAnimationFrame(animId);
+  }, [selectedBusId]);
 
   // Setup layers helper
   const setupMapLayers = (map: MapLibreMap) => {
@@ -493,9 +549,17 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
     };
   }, []);
 
-  // Update map style when provider, theme, or maptilerKey changes
+  const cachedBusGeometryRef = useRef<THREE.BufferGeometry | null>(null);
+  const lastAppliedStyleConfigRef = useRef<string>(
+    JSON.stringify({ mapProvider, theme, maptilerKey })
+  );
+
+  // Update map style only when provider, theme, or maptilerKey actually changes
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
+    const currentConfig = JSON.stringify({ mapProvider, theme, maptilerKey });
+    if (lastAppliedStyleConfigRef.current === currentConfig) return;
+    lastAppliedStyleConfigRef.current = currentConfig;
     const newStyle = getProviderMapStyle(mapProvider, theme, maptilerKey);
     mapRef.current.setStyle(newStyle);
   }, [mapProvider, theme, maptilerKey, mapLoaded]);
@@ -505,7 +569,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
     let renderer: THREE.WebGLRenderer;
     let scene: THREE.Scene;
     let camera: THREE.Camera;
-    let busGeometry: THREE.BufferGeometry | null = null;
+    let busGeometry: THREE.BufferGeometry | null = cachedBusGeometryRef.current;
     const busMeshes = new Map<string, THREE.Group>();
 
     const custom3DLayer: CustomLayerInterface = {
@@ -535,26 +599,37 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
         });
         renderer.autoClear = false;
 
-        // Load binary STL bus model
-        const loader = new STLLoader();
-        loader.load(
-          '/models/bus.stl',
-          (geometry) => {
-            geometry.center();
-            geometry.computeVertexNormals();
-            busGeometry = geometry;
-            setStlModelLoaded(true);
-          },
-          undefined,
-          (err) => {
-            console.warn('Fallback bus geometry', err);
-            const fallbackGeo = new THREE.BoxGeometry(10.8, 30.0, 14.0);
-            fallbackGeo.center();
-            fallbackGeo.computeVertexNormals();
-            busGeometry = fallbackGeo;
-            setStlModelLoaded(true);
-          }
-        );
+        // Load binary STL bus model if not already cached
+        if (!cachedBusGeometryRef.current) {
+          const loader = new STLLoader();
+          loader.load(
+            '/models/bus.stl',
+            (geometry) => {
+              geometry.center();
+              geometry.computeBoundingBox();
+              if (geometry.boundingBox) {
+                const minZ = geometry.boundingBox.min.z;
+                // Shift geometry up so the entire bus sits on the road surface (Z >= 0)
+                geometry.translate(0, 0, -minZ + 0.1);
+              }
+              geometry.computeVertexNormals();
+              busGeometry = geometry;
+              cachedBusGeometryRef.current = geometry;
+              setStlModelLoaded(true);
+            },
+            undefined,
+            (err) => {
+              console.warn('Fallback bus geometry', err);
+              const fallbackGeo = new THREE.BoxGeometry(10.8, 30.0, 14.0);
+              fallbackGeo.center();
+              fallbackGeo.translate(0, 0, 7.1);
+              fallbackGeo.computeVertexNormals();
+              busGeometry = fallbackGeo;
+              cachedBusGeometryRef.current = fallbackGeo;
+              setStlModelLoaded(true);
+            }
+          );
+        }
       },
       render: function (_gl, matrix) {
         const matrixArray = Array.isArray(matrix) ? matrix : (matrix as unknown as { defaultProjectionData?: { mainMatrix: number[] } })?.defaultProjectionData?.mainMatrix || matrix;
@@ -579,10 +654,10 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
             if (!group && busGeometry) {
               group = new THREE.Group();
 
-              // Solid Vibrant Blue 3D Bus Mesh from clean STL
+              // Solid Vibrant Blue 3D Bus Outer Shell from clean STL
               const material = new THREE.MeshStandardMaterial({
                 color: 0x2563eb, // Rich Solid Transit Blue
-                metalness: 0.3,
+                metalness: 0.2,
                 roughness: 0.35,
                 wireframe: false,
                 transparent: false,
@@ -596,7 +671,52 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               mesh.name = 'bus-body';
               group.add(mesh);
 
-              // Tactical Selection Radar Ring
+              // Solid Inner Cabin Core (Spans Z = 0.4 to 13.2 to block all window cutouts)
+              const cabinGeo = new THREE.BoxGeometry(10.3, 29.3, 12.8);
+              cabinGeo.translate(0, 0, 6.8);
+              const cabinMat = new THREE.MeshStandardMaterial({
+                color: 0x090d16, // Dark obsidian tinted glass / solid interior
+                metalness: 0.8,
+                roughness: 0.2,
+                transparent: false,
+                opacity: 1.0,
+              });
+              const cabinMesh = new THREE.Mesh(cabinGeo, cabinMat);
+              cabinMesh.name = 'bus-cabin';
+              group.add(cabinMesh);
+
+              // Solid Undercarriage Chassis Baseplate (Spans Z = 0.1 to 1.3, sealing bottom)
+              const baseGeo = new THREE.BoxGeometry(10.6, 29.6, 1.2);
+              baseGeo.translate(0, 0, 0.7);
+              const baseMat = new THREE.MeshStandardMaterial({
+                color: 0x030712, // Dark slate undercarriage
+                roughness: 0.9,
+                transparent: false,
+                opacity: 1.0,
+              });
+              const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+              baseMesh.name = 'bus-base';
+              group.add(baseMesh);
+
+              // Headlights & Taillights at bumper height (Z = 2.5)
+              const lightGeo = new THREE.SphereGeometry(0.65, 8, 8);
+              const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+              const headLightL = new THREE.Mesh(lightGeo, headLightMat);
+              headLightL.position.set(-3.6, 14.6, 2.5);
+              const headLightR = new THREE.Mesh(lightGeo, headLightMat);
+              headLightR.position.set(3.6, 14.6, 2.5);
+              group.add(headLightL);
+              group.add(headLightR);
+
+              const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+              const tailLightL = new THREE.Mesh(lightGeo, tailLightMat);
+              tailLightL.position.set(-3.6, -14.6, 2.5);
+              const tailLightR = new THREE.Mesh(lightGeo, tailLightMat);
+              tailLightR.position.set(3.6, -14.6, 2.5);
+              group.add(tailLightL);
+              group.add(tailLightR);
+
+              // Tactical Selection Radar Ring (Flat at ground Z = 0.2)
               const ringGeo = new THREE.RingGeometry(24, 28, 32);
               const ringMat = new THREE.MeshBasicMaterial({
                 color: 0x38bdf8,
@@ -605,6 +725,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
                 opacity: 0.9,
               });
               const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+              ringMesh.position.set(0, 0, 0.2);
               ringMesh.name = 'selection-ring';
               ringMesh.visible = false;
               group.add(ringMesh);
@@ -628,7 +749,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               if (bodyMesh && bodyMesh.material) {
                 const mat = bodyMesh.material as THREE.MeshStandardMaterial;
                 if (isSelected) {
-                  mat.color.set(0x60a5fa); // Bright cyan-blue when selected
+                  mat.color.set(0x38bdf8); // Bright electric cyan-blue when selected
                   mat.emissive.set(0x1d4ed8);
                 } else {
                   mat.color.set(0x2563eb); // Solid rich blue
@@ -643,12 +764,24 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
               // Enhanced scale factor for clean visibility
               const meterScale = mercatorCoord.meterInMercatorCoordinateUnits() * 16.0;
-
-              group.position.set(mercatorCoord.x, mercatorCoord.y, mercatorCoord.z);
               group.scale.set(meterScale, -meterScale, meterScale);
 
+              const targetPos = new THREE.Vector3(mercatorCoord.x, mercatorCoord.y, mercatorCoord.z);
               const headingRad = (bus.heading * Math.PI) / 180;
-              group.rotation.set(0, 0, headingRad + Math.PI);
+              const targetRotZ = headingRad + Math.PI;
+
+              if (!group.userData.initialized) {
+                group.position.copy(targetPos);
+                group.rotation.set(0, 0, targetRotZ);
+                group.userData.initialized = true;
+              } else {
+                // Smooth interpolation between discrete telemetry ticks
+                group.position.lerp(targetPos, 0.35);
+
+                // Shortest angular rotation lerp
+                const angleDiff = ((targetRotZ - group.rotation.z + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+                group.rotation.z += angleDiff * 0.35;
+              }
             }
           });
 
@@ -662,6 +795,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
         _gl.enable(_gl.DEPTH_TEST);
         _gl.depthFunc(_gl.LEQUAL);
+        _gl.depthMask(true);
 
         renderer.resetState();
         renderer.render(scene, camera);
@@ -709,12 +843,54 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
     });
   };
 
+  // Reset Camera to Initial Network Overview
+  const resetToInitialView = () => {
+    onSelectBus(null);
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: CHENNAI_CENTER,
+      zoom: 12.2,
+      pitch: is3D ? 50 : 0,
+      bearing: is3D ? -10 : 0,
+      speed: 1.2,
+      curve: 1.4,
+    });
+  };
+
+  // Keyboard shortcut (Escape) to reset view when a bus is focused
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedBusId) {
+        resetToInitialView();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBusId, is3D]);
+
   const activeSelectedBus = activeBuses.find((b) => b.id === selectedBusId);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
       {/* Map Canvas Container */}
       <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* Floating Tactical Reset Zoom Button (Active when a bus is zoomed into / selected) */}
+      {selectedBusId && (
+        <div className="absolute top-3 right-3 z-30 animate-in fade-in slide-in-from-top-2 duration-200">
+          <button
+            onClick={resetToInitialView}
+            className="flex items-center gap-2 px-3.5 py-2 bg-card/95 hover:bg-foreground hover:text-background text-foreground backdrop-blur-md border-2 border-foreground rounded-md shadow-2xl font-mono text-xs font-bold transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+            title="Zoom out to initial city overview (Esc)"
+          >
+            <ZoomOut className="w-4 h-4 transition-transform group-hover:-scale-x-100" />
+            <span className="tracking-wide">OVERVIEW // RESET ZOOM</span>
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-foreground/10 group-hover:bg-background/20 text-foreground group-hover:text-background rounded font-mono border border-border group-hover:border-transparent">
+              ESC
+            </kbd>
+          </button>
+        </div>
+      )}
 
       {/* Top Left Floating Tactical Controls */}
       <div className="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2">
@@ -807,8 +983,9 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               <span>LIVE TELEMETRY // {activeSelectedBus.id}</span>
             </div>
             <button
-              onClick={() => onSelectBus(null)}
+              onClick={resetToInitialView}
               className="hover:opacity-75 text-sm leading-none cursor-pointer"
+              title="Close and zoom out (Esc)"
             >
               ✕
             </button>
@@ -901,10 +1078,11 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
                 <span className="font-bold">LIVE RADAR TRACKING</span>
               </div>
               <button
-                onClick={() => onSelectBus(null)}
+                onClick={resetToInitialView}
                 className="px-2 py-0.5 rounded border border-border hover:bg-secondary text-foreground text-[10px] cursor-pointer"
+                title="Deselect and zoom out to full overview"
               >
-                DESELECT
+                DESELECT & ZOOM OUT
               </button>
             </div>
           </div>
