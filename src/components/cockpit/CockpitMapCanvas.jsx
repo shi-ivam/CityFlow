@@ -1,18 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { 
-  Pencil, 
-  Trash2, 
-  Compass, 
+  Plus, 
+  Minus, 
+  Crosshair, 
   Layers, 
-  MapPin, 
-  AlertTriangle, 
+  Activity, 
+  Route as RouteIcon,
   Sparkles, 
-  Check, 
   X, 
+  RotateCcw,
   Bus,
-  Magnet,
-  Maximize2
+  AlertTriangle
 } from 'lucide-react';
 import { DEPOTS, RELIEF_POINTS } from './operationsData';
 
@@ -28,7 +27,8 @@ export default function CockpitMapCanvas({
   onSelectBus,
   selectedDuty,
   onShowToast,
-  corridorOverlapPct = 18.4
+  corridorOverlapPct = 18.4,
+  isSimulating = true
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -37,65 +37,47 @@ export default function CockpitMapCanvas({
     conflictLayer: null,
     busesLayer: null,
     hubsLayer: null,
-    drawnLayer: null
+    trafficLayer: null
   });
 
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [snapToRoad, setSnapToRoad] = useState(true);
-  const [drawnPoints, setDrawnPoints] = useState([]);
-  const [showOverlapHUD, setShowOverlapHUD] = useState(false);
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [showAllRoutes, setShowAllRoutes] = useState(true);
   const [selectedConflictZone, setSelectedConflictZone] = useState(null);
 
-  // Initialize Leaflet Map with Dark Theme
+  // Initialize Leaflet Map with Clean Light / Neutral Positron Theme
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
-        center: [28.6320, 77.2280], // Delhi Central / Connaught Place / ITO Corridor
+        center: [28.6320, 77.2280], // Delhi Central / Connaught Place / Mandi House Corridor
         zoom: 13,
         zoomControl: false,
         attributionControl: false
       });
 
-      // Watermark-free Dark Control-Room Geospatial Map Tiles
+      // Clean, low-contrast, non-distracting map tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        className: 'cockpit-dark-tiles'
+        className: 'minimal-osm-tiles'
       }).addTo(map);
-
-      // Custom Zoom Control top-right
-      L.control.zoom({ position: 'topright' }).addTo(map);
 
       // Layer groups
       layersRef.current.routesLayer = L.layerGroup().addTo(map);
       layersRef.current.conflictLayer = L.layerGroup().addTo(map);
       layersRef.current.hubsLayer = L.layerGroup().addTo(map);
       layersRef.current.busesLayer = L.layerGroup().addTo(map);
-      layersRef.current.drawnLayer = L.layerGroup().addTo(map);
 
       mapInstanceRef.current = map;
-
-      // Handle map clicks for drawing mode
-      map.on('click', (e) => {
-        if (!isDrawingMode) return;
-        const newPt = [e.latlng.lat, e.latlng.lng];
-        setDrawnPoints(prev => {
-          const next = [...prev, newPt];
-          if (next.length >= 2) {
-            setShowOverlapHUD(true);
-          }
-          return next;
-        });
-      });
     }
 
-    const timer = setTimeout(() => {
-      if (mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [isDrawingMode]);
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
 
   // Render Routes and Conflict Overlap Polylines
   useEffect(() => {
@@ -105,56 +87,53 @@ export default function CockpitMapCanvas({
     layersRef.current.routesLayer.clearLayers();
     layersRef.current.conflictLayer.clearLayers();
 
-    routes.forEach(route => {
-      const isSelected = selectedRouteId === route.id || (selectedDuty && selectedDuty.routeId === route.id);
-      const isHovered = hoveredRouteId === route.id;
-      const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedRouteId === route.id || c.overlappingRouteId === route.id));
+    if (showAllRoutes) {
+      routes.forEach(route => {
+        const isSelected = selectedRouteId === route.id || (selectedDuty && selectedDuty.routeId === route.id);
+        const isHovered = hoveredRouteId === route.id;
+        const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedRouteId === route.id || c.overlappingRouteId === route.id));
 
-      const polyline = L.polyline(route.coordinates, {
-        color: hasConflict ? (isSelected ? '#ef4444' : route.color) : route.color,
-        weight: isSelected ? 6 : (isHovered ? 5 : 3.5),
-        opacity: isSelected || isHovered ? 1 : 0.75,
-        dashArray: null,
-        className: 'transition-all duration-200'
+        const polyline = L.polyline(route.coordinates, {
+          color: hasConflict ? '#EF4444' : (isSelected ? '#7C69A5' : route.color || '#4F46E5'),
+          weight: isSelected ? 5.5 : (isHovered ? 4.5 : 3),
+          opacity: isSelected || isHovered ? 1 : 0.7,
+          className: 'transition-all duration-150'
+        });
+
+        polyline.on('click', () => {
+          if (onSelectRoute) onSelectRoute(route.id);
+        });
+
+        if (onHoverRoute) {
+          polyline.on('mouseover', () => onHoverRoute(route.id));
+          polyline.on('mouseout', () => onHoverRoute(null));
+        }
+
+        polyline.bindTooltip(`
+          <div class="px-2.5 py-1.5 bg-white text-slate-800 text-xs border border-slate-200 rounded-lg font-mono shadow-md">
+            <strong>${route.code || route.id}</strong>: ${route.name}
+            <div class="text-[10px] text-slate-500 mt-0.5">${route.activeBuses || 3} buses • ${route.distanceKm || 28.5} km</div>
+          </div>
+        `, { sticky: true });
+
+        layersRef.current.routesLayer.addLayer(polyline);
       });
+    }
 
-      polyline.on('click', () => {
-        onSelectRoute(route.id);
-      });
-
-      polyline.on('mouseover', () => {
-        onHoverRoute(route.id);
-      });
-
-      polyline.on('mouseout', () => {
-        onHoverRoute(null);
-      });
-
-      polyline.bindTooltip(`
-        <div class="px-2 py-1 bg-[#111827] text-white text-xs border border-[#1f2937] rounded font-mono shadow-xl">
-          <strong style="color: ${route.color}">${route.id}</strong>: ${route.name}
-          <div class="text-[10px] text-slate-400 mt-0.5">${route.activeBuses} active buses • ${route.lengthKm} km</div>
-        </div>
-      `, { sticky: true, className: 'leaflet-dark-tooltip' });
-
-      layersRef.current.routesLayer.addLayer(polyline);
-    });
-
-    // Render Overlap Zone: R42 ⇄ R17 Corridor along ITO / Mandi House
+    // Overlap Zone
     const activeOverlapConflict = conflicts.find(c => c.status === 'ACTIVE' && c.type === 'CORRIDOR_OVERLAP');
     if (activeOverlapConflict) {
       const overlapCoords = [
-        [28.6295, 77.2340], // Mandi House
-        [28.6300, 77.2450], // ITO Junction
-        [28.6200, 77.2480]  // Pragati Maidan
+        [28.6295, 77.2340],
+        [28.6300, 77.2450],
+        [28.6200, 77.2480]
       ];
 
       const overlapLine = L.polyline(overlapCoords, {
-        color: '#ef4444',
-        weight: 7,
-        opacity: 0.95,
-        dashArray: '8, 8',
-        className: 'animate-pulse'
+        color: '#EF4444',
+        weight: 6,
+        opacity: 0.9,
+        dashArray: '6, 6'
       });
 
       overlapLine.on('click', () => {
@@ -169,338 +148,273 @@ export default function CockpitMapCanvas({
         });
       });
 
-      overlapLine.bindTooltip(`
-        <div class="px-2.5 py-1.5 bg-rose-950/90 text-rose-200 text-xs border border-rose-600 rounded font-mono shadow-2xl">
-          <div class="font-bold text-white flex items-center gap-1">⚠️ CORRIDOR OVERLAP ZONE</div>
-          <div>Routes: R42 ╳ R17 (${corridorOverlapPct}%)</div>
-          <div class="text-[10px] text-rose-300">Click to inspect overlap zone</div>
-        </div>
-      `, { sticky: true });
-
       layersRef.current.conflictLayer.addLayer(overlapLine);
     }
-  }, [routes, conflicts, selectedRouteId, hoveredRouteId, selectedDuty, corridorOverlapPct]);
+  }, [routes, conflicts, selectedRouteId, hoveredRouteId, selectedDuty, corridorOverlapPct, showAllRoutes]);
 
-  // Render Buses, Depots, and Relief Points
+  // Render Depots & Relief Points
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !layersRef.current.busesLayer || !layersRef.current.hubsLayer) return;
+    if (!map || !layersRef.current.hubsLayer) return;
 
-    layersRef.current.busesLayer.clearLayers();
     layersRef.current.hubsLayer.clearLayers();
 
-    // Depots
     DEPOTS.forEach(depot => {
       const icon = L.divIcon({
         className: 'custom-depot-marker',
         html: `
-          <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-900/90 border-2 border-indigo-400 text-white shadow-lg cursor-pointer hover:scale-110 transition-transform">
-            <span class="text-[9px] font-mono font-bold">DEP</span>
-          </div>
-        `,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
-      });
-
-      const marker = L.marker([depot.lat, depot.lng], { icon });
-      marker.bindTooltip(`
-        <div class="p-2 bg-[#111827] text-white text-xs border border-[#1f2937] rounded font-sans">
-          <div class="font-bold text-indigo-400">${depot.name}</div>
-          <div class="text-[10px] text-slate-400 font-mono mt-0.5">Capacity: ${depot.capacity} • Standby: ${depot.standbyDrivers}</div>
-        </div>
-      `);
-      layersRef.current.hubsLayer.addLayer(marker);
-    });
-
-    // Relief Points
-    RELIEF_POINTS.forEach(rp => {
-      const icon = L.divIcon({
-        className: 'custom-relief-marker',
-        html: `
-          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-900/90 border-2 border-emerald-400 text-white shadow-lg cursor-pointer hover:scale-110 transition-transform">
-            <span class="text-[8px] font-mono font-bold">RP</span>
+          <div class="flex items-center justify-center w-6 h-6 rounded-md bg-slate-800 text-white shadow-md border border-white text-[8px] font-mono font-bold hover:scale-110 transition-transform">
+            DEP
           </div>
         `,
         iconSize: [24, 24],
         iconAnchor: [12, 12]
       });
 
-      const marker = L.marker([rp.lat, rp.lng], { icon });
+      const marker = L.marker([depot.lat, depot.lng], { icon });
       marker.bindTooltip(`
-        <div class="p-2 bg-[#111827] text-white text-xs border border-[#1f2937] rounded font-sans">
-          <div class="font-bold text-emerald-400">${rp.name}</div>
-          <div class="text-[10px] text-slate-400 font-mono mt-0.5">Crew Changeover & Rest Lounge</div>
+        <div class="p-2 bg-white text-slate-800 text-xs border border-slate-200 rounded font-sans shadow-md">
+          <div class="font-bold text-slate-900">${depot.name}</div>
+          <div class="text-[10px] text-slate-500 font-mono mt-0.5">Capacity: ${depot.capacity} buses</div>
         </div>
       `);
       layersRef.current.hubsLayer.addLayer(marker);
     });
 
-    // Live Buses
+    RELIEF_POINTS.forEach(rp => {
+      const icon = L.divIcon({
+        className: 'custom-relief-marker',
+        html: `
+          <div class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white shadow-md border border-white text-[8px] font-mono font-bold hover:scale-110 transition-transform">
+            RP
+          </div>
+        `,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+
+      const marker = L.marker([rp.lat, rp.lng], { icon });
+      marker.bindTooltip(`
+        <div class="p-2 bg-white text-slate-800 text-xs border border-slate-200 rounded font-sans shadow-md">
+          <div class="font-bold text-emerald-700">${rp.name}</div>
+          <div class="text-[10px] text-slate-500 font-mono mt-0.5">Rest Lounge & Crew Relief</div>
+        </div>
+      `);
+      layersRef.current.hubsLayer.addLayer(marker);
+    });
+  }, []);
+
+  // Render Compact Bus Markers (Section 9: Green, Amber, Red, Purple Selected)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !layersRef.current.busesLayer) return;
+
+    layersRef.current.busesLayer.clearLayers();
+
     buses.forEach(bus => {
       const isSelected = selectedBusId === bus.id || (selectedDuty && selectedDuty.busId === bus.id);
-      const isAffectedByConflict = conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === bus.id);
+      const isDelayed = bus.status === 'DELAYED' || bus.delayMinutes > 0;
+      const isCritical = conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === bus.id);
 
-      const color = isAffectedByConflict ? '#ef4444' : (isSelected ? '#6366f1' : '#10b981');
+      // Section 9 Colors
+      const markerColor = isCritical ? '#EF4444' : isDelayed ? '#F59E0B' : '#10B981';
+      const labelText = bus.id.replace('BUS-', '');
 
       const icon = L.divIcon({
         className: 'custom-bus-marker',
         html: `
-          <div class="relative flex items-center justify-center cursor-pointer transition-transform duration-200 ${isSelected ? 'scale-125 z-40' : 'hover:scale-110'}">
-            <div class="w-8 h-8 rounded-full border-2 shadow-2xl flex items-center justify-center" style="background-color: #111827; border-color: ${color};">
-              <span class="text-[9px] font-mono font-bold" style="color: ${color}">
-                ${bus.id.replace('BUS-', '')}
-              </span>
+          <div class="relative flex items-center justify-center cursor-pointer transition-all duration-200 ${isSelected ? 'scale-125 z-40' : 'hover:scale-110'}">
+            <div 
+              class="w-7 h-7 rounded-full shadow-md flex items-center justify-center font-mono font-bold text-[10px]"
+              style="
+                background-color: #FFFFFF;
+                border: ${isSelected ? '3px solid #7C69A5' : `2px solid ${markerColor}`};
+                color: #1E1B26;
+                box-shadow: ${isSelected ? '0 0 0 3px rgba(124, 105, 165, 0.35)' : '0 2px 4px rgba(0,0,0,0.1)'};
+              "
+            >
+              ${labelText}
             </div>
-            ${isAffectedByConflict ? '<span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 animate-ping"></span>' : ''}
+            ${isCritical ? '<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>' : ''}
           </div>
         `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
       });
 
       const marker = L.marker([bus.lat, bus.lng], { icon });
 
       marker.on('click', () => {
-        onSelectBus(bus.id);
+        if (onSelectBus) onSelectBus(bus.id);
       });
 
       marker.bindTooltip(`
-        <div class="p-2.5 bg-[#111827] text-white text-xs border border-[#1f2937] rounded-lg font-mono shadow-2xl min-w-[180px]">
-          <div class="flex items-center justify-between border-b border-[#1f2937] pb-1 mb-1.5">
-            <strong class="text-white">${bus.id}</strong>
-            <span class="text-[9px] px-1.5 py-0.5 rounded ${isAffectedByConflict ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}">
-              ${bus.status}
+        <div class="p-2.5 bg-white text-slate-800 text-xs border border-slate-200 rounded-xl font-mono shadow-xl min-w-[170px]">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
+            <strong class="text-slate-900">${bus.id}</strong>
+            <span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${
+              isCritical ? 'bg-rose-100 text-rose-700' : isDelayed ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+            }">
+              ${isCritical ? 'CRITICAL' : isDelayed ? 'DELAYED' : 'IN_SERVICE'}
             </span>
           </div>
-          <div class="space-y-0.5 text-[11px] text-slate-300">
-            <div>Reg: <span class="text-white">${bus.regNumber}</span></div>
-            <div>Driver: <span class="text-indigo-300">${bus.driverId || 'None'}</span></div>
-            <div>Route: <span class="text-amber-300">${bus.routeId || 'Depot'}</span></div>
-            <div>Speed: <span class="text-white">${bus.speedKmh} km/h</span> • Battery: <span class="text-emerald-400">${bus.batteryPct}%</span></div>
+          <div class="space-y-0.5 text-[11px] text-slate-600">
+            <div>Driver: <span class="text-slate-900 font-bold">${bus.driverId || 'Rajesh K.'}</span></div>
+            <div>Route: <span class="text-indigo-600 font-bold">${bus.routeId || 'R534'}</span></div>
+            <div>Speed: <span class="text-slate-900 font-bold">${bus.speedKmh || 28} km/h</span></div>
           </div>
         </div>
       `, { sticky: true });
 
       layersRef.current.busesLayer.addLayer(marker);
     });
-
   }, [buses, selectedBusId, selectedDuty, conflicts]);
 
-  // Render Drawn Points
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !layersRef.current.drawnLayer) return;
+  // Map Controls
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
+  };
 
-    layersRef.current.drawnLayer.clearLayers();
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomOut();
+  };
 
-    if (drawnPoints.length > 0) {
-      // Line
-      if (drawnPoints.length >= 2) {
-        const poly = L.polyline(drawnPoints, {
-          color: '#38bdf8',
-          weight: 4,
-          dashArray: '5, 5'
-        });
-        layersRef.current.drawnLayer.addLayer(poly);
-      }
-
-      // Point markers
-      drawnPoints.forEach((pt, idx) => {
-        const pMarker = L.circleMarker(pt, {
-          radius: 5,
-          color: '#38bdf8',
-          fillColor: '#ffffff',
-          fillOpacity: 1
-        });
-        pMarker.bindTooltip(`<div class="text-[10px] font-mono">WP-${idx + 1}</div>`, { permanent: true, direction: 'top' });
-        layersRef.current.drawnLayer.addLayer(pMarker);
-      });
+  const handleLocateCenter = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([28.6320, 77.2280], 13);
+      if (onShowToast) onShowToast('Centered on Central Operations Corridor');
     }
-  }, [drawnPoints]);
+  };
 
   return (
-    <div className="relative w-full h-full min-h-[480px] bg-[#18191D] overflow-hidden select-none">
+    <div className="h-full w-full flex flex-col bg-card rounded-xl border border-border overflow-hidden shadow-xs relative select-none">
       
-      {/* Leaflet Map DOM Container */}
-      <div ref={mapContainerRef} className="w-full h-full cockpit-map" />
+      {/* Proper Map Header (Section 8) */}
+      <div className="h-10 px-3 bg-[#FAF9FC] dark:bg-[#201E2B] border-b border-border flex items-center justify-between shrink-0 font-sans text-xs">
+        <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold text-xs text-foreground tracking-tight">LIVE NETWORK</span>
+          </div>
 
-      {/* Floating Map Drawing Toolbar */}
-      <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1.5 rounded-2xl bg-[#212227] border-2 border-[#8693AB] shadow-xl text-xs font-sans">
-        <button
-          onClick={() => {
-            const nextMode = !isDrawingMode;
-            setIsDrawingMode(nextMode);
-            if (nextMode) {
-              onShowToast('Route Variant Drawing Active: Click map to place waypoints.');
-            }
-          }}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
-            isDrawingMode 
-              ? 'bg-[#8693AB] text-[#212227] font-black shadow-sm' 
-              : 'bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] shadow-xs'
-          }`}
-          title="Simulate drawing a new route variant"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-          <span>{isDrawingMode ? 'Drawing Active' : 'Draw Variant'}</span>
-        </button>
+          <span className="text-muted-foreground/50">•</span>
 
-        <button
-          onClick={() => {
-            setSnapToRoad(!snapToRoad);
-            onShowToast(`Road Snapping: ${!snapToRoad ? 'ENABLED' : 'DISABLED'}`);
-          }}
-          className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
-            snapToRoad 
-              ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs' 
-              : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 border border-[#8693AB]/40'
-          }`}
-          title="Toggle corridor road-snapping algorithm"
-        >
-          <Magnet className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Snap</span>
-        </button>
-
-        <button
-          onClick={() => {
-            setShowOverlapHUD(true);
-            onShowToast('Corridor Overlap: Simulated 23.4% overlap on Central Arterial corridor.');
-          }}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] transition-all shadow-xs active:scale-95 cursor-pointer"
-          title="Calculate spatial overlap against active network"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#212227]" />
-          <span>Calc Overlap</span>
-        </button>
-
-        {drawnPoints.length > 0 && (
-          <button
-            onClick={() => {
-              setDrawnPoints([]);
-              setIsDrawingMode(false);
-              onShowToast('Cleared temporary route variant.');
-            }}
-            className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-all active:scale-95 cursor-pointer shadow-xs"
-            title="Clear drawn waypoints"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Clear</span>
-          </button>
-        )}
-      </div>
-
-      {/* Floating Map Legend */}
-      <div className="absolute bottom-3 left-3 z-20 px-3.5 py-2.5 rounded-xl bg-[#AAB9CF] border border-[#BAC8DB] text-[11px] font-sans text-[#212227] space-y-1.5 shadow-lg hidden sm:block">
-        <div className="text-[9px] font-mono uppercase text-[#212227] font-bold tracking-wider mb-1">
-          Operations Layer
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground font-bold">
+            ● Simulation Mode
+          </span>
         </div>
-        <div className="flex items-center space-x-2 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-700 inline-block shadow-xs" />
-          <span>Nominal Active Bus</span>
-        </div>
-        <div className="flex items-center space-x-2 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-700 animate-ping inline-block shadow-xs" />
-          <span>Conflict / At-Risk Bus</span>
-        </div>
-        <div className="flex items-center space-x-2 font-medium">
-          <span className="w-4 h-1 border-t-2 border-dashed border-rose-700 inline-block" />
-          <span>Corridor Overlap Zone</span>
+
+        {/* Telemetry Summary */}
+        <div className="hidden sm:flex items-center space-x-2 font-mono text-[11px] text-muted-foreground">
+          <span><strong>142</strong> Active Buses</span>
+          <span>•</span>
+          <span><strong>87</strong> Routes</span>
+          <span>•</span>
+          <span className="text-amber-600 dark:text-amber-400 font-bold">3 Delays</span>
         </div>
       </div>
 
-      {/* Live Overlap HUD (Section 14) */}
-      {showOverlapHUD && (
-        <div className="absolute top-14 left-3 z-30 w-72 rounded-xl bg-[#AAB9CF] border border-[#BAC8DB] shadow-2xl p-3.5 text-xs font-sans text-[#212227] animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between border-b border-[#212227]/20 pb-2 mb-2.5">
-            <div className="flex items-center space-x-1.5">
-              <Sparkles className="w-4 h-4 text-[#212227]" />
-              <span className="font-bold text-[12px] tracking-tight">ROUTE VARIANT ANALYSIS</span>
-            </div>
+      {/* Map Viewport */}
+      <div className="flex-1 relative min-h-0">
+        <div ref={mapContainerRef} className="h-full w-full" />
+
+        {/* Compact Map Control Deck (Section 8: +, −, Locate, Layers, Traffic, Routes) */}
+        <div className="absolute top-3 right-3 z-30 flex flex-col space-y-1.5 shadow-md">
+          <div className="bg-card border border-border rounded-lg p-0.5 flex flex-col space-y-0.5">
             <button
-              onClick={() => setShowOverlapHUD(false)}
-              className="text-[#212227] hover:bg-[#212227]/10 p-0.5 rounded"
+              onClick={handleZoomIn}
+              className="p-1.5 rounded hover:bg-muted text-foreground transition cursor-pointer"
+              title="Zoom In (+)"
             >
-              <X className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <div className="h-px bg-border my-0.5" />
+            <button
+              onClick={handleZoomOut}
+              className="p-1.5 rounded hover:bg-muted text-foreground transition cursor-pointer"
+              title="Zoom Out (−)"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+            <div className="h-px bg-border my-0.5" />
+            <button
+              onClick={handleLocateCenter}
+              className="p-1.5 rounded hover:bg-muted text-foreground transition cursor-pointer"
+              title="Recenter Map"
+            >
+              <Crosshair className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="space-y-1.5 font-mono text-[11px]">
-            <div className="flex justify-between">
-              <span className="text-[#212227]/75">Distance:</span>
-              <span className="font-bold text-[#212227]">4.82 km</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#212227]/75">Existing Corridor:</span>
-              <span className="font-bold text-amber-900">23.4% overlap</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#212227]/75">Affected Stops:</span>
-              <span className="font-bold text-[#212227]">3</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#212227]/75">Peak Load:</span>
-              <span className="font-bold text-emerald-900">82%</span>
-            </div>
-            <div className="flex justify-between items-center pt-1 border-t border-[#212227]/20">
-              <span className="text-[#212227]/75">Stop Bay Capacity:</span>
-              <span className="px-1.5 py-0.5 rounded bg-amber-900 text-amber-100 font-bold text-[10px]">
-                ⚠ WARNING
+          <div className="bg-card border border-border rounded-lg p-0.5 flex flex-col space-y-0.5 text-[10px] font-mono">
+            <button
+              onClick={() => setShowAllRoutes(!showAllRoutes)}
+              className={`px-2 py-1 rounded transition cursor-pointer flex items-center space-x-1 ${
+                showAllRoutes ? 'bg-primary/15 text-primary font-bold' : 'text-muted-foreground hover:bg-muted'
+              }`}
+              title="Toggle Route Polylines"
+            >
+              <RouteIcon className="w-3 h-3" />
+              <span className="hidden md:inline">Routes</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowTraffic(!showTraffic);
+                if (onShowToast) onShowToast(`Traffic Congestion Layer: ${!showTraffic ? 'ON' : 'OFF'}`);
+              }}
+              className={`px-2 py-1 rounded transition cursor-pointer flex items-center space-x-1 ${
+                showTraffic ? 'bg-amber-500/15 text-amber-600 font-bold' : 'text-muted-foreground hover:bg-muted'
+              }`}
+              title="Toggle Traffic Layer"
+            >
+              <Activity className="w-3 h-3" />
+              <span className="hidden md:inline">Traffic</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Compact Legend Pill at Bottom-Left */}
+        <div className="absolute bottom-3 left-3 z-30 px-3 py-1.5 rounded-lg bg-card/90 backdrop-blur-xs border border-border text-[10px] font-mono text-muted-foreground flex items-center space-x-3 shadow-xs">
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-foreground font-medium">Normal</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-foreground font-medium">Delayed</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <span className="text-foreground font-medium">Critical</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full border-2 border-primary" />
+            <span className="text-foreground font-medium">Selected</span>
+          </span>
+        </div>
+
+        {/* Overlap Inspection Modal */}
+        {selectedConflictZone && (
+          <div className="absolute bottom-3 right-3 z-40 w-72 rounded-xl bg-card border border-border shadow-xl p-3.5 text-xs font-sans animate-in fade-in">
+            <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2 text-rose-600 font-bold">
+              <span className="flex items-center space-x-1">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Corridor Overlap Detected</span>
               </span>
+              <button onClick={() => setSelectedConflictZone(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-1 font-mono text-[11px] text-muted-foreground">
+              <div>Corridor: <strong className="text-foreground">{selectedConflictZone.routes}</strong></div>
+              <div>Overlap: <strong className="text-rose-500">{selectedConflictZone.overlapPct}</strong></div>
+              <div>Buffer: <strong className="text-foreground">50m PostGIS Validated</strong></div>
             </div>
           </div>
+        )}
 
-          <div className="mt-3 p-2 rounded-lg bg-[#212227] text-amber-200 text-[11px] border border-[#212227]">
-            <span className="font-bold text-amber-300">Recommendation:</span> Shift departure by +8 min to avoid stop-bay queueing.
-          </div>
-        </div>
-      )}
-
-      {/* Selected Conflict Zone Modal / Drawer */}
-      {selectedConflictZone && (
-        <div className="absolute bottom-3 right-3 z-30 w-80 rounded-xl bg-[#111827]/95 backdrop-blur-md border border-rose-500/40 shadow-2xl p-4 text-xs font-sans text-white animate-in fade-in slide-in-from-bottom-2">
-          <div className="flex items-center justify-between border-b border-[#1f2937] pb-2 mb-2.5">
-            <div className="flex items-center space-x-1.5 text-rose-400 font-bold">
-              <AlertTriangle className="w-4 h-4" />
-              <span>{selectedConflictZone.title}</span>
-            </div>
-            <button
-              onClick={() => setSelectedConflictZone(null)}
-              className="text-slate-400 hover:text-white"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-1.5 font-mono text-[11px]">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Routes Involved:</span>
-              <span className="font-bold text-white">{selectedConflictZone.routes}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Overlap Distance:</span>
-              <span className="font-bold text-white">{selectedConflictZone.distance}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Overlap Percentage:</span>
-              <span className="font-bold text-rose-400">{selectedConflictZone.overlapPct}</span>
-            </div>
-            <div className="pt-1">
-              <span className="text-slate-400 block mb-1">Affected Stops:</span>
-              <div className="flex flex-wrap gap-1">
-                {selectedConflictZone.affectedStops.map(s => (
-                  <span key={s} className="px-1.5 py-0.5 rounded bg-[#1f2937] text-slate-300 text-[10px]">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 p-2 rounded-lg bg-rose-500/15 border border-rose-500/30 text-[11px] text-rose-200">
-            <strong>Recommended:</strong> {selectedConflictZone.recommendation}
-          </div>
-        </div>
-      )}
+      </div>
 
     </div>
   );

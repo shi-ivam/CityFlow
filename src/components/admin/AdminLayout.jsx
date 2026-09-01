@@ -31,14 +31,12 @@ export default function AdminLayout({
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const location = useLocation();
 
-  const isCockpit = location.pathname === '/admin' || 
-                    location.pathname === '/admin/' || 
-                    location.pathname === '/admin/dashboard';
-
   const enhancedChildren = React.isValidElement(children)
     ? React.cloneElement(children, {
         onToggleSidebar: () => setIsSidebarCollapsed(prev => !prev),
-        isSidebarCollapsed
+        isSidebarCollapsed,
+        onOpenSearch: () => setIsSearchOpen(true),
+        onOpenAlertsDrawer: () => setIsAlertsOpen(true)
       })
     : children;
 
@@ -50,80 +48,55 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className={`h-screen w-screen flex bg-[#F5F4F8] dark:bg-[#191821] text-foreground font-sans antialiased overflow-hidden select-none ${darkMode ? 'dark' : ''}`}>
+    <div className={`h-screen w-screen flex bg-[#F4F3F8] dark:bg-[#191821] text-foreground font-sans antialiased overflow-hidden select-none ${darkMode ? 'dark' : ''}`}>
       
-      {/* Sidebar: In cockpit mode, off-canvas drawer; in sub-modules, docked sidebar */}
-      {isCockpit ? (
-        <>
-          {/* Backdrop when drawer is open on cockpit */}
-          {!isSidebarCollapsed && (
-            <div
-              onClick={() => setIsSidebarCollapsed(true)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs animate-in fade-in transition-opacity"
-            />
-          )}
-          <div className={`fixed inset-y-0 left-0 z-50 transition-transform duration-200 shadow-2xl ${
-            isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
-          }`}>
-            <AdminSidebar
-              isCollapsed={false}
-              setIsCollapsed={setIsSidebarCollapsed}
-              conflictsCount={conflictsCount}
-            />
-          </div>
-        </>
-      ) : (
-        <AdminSidebar
-          isCollapsed={isSidebarCollapsed}
-          setIsCollapsed={setIsSidebarCollapsed}
-          conflictsCount={conflictsCount}
-        />
-      )}
+      {/* 1. DOCKED COMPACT SIDEBAR (230px, Light Lavender-Grey) */}
+      <AdminSidebar
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        conflictsCount={conflictsCount}
+      />
 
-      {/* Main Right Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      {/* 2. MAIN WORKSPACE CONTAINER */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#F4F3F8] dark:bg-[#191821]">
         
-        {/* Render standard AdminHeader on sub-modules, omit on cockpit which has its own TopControlDeck */}
-        {!isCockpit && (
-          <AdminHeader
-            onOpenSearch={() => setIsSearchOpen(true)}
-            operationalTime={operationalTime}
-            setOperationalTime={setOperationalTime}
-            isSimulating={isSimulating}
-            setIsSimulating={setIsSimulating}
-            simSpeed={simSpeed}
-            setSimSpeed={setSimSpeed}
-            conflictsCount={conflictsCount}
-            onOpenFallbackModal={onOpenFallbackModal}
-            onOpenAlerts={() => setIsAlertsOpen(true)}
-            alertCount={mockActivityEvents.length}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-            selectedCity={selectedCity}
-            onSelectCity={onSelectCity}
-          />
-        )}
+        {/* UNIFIED TOP HEADER (Clean, non-crowded) */}
+        <AdminHeader
+          onOpenSearch={() => setIsSearchOpen(true)}
+          operationalTime={operationalTime}
+          setOperationalTime={setOperationalTime}
+          isSimulating={isSimulating}
+          setIsSimulating={setIsSimulating}
+          simSpeed={simSpeed}
+          setSimSpeed={setSimSpeed}
+          conflictsCount={conflictsCount}
+          onOpenFallbackModal={onOpenFallbackModal}
+          onOpenAlerts={() => setIsAlertsOpen(true)}
+          alertCount={mockActivityEvents.length}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          selectedCity={selectedCity}
+          onSelectCity={onSelectCity}
+        />
 
-        {/* Content View */}
-        <main className={`flex-1 min-h-0 ${isCockpit ? 'overflow-hidden p-0' : 'overflow-y-auto bg-background'}`}>
+        {/* CONTENT VIEWPORT */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[#F4F3F8] dark:bg-[#191821] p-3 sm:p-4">
           {enhancedChildren}
         </main>
       </div>
 
-      {/* Global Command HUD Modal */}
-      {!isCockpit && (
-        <GlobalSearchModal
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          busFleet={busFleet}
-          crewMembers={crewMembers}
-          routes={routes}
-          dutyAssignments={dutyAssignments}
-          activeConflicts={activeConflicts}
-        />
-      )}
+      {/* GLOBAL COMMAND PALETTE (Ctrl + K) */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        busFleet={busFleet}
+        crewMembers={crewMembers}
+        routes={routes}
+        dutyAssignments={dutyAssignments}
+        activeConflicts={activeConflicts}
+      />
 
-      {/* Activity Alert Drawer */}
+      {/* ACTIVITY ALERT DRAWER */}
       <ActivityAlertDrawer
         isOpen={isAlertsOpen}
         onClose={() => setIsAlertsOpen(false)}

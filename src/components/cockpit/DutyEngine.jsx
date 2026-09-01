@@ -4,7 +4,6 @@ import {
   Unlock, 
   ArrowLeftRight, 
   Coffee, 
-  Footprints, 
   AlertTriangle, 
   ShieldCheck, 
   Sparkles, 
@@ -17,7 +16,8 @@ import {
   ShieldAlert,
   Zap,
   Calendar,
-  Layers
+  Layers,
+  ChevronLeft
 } from 'lucide-react';
 
 export default function DutyEngine({
@@ -44,12 +44,8 @@ export default function DutyEngine({
   onShowToast
 }) {
   const [viewMode, setViewMode] = useState('bus'); // 'bus' | 'driver'
-  const [selectedConflictDetail, setSelectedConflictDetail] = useState(null);
-  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
-  const [rescheduleStart, setRescheduleStart] = useState('06:00');
-  const [rescheduleEnd, setRescheduleEnd] = useState('10:30');
-  const [isDriverPickerOpen, setIsDriverPickerOpen] = useState(false);
-  const [isBusPickerOpen, setIsBusPickerOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState('Today');
+  const [timeScale, setTimeScale] = useState(1);
 
   // Timeline bounds: 06:00 to 22:00 (16 hours total)
   const timelineStartHour = 6;
@@ -73,640 +69,277 @@ export default function DutyEngine({
   // Current simulation time percent
   const simHours = simulationTimeSeconds / 3600;
   const nowPercent = Math.max(0, Math.min(100, ((simHours - timelineStartHour) / totalHours) * 100));
+  const nowDisplay = `${String(Math.floor(simHours % 24)).padStart(2, '0')}:${String(Math.floor((simulationTimeSeconds % 3600) / 60)).padStart(2, '0')}`;
 
   const activeConflicts = conflicts.filter(c => c.status === 'ACTIVE');
-  const resolvedConflicts = conflicts.filter(c => c.status === 'RESOLVED');
+
+  // Rows for Bus View
+  const busRows = buses.slice(0, 6).map(bus => {
+    const busDuties = duties.filter(d => d.busId === bus.id);
+    const assignedDriver = drivers.find(d => d.id === bus.driverId) || drivers[0];
+    const assignedRoute = routes.find(r => r.id === bus.routeId) || routes[0];
+    return {
+      id: bus.id,
+      primaryText: bus.id,
+      secondaryText: assignedDriver?.name || 'Driver Standby',
+      routeCode: assignedRoute?.code || assignedRoute?.id || 'R534',
+      duties: busDuties
+    };
+  });
+
+  // Rows for Driver View
+  const driverRows = drivers.slice(0, 6).map(driver => {
+    const driverDuties = duties.filter(d => d.driverId === driver.id || d.crewId === driver.id);
+    return {
+      id: driver.id,
+      primaryText: driver.name,
+      secondaryText: `ID: ${driver.id}`,
+      routeCode: driverDuties[0]?.routeId || 'R534',
+      duties: driverDuties
+    };
+  });
+
+  const displayRows = viewMode === 'bus' ? busRows : driverRows;
+
+  // Status color resolver (Section 12: subtle tints)
+  const getDutyColorClasses = (duty) => {
+    const isSelected = selectedDuty?.id === duty.id;
+    const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedDutyId === duty.id || c.affectedBusId === duty.busId));
+
+    if (hasConflict) {
+      return isSelected
+        ? 'bg-rose-500/25 border-2 border-rose-600 text-rose-900 dark:text-rose-200 ring-2 ring-rose-400/40'
+        : 'bg-rose-500/15 border border-rose-500/40 text-rose-900 dark:text-rose-200 hover:bg-rose-500/25';
+    }
+
+    if (duty.status === 'DELAYED') {
+      return isSelected
+        ? 'bg-amber-500/25 border-2 border-amber-600 text-amber-900 dark:text-amber-200 ring-2 ring-amber-400/40'
+        : 'bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 hover:bg-amber-500/25';
+    }
+
+    if (duty.type === 'UNLINKED') {
+      return isSelected
+        ? 'bg-purple-500/25 border-2 border-purple-600 text-purple-900 dark:text-purple-200 ring-2 ring-purple-400/40'
+        : 'bg-purple-500/15 border border-purple-500/40 text-purple-900 dark:text-purple-200 hover:bg-purple-500/25';
+    }
+
+    // Default Normal Linked Duty
+    return isSelected
+      ? 'bg-emerald-500/25 border-2 border-emerald-600 text-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-400/40'
+      : 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-500/25';
+  };
 
   return (
-    <div className="flex flex-col h-full bg-[#18191D] border-l-2 border-[#8693AB]/40 overflow-hidden select-none font-sans text-[#F1F5F9]">
+    <div className="h-full w-full flex flex-col bg-card rounded-xl border border-border overflow-hidden shadow-xs select-none font-sans">
       
-      {/* Top Header: Tabs & Mode Toggles */}
-      <div className="h-12 px-4 bg-[#212227] border-b-2 border-[#8693AB]/40 flex items-center justify-between shrink-0">
+      {/* Header: DISPATCH TIMELINE (Section 11) */}
+      <div className="h-10 px-3 bg-[#FAF9FC] dark:bg-[#201E2B] border-b border-border flex items-center justify-between shrink-0 font-sans text-xs">
         
-        {/* Navigation Tabs */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onTabChange('gantt')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer ${
-              activeTab === 'gantt'
-                ? 'bg-[#8693AB] text-[#212227] shadow-sm'
-                : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 hover:text-white border border-[#8693AB]/30'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>GANTT</span>
-          </button>
+        {/* Left: Title & Tabs */}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-primary" />
+            <span className="font-bold text-xs text-foreground tracking-tight">DISPATCH TIMELINE</span>
+          </div>
 
-          <button
-            onClick={() => onTabChange('conflicts')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 cursor-pointer relative ${
-              activeTab === 'conflicts'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-[#212227] text-[#AAB9CF] hover:bg-[#8693AB]/20 hover:text-white border border-[#8693AB]/30'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>CONFLICTS</span>
-            {activeConflicts.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-mono font-bold">
-                {activeConflicts.length}
-              </span>
-            )}
-          </button>
-        </div>
+          <div className="h-4 w-px bg-border hidden sm:block" />
 
-        {/* View Mode Toggle: Bus vs Driver (Visible in Gantt tab) */}
-        {activeTab === 'gantt' && (
-          <div className="flex items-center space-x-1 bg-[#212227] p-0.5 rounded-xl border border-[#8693AB]/50 text-xs">
+          {/* Bus View / Driver View */}
+          <div className="flex items-center bg-muted/60 p-0.5 rounded-lg text-[11px] font-mono">
             <button
               onClick={() => setViewMode('bus')}
-              className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-[11px] font-mono transition-all active:scale-95 cursor-pointer ${
-                viewMode === 'bus'
-                  ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs'
-                  : 'text-[#AAB9CF] hover:text-white'
+              className={`px-2.5 py-0.5 rounded transition cursor-pointer font-bold ${
+                viewMode === 'bus' ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Bus className="w-3.5 h-3.5 text-[#212227]" />
-              <span>Bus View</span>
+              Bus View
             </button>
             <button
               onClick={() => setViewMode('driver')}
-              className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-[11px] font-mono transition-all active:scale-95 cursor-pointer ${
-                viewMode === 'driver'
-                  ? 'bg-[#8693AB] text-[#212227] font-black shadow-xs'
-                  : 'text-[#AAB9CF] hover:text-white'
+              className={`px-2.5 py-0.5 rounded transition cursor-pointer font-bold ${
+                viewMode === 'driver' ? 'bg-card text-foreground shadow-2xs' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Users className="w-3.5 h-3.5 text-[#212227]" />
-              <span>Driver View</span>
+              Driver View
             </button>
           </div>
-        )}
+        </div>
+
+        {/* Right: Date, Time Zoom, Controls */}
+        <div className="flex items-center space-x-2 font-mono text-[11px]">
+          {/* Day Navigation */}
+          <div className="flex items-center space-x-1">
+            <button 
+              onClick={() => setSelectedDay(selectedDay === 'Today' ? 'Yesterday' : 'Today')}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <ChevronLeft className="w-3 h-3" />
+            </button>
+            <span className="font-bold text-foreground px-1">{selectedDay}</span>
+            <button 
+              onClick={() => setSelectedDay(selectedDay === 'Today' ? 'Tomorrow' : 'Today')}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border" />
+
+          {/* Time Zoom Multiplier */}
+          <div className="flex items-center space-x-1 bg-muted/60 px-1.5 py-0.5 rounded text-[10px]">
+            <button 
+              onClick={() => setTimeScale(Math.max(1, timeScale - 1))}
+              className="hover:text-foreground cursor-pointer font-bold"
+            >
+              −
+            </button>
+            <span className="font-bold text-foreground px-1">{timeScale}x</span>
+            <button 
+              onClick={() => setTimeScale(Math.min(5, timeScale + 1))}
+              className="hover:text-foreground cursor-pointer font-bold"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Conflicts Switch */}
+          {activeConflicts.length > 0 && (
+            <button
+              onClick={() => onTabChange(activeTab === 'gantt' ? 'conflicts' : 'gantt')}
+              className="flex items-center space-x-1 px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 font-bold hover:bg-rose-500/25 transition cursor-pointer"
+            >
+              <AlertTriangle className="w-3 h-3" />
+              <span>{activeConflicts.length} Conflicts</span>
+            </button>
+          )}
+        </div>
+
       </div>
 
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
+      {/* TIMELINE RULER & CANVAS */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative flex flex-col bg-[#FDFCFE] dark:bg-[#1E1C27]">
         
-        {/* TAB 1: GANTT SCHEDULE */}
-        {activeTab === 'gantt' && (
-          <div className="p-3 space-y-3">
-            
-            {/* Legend Strip */}
-            <div className="flex items-center justify-between text-[10px] font-mono text-[#AAB9CF] px-1 border-b border-[#2B2D35] pb-2">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-[#2B3C56] border border-[#AAB9CF] inline-block" />
-                  <span>Linked Duty</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-amber-500/30 border border-amber-500 inline-block" />
-                  <span>Unlinked Duty</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-[#2A2C34] border border-[#3B3E49] inline-block" />
-                  <span>Mandatory Rest</span>
-                </div>
-              </div>
-              <div className="text-[#AAB9CF] font-bold">
-                NOW: {Math.floor(simulationTimeSeconds / 3600)}:{String(Math.floor((simulationTimeSeconds % 3600) / 60)).padStart(2, '0')}
-              </div>
-            </div>
-
-            {/* Timeline Header Ruler */}
-            <div className="relative h-6 bg-[#AAB9CF] rounded border border-[#BAC8DB] flex items-center text-[10px] font-mono text-[#212227] px-20 shadow-xs">
-              <div className="absolute left-2 text-[10px] text-[#212227] font-bold">
-                {viewMode === 'bus' ? 'FLEET' : 'CREW'}
-              </div>
-              <div className="flex-1 flex justify-between relative pl-4 font-bold">
-                {hoursArray.map((hr) => (
-                  <span key={hr}>{hr}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Timeline Rows */}
-            <div className="space-y-2">
-              {viewMode === 'bus' ? (
-                // BUS ROWS
-                buses.slice(0, 7).map((bus) => {
-                  const busDuties = duties.filter(d => d.busId === bus.id);
-                  const isConflictBus = conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === bus.id);
-
-                  return (
-                    <div
-                      key={bus.id}
-                      className={`relative h-11 bg-[#212227] rounded-lg border flex items-center p-1 transition-all ${
-                        isConflictBus 
-                          ? 'border-rose-500/50 bg-rose-950/20' 
-                          : 'border-[#32353E] hover:border-[#AAB9CF]/50'
-                      }`}
-                    >
-                      {/* Row Label */}
-                      <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col justify-center">
-                        <span className="font-bold text-[#F1F5F9] flex items-center gap-1">
-                          {bus.id}
-                          {isConflictBus && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
-                        </span>
-                        <span className="text-[9px] text-[#AAB9CF]">{bus.model.split(' ')[0]}</span>
-                      </div>
-
-                      {/* Timeline Track */}
-                      <div className="flex-1 h-full relative border-l border-[#32353E] pl-1 overflow-hidden">
-                        {/* Now Scrubber Line */}
-                        <div
-                          className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-20 pointer-events-none"
-                          style={{ left: `${nowPercent}%` }}
-                        />
-
-                        {/* Duty Blocks */}
-                        {busDuties.map((duty) => {
-                          const leftPct = timeToPercent(duty.startTime);
-                          const rightPct = timeToPercent(duty.endTime);
-                          const widthPct = Math.max(3, rightPct - leftPct);
-                          const isSelected = selectedDuty && selectedDuty.id === duty.id;
-                          const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && c.affectedDutyId === duty.id);
-
-                          return (
-                            <div
-                              key={duty.id}
-                              onClick={() => onSelectDuty(duty)}
-                              onMouseEnter={() => onHoverDuty(duty.id)}
-                              onMouseLeave={() => onHoverDuty(null)}
-                              style={{
-                                left: `${leftPct}%`,
-                                width: `${widthPct}%`
-                              }}
-                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-sm overflow-hidden ${
-                                duty.type === 'LINKED'
-                                  ? (hasConflict 
-                                      ? 'bg-rose-600 text-white border border-rose-400 animate-pulse' 
-                                      : 'bg-[#AAB9CF] text-[#212227] font-bold border border-[#BAC8DB]')
-                                  : 'bg-amber-400 text-amber-950 font-bold border border-amber-300'
-                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-110'}`}
-                              title={`${duty.id} | Driver: ${duty.driverId} | ${duty.startTime} - ${duty.endTime}`}
-                            >
-                              <div className="truncate flex items-center space-x-1">
-                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0 text-[#212227]" /> : <Unlock className="w-2.5 h-2.5 shrink-0 text-amber-900" />}
-                                <span className="font-bold truncate text-[#212227]">{duty.dutyCode}</span>
-                                <span className="text-[9px] text-[#212227]/80 truncate hidden sm:inline">{duty.driverId}</span>
-                              </div>
-                              <span className="text-[9px] font-bold shrink-0 text-[#212227] hidden md:inline">{duty.startTime}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                // DRIVER ROWS
-                drivers.map((driver) => {
-                  const driverDuties = duties.filter(d => d.driverId === driver.id);
-                  const isConflictDriver = conflicts.some(c => c.status === 'ACTIVE' && c.driverId === driver.id);
-
-                  return (
-                    <div
-                      key={driver.id}
-                      className={`relative h-11 bg-[#212227] rounded-lg border flex items-center p-1 transition-all ${
-                        isConflictDriver 
-                          ? 'border-rose-500/50 bg-rose-950/20' 
-                          : 'border-[#32353E] hover:border-[#AAB9CF]/50'
-                      }`}
-                    >
-                      {/* Row Label */}
-                      <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col">
-                        <span className="font-bold text-[#F1F5F9] truncate flex items-center gap-1">
-                          {driver.id}
-                          {isConflictDriver && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
-                        </span>
-                        <span className="text-[9px] text-[#8E9BAE]">{driver.status}</span>
-                      </div>
-
-                      {/* Timeline Track */}
-                      <div className="flex-1 h-full relative border-l border-[#2B2D35] pl-1 overflow-hidden">
-                        {/* Now Scrubber Line */}
-                        <div
-                          className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-20 pointer-events-none"
-                          style={{ left: `${nowPercent}%` }}
-                        />
-
-                        {driverDuties.map((duty) => {
-                          const leftPct = timeToPercent(duty.startTime);
-                          const rightPct = timeToPercent(duty.endTime);
-                          const widthPct = Math.max(3, rightPct - leftPct);
-                          const isSelected = selectedDuty && selectedDuty.id === duty.id;
-                          const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && c.affectedDutyId === duty.id);
-
-                          return (
-                            <div
-                              key={duty.id}
-                              onClick={() => onSelectDuty(duty)}
-                              onMouseEnter={() => onHoverDuty(duty.id)}
-                              onMouseLeave={() => onHoverDuty(null)}
-                              style={{
-                                left: `${leftPct}%`,
-                                width: `${widthPct}%`
-                              }}
-                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-sm overflow-hidden ${
-                                hasConflict 
-                                  ? 'bg-rose-600 text-white border border-rose-400 animate-pulse' 
-                                  : 'bg-[#AAB9CF] text-[#212227] font-bold border border-[#BAC8DB]'
-                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-110'}`}
-                            >
-                              <div className="truncate flex items-center space-x-1">
-                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0 text-[#212227]" /> : <Unlock className="w-2.5 h-2.5 shrink-0 text-amber-900" />}
-                                <span className="font-bold truncate text-[#212227]">{duty.busId}</span>
-                                <span className="text-[9px] text-[#212227]/80 truncate hidden sm:inline">{duty.routeId}</span>
-                              </div>
-                              <span className="text-[9px] font-bold shrink-0 text-[#212227]">{duty.startTime}</span>
-                            </div>
-                          );
-                        })}
-
-                        {/* If Driver is on break, show Mandatory Rest Block */}
-                        {driver.status === 'BREAK' && (
-                          <div
-                            style={{ left: `${timeToPercent('08:00')}%`, width: '12%' }}
-                            className="absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-center space-x-1 text-[10px] font-mono bg-slate-700/80 text-slate-300 border border-slate-500/50"
-                          >
-                            <Coffee className="w-2.5 h-2.5 text-amber-400" />
-                            <span>REST 45m</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Selected Duty Details Inspector Panel */}
-            {selectedDuty && (
-              <div className="mt-4 p-3.5 rounded-xl bg-[#0b0f19] border border-indigo-500/40 shadow-2xl space-y-3 animate-in fade-in slide-in-from-bottom-2">
-                <div className="flex items-center justify-between border-b border-[#1f2937] pb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs">
-                      {selectedDuty.dutyCode}
-                    </span>
-                    <span className="text-xs font-semibold text-white">Duty Assignment Inspector</span>
-                  </div>
-                  <button
-                    onClick={() => onSelectDuty(null)}
-                    className="text-slate-400 hover:text-white"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-                  <div className="p-2 rounded bg-[#111827] border border-[#1f2937]">
-                    <span className="text-[10px] text-slate-400 block">Assigned Bus</span>
-                    <span className="font-bold text-emerald-400">{selectedDuty.busId}</span>
-                  </div>
-                  <div className="p-2 rounded bg-[#111827] border border-[#1f2937]">
-                    <span className="text-[10px] text-slate-400 block">Driver</span>
-                    <span className="font-bold text-cyan-400">{selectedDuty.driverId}</span>
-                  </div>
-                  <div className="p-2 rounded bg-[#111827] border border-[#1f2937]">
-                    <span className="text-[10px] text-slate-400 block">Route</span>
-                    <span className="font-bold text-amber-400">{selectedDuty.routeId}</span>
-                  </div>
-                  <div className="p-2 rounded bg-[#111827] border border-[#1f2937]">
-                    <span className="text-[10px] text-slate-400 block">Shift Window</span>
-                    <span className="font-bold text-white">{selectedDuty.startTime} – {selectedDuty.endTime}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-slate-300 font-sans px-1">
-                  <span>Relief Station: <strong className="text-white font-mono">{selectedDuty.nextReliefStop}</strong></span>
-                  <span>Rest Mandate: <strong className="text-emerald-400 font-mono">{selectedDuty.restRequirementMinutes} min</strong></span>
-                </div>
-
-                {/* Duty Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#8693AB]/40">
-                  <button
-                    onClick={() => setIsDriverPickerOpen(!isDriverPickerOpen)}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    <Users className="w-3.5 h-3.5 text-[#212227]" />
-                    <span>Reassign Driver</span>
-                  </button>
-
-                  <button
-                    onClick={() => setIsBusPickerOpen(!isBusPickerOpen)}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    <Bus className="w-3.5 h-3.5 text-[#212227]" />
-                    <span>Swap Bus</span>
-                  </button>
-
-                  <button
-                    onClick={() => onToggleLockDuty(selectedDuty.id)}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    {selectedDuty.isLocked ? <Unlock className="w-3.5 h-3.5 text-amber-900" /> : <Lock className="w-3.5 h-3.5 text-[#212227]" />}
-                    <span>{selectedDuty.isLocked ? 'Unlock Duty' : 'Lock Assignment'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setRescheduleStart(selectedDuty.startTime);
-                      setRescheduleEnd(selectedDuty.endTime);
-                      setIsRescheduleModalOpen(true);
-                    }}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    <Clock className="w-3.5 h-3.5 text-[#212227]" />
-                    <span>Reschedule</span>
-                  </button>
-                </div>
-
-                {/* Driver Picker Dropdown Modal */}
-                {isDriverPickerOpen && (
-                  <div className="p-3 rounded-lg bg-[#111827] border border-indigo-500/40 space-y-2 animate-in fade-in">
-                    <div className="text-[11px] font-mono text-slate-400 font-bold uppercase">
-                      Select Available Driver for {selectedDuty.dutyCode}
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                      {drivers.map(d => (
-                        <button
-                          key={d.id}
-                          onClick={() => {
-                            onReassignDriver(selectedDuty.id, d.id);
-                            setIsDriverPickerOpen(false);
-                            onShowToast(`Reassigned ${selectedDuty.dutyCode} to driver ${d.name} (${d.id})`);
-                          }}
-                          className={`p-1.5 rounded text-left text-xs font-mono transition border ${
-                            d.id === selectedDuty.driverId
-                              ? 'bg-indigo-600 text-white border-indigo-400'
-                              : 'bg-[#0b0f19] hover:bg-[#1a2333] text-slate-300 border-[#1f2937]'
-                          }`}
-                        >
-                          <div className="font-bold truncate">{d.name}</div>
-                          <div className="text-[10px] text-slate-400">{d.id} • {d.status}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Bus Picker Dropdown Modal */}
-                {isBusPickerOpen && (
-                  <div className="p-3 rounded-lg bg-[#111827] border border-emerald-500/40 space-y-2 animate-in fade-in">
-                    <div className="text-[11px] font-mono text-slate-400 font-bold uppercase">
-                      Select Fleet Vehicle for {selectedDuty.dutyCode}
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                      {buses.map(b => (
-                        <button
-                          key={b.id}
-                          onClick={() => {
-                            onSwapBus(selectedDuty.id, b.id);
-                            setIsBusPickerOpen(false);
-                            onShowToast(`Swapped bus to ${b.id} (${b.regNumber})`);
-                          }}
-                          className={`p-1.5 rounded text-left text-xs font-mono transition border ${
-                            b.id === selectedDuty.busId
-                              ? 'bg-emerald-600 text-white border-emerald-400'
-                              : 'bg-[#0b0f19] hover:bg-[#1a2333] text-slate-300 border-[#1f2937]'
-                          }`}
-                        >
-                          <div className="font-bold truncate">{b.id}</div>
-                          <div className="text-[10px] text-slate-400">{b.regNumber} • {b.status}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              </div>
-            )}
-
+        {/* Timeline Header Hour Markers (Section 11) */}
+        <div className="h-7 bg-[#F4F3F8] dark:bg-[#22202C] border-b border-border flex items-center shrink-0 font-mono text-[10px] text-muted-foreground sticky top-0 z-20">
+          <div className="w-40 sm:w-44 px-3 font-bold text-foreground border-r border-border truncate">
+            {viewMode === 'bus' ? 'VEHICLE / CREW' : 'DRIVER / BUS'}
           </div>
-        )}
-
-        {/* TAB 2: CONFLICT DECISION ENGINE (Sections 20, 21, 22, 23) */}
-        {activeTab === 'conflicts' && (
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1f2937] pb-2">
-              <div>
-                <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-rose-500" />
-                  Mission-Critical Operational Conflicts
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Automated constraint resolution engine. Select fallback actions below to update rosters and schedules.
-                </p>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 font-mono text-xs font-bold border border-rose-500/30">
-                {activeConflicts.length} ACTIVE
+          <div className="flex-1 flex justify-between px-3 relative">
+            {hoursArray.map((hour, idx) => (
+              <span key={hour} className="relative -translate-x-1/2 font-bold text-muted-foreground">
+                {hour}
               </span>
-            </div>
-
-            {/* Active Conflicts List */}
-            {activeConflicts.length > 0 ? (
-              <div className="space-y-3">
-                {activeConflicts.map((conflict) => (
-                  <div
-                    key={conflict.id}
-                    className={`rounded-xl border p-4 shadow-lg space-y-3 transition-all ${
-                      conflict.severity === 'CRITICAL'
-                        ? 'bg-[#261A1D] border-rose-500/40'
-                        : 'bg-[#262017] border-amber-500/40'
-                    }`}
-                  >
-                    {/* Conflict Card Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                          conflict.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        }`}>
-                          {conflict.severity === 'CRITICAL' ? '🔴 CRITICAL' : '🟠 WARNING'}
-                        </span>
-                        <span className="font-mono font-bold text-xs text-[#F1F5F9]">{conflict.code}</span>
-                        <span className="text-xs text-[#AAB9CF]">• Departure: <strong className="text-white font-mono">{conflict.departureTime}</strong></span>
-                      </div>
-                      <div className="text-xs font-mono text-[#AAB9CF]">
-                        Bus: <strong className="text-white">{conflict.affectedBusId}</strong>
-                      </div>
-                    </div>
-
-                    {/* Conflict Description & Affected Context */}
-                    <div className="space-y-1 text-xs">
-                      <div className="font-semibold text-[#F1F5F9]">{conflict.issue}</div>
-                      <div className="text-[#AAB9CF] text-[11px]">{conflict.impact}</div>
-                      <div className="text-[#AAB9CF] font-mono text-[11px] pt-1">
-                        Driver: <strong className="text-white">{conflict.driverName} ({conflict.driverId})</strong>
-                      </div>
-                    </div>
-
-                    {/* Recommendation Banner */}
-                    <div className="p-2.5 rounded-lg bg-[#18191D] border border-[#32353E] text-xs flex items-center justify-between">
-                      <span className="text-[#AAB9CF]">Recommended Fallback:</span>
-                      <span className="font-bold text-emerald-400">{conflict.recommendation}</span>
-                    </div>
-
-                    {/* FALLBACK ACTIONS THAT ACTUALLY WORK (Section 21) */}
-                    <div className="pt-2.5 border-t-2 border-[#8693AB]/40 flex flex-wrap gap-2">
-                      {conflict.id === 'CF-204' && (
-                        <>
-                          <button
-                            onClick={() => onAssignStandbyCrew(conflict.id, 'SHARMA-18', conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <Users className="w-3.5 h-3.5" />
-                            <span>Assign Standby Crew</span>
-                          </button>
-
-                          <button
-                            onClick={() => onTriggerOvertimeProtocol(conflict.id, conflict.driverId, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <Zap className="w-3.5 h-3.5" />
-                            <span>Overtime Protocol</span>
-                          </button>
-
-                          <button
-                            onClick={() => onSplitShiftFallback(conflict.id, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <Footprints className="w-3.5 h-3.5" />
-                            <span>Split-Shift Fallback</span>
-                          </button>
-                        </>
-                      )}
-
-                      {conflict.id === 'CF-109' && (
-                        <>
-                          <button
-                            onClick={() => onAdjustDeparture(conflict.id, conflict.affectedDutyId, 8)}
-                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#8693AB] hover:bg-[#96A3BC] text-[#212227] font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>Adjust Departure +8 min</span>
-                          </button>
-
-                          <button
-                            onClick={() => onRerouteVariant(conflict.id, 'R17')}
-                            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-black transition shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Reroute Variant</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* All Resolved State (Section 30) */
-              <div className="p-8 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-sm text-white">NO ACTIVE CONFLICTS</h4>
-                <p className="text-xs text-emerald-300/80 max-w-sm mx-auto">
-                  All current departures have compliant crew coverage and nominal corridor headway separation.
-                </p>
-              </div>
-            )}
-
-            {/* Resolved Conflicts Archive */}
-            {resolvedConflicts.length > 0 && (
-              <div className="mt-6 space-y-2 pt-4 border-t border-[#1f2937]">
-                <div className="text-xs font-mono text-slate-400 uppercase font-bold tracking-wider">
-                  Resolved Conflicts Log ({resolvedConflicts.length})
-                </div>
-                <div className="space-y-2">
-                  {resolvedConflicts.map(rc => (
-                    <div
-                      key={rc.id}
-                      className="p-3 rounded-lg bg-[#0b0f19] border border-emerald-500/30 flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold">
-                          RESOLVED
-                        </span>
-                        <span className="font-mono text-slate-300">{rc.code}: {rc.issue.split('.')[0]}</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-500">{rc.resolvedAt || '08:30 IST'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
-        )}
-
-      </div>
-
-      {/* Reschedule Duty Modal (Section 19) */}
-      {isRescheduleModalOpen && selectedDuty && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#111827] border border-[#1f2937] rounded-xl shadow-2xl p-5 space-y-4 animate-in fade-in zoom-in-95 font-sans">
-            <div className="flex items-center justify-between border-b border-[#1f2937] pb-3">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-cyan-400" />
-                <h3 className="font-bold text-sm text-white">Reschedule {selectedDuty.dutyCode}</h3>
-              </div>
-              <button
-                onClick={() => setIsRescheduleModalOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3 font-mono text-xs">
-              <div>
-                <label className="block text-slate-400 mb-1">Start Time (HH:MM)</label>
-                <input
-                  type="text"
-                  value={rescheduleStart}
-                  onChange={(e) => setRescheduleStart(e.target.value)}
-                  className="w-full bg-[#0b0f19] border border-[#1f2937] rounded-lg px-3 py-2 text-white outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 mb-1">End Time (HH:MM)</label>
-                <input
-                  type="text"
-                  value={rescheduleEnd}
-                  onChange={(e) => setRescheduleEnd(e.target.value)}
-                  className="w-full bg-[#0b0f19] border border-[#1f2937] rounded-lg px-3 py-2 text-white outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="p-2.5 rounded bg-indigo-950/20 border border-indigo-500/30 text-slate-300 text-[11px] font-sans">
-                Rescheduling will automatically recalculate continuous driving rest requirements and corridor overlap.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#1f2937]">
-              <button
-                onClick={() => setIsRescheduleModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg bg-[#1f2937] text-slate-300 text-xs font-semibold hover:bg-slate-700"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  onRescheduleDuty(selectedDuty.id, rescheduleStart, rescheduleEnd);
-                  setIsRescheduleModalOpen(false);
-                  onShowToast(`Rescheduled ${selectedDuty.dutyCode} to ${rescheduleStart} – ${rescheduleEnd}`);
-                }}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md"
-              >
-                Apply Schedule Change
-              </button>
-            </div>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Rows Container (Section 14: generous height for readability) */}
+        <div className="flex-1 divide-y divide-border/60 relative">
+          
+          {/* Section 13: Elegant Thin Current Time Vertical Line */}
+          <div
+            className="absolute top-0 bottom-0 z-10 pointer-events-none transition-all duration-300"
+            style={{ left: `calc(10rem + (100% - 10rem) * ${nowPercent / 100})` }}
+          >
+            <div className="h-full w-px bg-primary/70 relative">
+              <span className="absolute -top-6 -left-8 px-1.5 py-0.2 rounded bg-primary text-primary-foreground font-mono text-[9px] font-bold shadow-xs">
+                NOW {nowDisplay}
+              </span>
+            </div>
+          </div>
+
+          {displayRows.map((row) => (
+            <div 
+              key={row.id}
+              className="h-14 flex items-center hover:bg-muted/30 transition-colors relative group"
+            >
+              {/* Row Left Label: Bus ID • Driver • Route */}
+              <div className="w-40 sm:w-44 px-3 border-r border-border h-full flex flex-col justify-center shrink-0 bg-card/60">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-xs text-foreground truncate">
+                    {row.primaryText}
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded bg-muted text-[10px] font-mono font-bold text-muted-foreground">
+                    {row.routeCode}
+                  </span>
+                </div>
+                <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+                  {row.secondaryText}
+                </div>
+              </div>
+
+              {/* Row Timeline Track */}
+              <div className="flex-1 h-full relative px-2">
+                {/* Background grid lines */}
+                <div className="absolute inset-0 flex justify-between pointer-events-none px-3">
+                  {hoursArray.map((h) => (
+                    <div key={h} className="w-px h-full bg-border/25" />
+                  ))}
+                </div>
+
+                {/* Duty Blocks in this row */}
+                {row.duties.map((duty) => {
+                  const leftPct = timeToPercent(duty.startTime || '07:00');
+                  const rightPct = timeToPercent(duty.endTime || '11:00');
+                  const widthPct = Math.max(8, rightPct - leftPct);
+
+                  return (
+                    <div
+                      key={duty.id}
+                      onClick={() => onSelectDuty(duty)}
+                      onMouseEnter={() => onHoverDuty && onHoverDuty(duty.id)}
+                      onMouseLeave={() => onHoverDuty && onHoverDuty(null)}
+                      className={`absolute top-2 bottom-2 rounded-lg transition-all cursor-pointer flex flex-col justify-center px-2.5 shadow-2xs ${getDutyColorClasses(duty)}`}
+                      style={{
+                        left: `${leftPct}%`,
+                        width: `${widthPct}%`
+                      }}
+                      title={`${duty.id} • ${duty.startTime} - ${duty.endTime} • Route ${duty.routeId}`}
+                    >
+                      <div className="flex items-center justify-between leading-none">
+                        <span className="font-bold text-[11px] truncate">
+                          {duty.routeId || 'R534'}
+                        </span>
+                        <span className="font-mono text-[10px] opacity-85 hidden md:inline truncate ml-1">
+                          {duty.startTime}–{duty.endTime}
+                        </span>
+                      </div>
+                      <div className="text-[9px] font-mono opacity-75 truncate mt-0.5">
+                        {duty.driverId || 'Rajesh K.'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+        </div>
+
+      </div>
+
+      {/* Compact Timeline Footer Status Strip */}
+      <div className="h-7 px-3 bg-[#FAF9FC] dark:bg-[#201E2B] border-t border-border flex items-center justify-between font-mono text-[10px] text-muted-foreground shrink-0">
+        <div className="flex items-center space-x-3">
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>Normal Duty</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <span>Unlinked Shift</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <span>Rest Conflict</span>
+          </span>
+        </div>
+        <div>
+          <span>Scroll track to inspect full schedule</span>
+        </div>
+      </div>
 
     </div>
   );

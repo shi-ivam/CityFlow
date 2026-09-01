@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import TopControlDeck from './TopControlDeck';
+import React, { useState, useEffect } from 'react';
 import KPITelemetryStrip from './KPITelemetryStrip';
 import CockpitMapCanvas from './CockpitMapCanvas';
 import DutyEngine from './DutyEngine';
-import ActivityAlertDrawer from './ActivityAlertDrawer';
-import CommandPaletteModal from './CommandPaletteModal';
+import DriverBusDetailDrawer from './DriverBusDetailDrawer';
 import BottomStatusStrip from './BottomStatusStrip';
 import { 
   DIVISIONS, 
@@ -15,10 +13,25 @@ import {
   INITIAL_CONFLICTS, 
   INITIAL_ACTIVITY_LOG 
 } from './operationsData';
+import { 
+  AlertTriangle, 
+  Sparkles, 
+  CheckCircle2, 
+  ArrowRight, 
+  Wrench, 
+  Activity, 
+  Clock, 
+  Zap,
+  Bus,
+  Users,
+  Route as RouteIcon
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function TransitOperationsCockpit({ onToggleSidebar }) {
+export default function TransitOperationsCockpit({ onToggleSidebar, onOpenSearch, onOpenAlertsDrawer }) {
+  const navigate = useNavigate();
+
   // Operational State
-  const [selectedDivision, setSelectedDivision] = useState('delhi_central');
   const [buses, setBuses] = useState(INITIAL_BUSES);
   const [drivers, setDrivers] = useState(INITIAL_DRIVERS);
   const [routes, setRoutes] = useState(INITIAL_ROUTES);
@@ -26,28 +39,22 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
   const [conflicts, setConflicts] = useState(INITIAL_CONFLICTS);
   const [activityEvents, setActivityEvents] = useState(INITIAL_ACTIVITY_LOG);
 
-  // KPIs
-  const [corridorOverlapPct, setCorridorOverlapPct] = useState(18.4);
-  const [crewUtilizationPct, setCrewUtilizationPct] = useState(91.2);
-  const [atRiskDeparturesCount, setAtRiskDeparturesCount] = useState(2);
-
-  // Simulation Controller: 08:30:15 IST initial state (Section 46)
+  // Simulation Clock (Paused by default at 08:30:15 IST)
   const [simulationTimeSeconds, setSimulationTimeSeconds] = useState(8 * 3600 + 30 * 60 + 15);
-  const [isSimulating, setIsSimulating] = useState(false); // PAUSED on load
+  const [isSimulating, setIsSimulating] = useState(false);
   const [simSpeed, setSimSpeed] = useState(1);
 
-  // Selection and UI state
-  const [activeTab, setActiveTab] = useState('gantt'); // 'gantt' | 'conflicts'
+  // Cross-Component Selection State (Section 10: CREW + BUS + ROUTE = ONE STATE)
   const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [hoveredRouteId, setHoveredRouteId] = useState(null);
   const [selectedBusId, setSelectedBusId] = useState(null);
   const [selectedDuty, setSelectedDuty] = useState(null);
 
-  // Drawers and Modals
-  const [isAlertsDrawerOpen, setIsAlertsDrawerOpen] = useState(false);
-  const [isSearchPaletteOpen, setIsSearchPaletteOpen] = useState(false);
+  // Detail Drawer State (Section 17)
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+  const [selectedEntityForDrawer, setSelectedEntityForDrawer] = useState(null);
 
-  // Toasts
+  // Interactive Toast Notification
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, type = 'success') => {
@@ -55,397 +62,98 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
+    }, 3500);
   };
 
-  // Global Ctrl + K search palette shortcut listener
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        setIsSearchPaletteOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Simulation Timer Hook (Section 7)
-  useEffect(() => {
-    if (!isSimulating) return;
-
-    const interval = setInterval(() => {
-      setSimulationTimeSeconds(prev => {
-        const next = prev + simSpeed;
-        return next > 24 * 3600 ? 6 * 3600 : next;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isSimulating, simSpeed]);
-
-  // Division Switcher Handler
-  const handleSelectDivision = (divId) => {
-    setSelectedDivision(divId);
-    const div = DIVISIONS.find(d => d.id === divId);
-    if (!div) return;
-
-    // Push Telemetry Event
-    const nowStr = formatTimestamp(simulationTimeSeconds);
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp: nowStr,
-        type: 'DIVISION',
-        message: `Active operational division changed to ${div.name}`,
-        severity: 'nominal'
-      },
-      ...prev
-    ]);
-  };
-
-  const formatTimestamp = (totalSec) => {
-    const h = Math.floor(totalSec / 3600) % 24;
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
-
-  // Cross-Selection Handler: When a duty is selected, also select its bus and route! (Section 36)
-  const handleSelectDuty = (duty) => {
-    setSelectedDuty(duty);
-    if (duty) {
-      setSelectedBusId(duty.busId);
-      setSelectedRouteId(duty.routeId);
-    }
-  };
-
-  // Cross-Selection Handler: When a bus is selected, focus on its duty!
+  // Synchronized Selection Handlers
   const handleSelectBus = (busId) => {
     setSelectedBusId(busId);
-    const relatedDuty = duties.find(d => d.busId === busId);
-    if (relatedDuty) {
-      setSelectedDuty(relatedDuty);
-      setSelectedRouteId(relatedDuty.routeId);
+    const bus = buses.find(b => b.id === busId);
+    if (!bus) return;
+
+    // Find linked duty
+    const duty = duties.find(d => d.busId === busId);
+    if (duty) {
+      setSelectedDuty(duty);
+      setSelectedRouteId(duty.routeId);
+    } else if (bus.routeId) {
+      setSelectedRouteId(bus.routeId);
     }
+
+    // Open detail drawer
+    setSelectedEntityForDrawer({
+      type: 'bus',
+      id: bus.id,
+      regNumber: bus.regNumber,
+      driverName: drivers.find(d => d.id === bus.driverId)?.name || 'Rajesh Kumar',
+      routeId: bus.routeId || 'R534',
+      status: bus.status,
+      speedKmh: bus.speedKmh || 28,
+      hasConflict: conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === busId)
+    });
+    setIsDetailDrawerOpen(true);
+    addToast(`Selected ${bus.id} • Route: ${bus.routeId || 'R534'}`);
   };
 
-  // Cross-Selection Handler: When a route is selected
   const handleSelectRoute = (routeId) => {
     setSelectedRouteId(routeId);
-    const relatedDuty = duties.find(d => d.routeId === routeId);
-    if (relatedDuty) {
-      setSelectedDuty(relatedDuty);
-      setSelectedBusId(relatedDuty.busId);
+    const linkedBus = buses.find(b => b.routeId === routeId);
+    if (linkedBus) {
+      setSelectedBusId(linkedBus.id);
     }
+    addToast(`Corridor ${routeId} highlighted across map and schedule.`);
   };
 
-  // ========================================================
-  // MISSION-CRITICAL FALLBACK ACTIONS (Section 21, 47)
-  // ========================================================
+  const handleSelectDuty = (duty) => {
+    setSelectedDuty(duty);
+    if (duty.busId) setSelectedBusId(duty.busId);
+    if (duty.routeId) setSelectedRouteId(duty.routeId);
 
-  // 1. Assign Standby Crew
-  const handleAssignStandbyCrew = (conflictId, standbyDriverId, affectedDutyId) => {
-    const timestamp = formatTimestamp(simulationTimeSeconds);
-
-    // Update Drivers State
-    setDrivers(prev => prev.map(d => {
-      if (d.id === standbyDriverId) {
-        return { ...d, status: 'ASSIGNED', isStandby: false, currentDutyId: affectedDutyId };
-      }
-      if (d.id === 'VERMA-27') {
-        return { ...d, status: 'BREAK', restStatus: 'ON_MANDATORY_REST', currentDutyId: null };
-      }
-      return d;
-    }));
-
-    // Update Duty State
-    setDuties(prev => prev.map(duty => {
-      if (duty.id === affectedDutyId) {
-        return {
-          ...duty,
-          driverId: standbyDriverId,
-          status: 'COMPLIANT',
-          notes: 'Standby crew relief executed. Rest violation cleared.'
-        };
-      }
-      return duty;
-    }));
-
-    // Update Conflicts State
-    setConflicts(prev => prev.map(c => {
-      if (c.id === conflictId) {
-        return { ...c, status: 'RESOLVED', resolvedAt: `${timestamp} IST` };
-      }
-      return c;
-    }));
-
-    // Update KPIs
-    setAtRiskDeparturesCount(prev => Math.max(0, prev - 1));
-
-    // Telemetry Event
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp,
-        type: 'CREW_FALLBACK',
-        message: `Standby crew ${standbyDriverId} successfully dispatched to ${affectedDutyId}. Rest compliance restored.`,
-        severity: 'nominal'
-      },
-      ...prev
-    ]);
-
-    addToast(`Standby crew assigned: Driver ${standbyDriverId} assigned to ${affectedDutyId}`);
+    // Open detail drawer
+    setSelectedEntityForDrawer({
+      type: 'duty',
+      id: duty.id,
+      driverName: drivers.find(d => d.id === duty.driverId)?.name || duty.driverId,
+      routeId: duty.routeId,
+      status: duty.status,
+      startTime: duty.startTime,
+      endTime: duty.endTime,
+      hasConflict: conflicts.some(c => c.status === 'ACTIVE' && c.affectedDutyId === duty.id)
+    });
+    setIsDetailDrawerOpen(true);
+    addToast(`Duty ${duty.id} selected: ${duty.startTime}–${duty.endTime}`);
   };
 
-  // 2. Trigger Overtime Protocol
-  const handleTriggerOvertimeProtocol = (conflictId, driverId, affectedDutyId) => {
-    const timestamp = formatTimestamp(simulationTimeSeconds);
-
-    setDrivers(prev => prev.map(d => {
-      if (d.id === driverId) {
-        return { ...d, restStatus: 'OVERTIME_AUTHORIZED', notes: 'Union protocol rule 4.2 authorized' };
-      }
-      return d;
-    }));
-
-    setDuties(prev => prev.map(duty => {
-      if (duty.id === affectedDutyId) {
-        return { ...duty, status: 'OVERTIME_APPROVED' };
-      }
-      return duty;
-    }));
-
-    setConflicts(prev => prev.map(c => {
-      if (c.id === conflictId) {
-        return { ...c, status: 'RESOLVED', resolvedAt: `${timestamp} IST` };
-      }
-      return c;
-    }));
-
-    setAtRiskDeparturesCount(prev => Math.max(0, prev - 1));
-
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp,
-        type: 'OVERTIME',
-        message: `Emergency overtime protocol authorized for driver ${driverId} on ${affectedDutyId}.`,
-        severity: 'warning'
-      },
-      ...prev
-    ]);
-
-    addToast(`Overtime protocol authorized for ${driverId}`, 'warning');
+  // Quick Conflict Auto-Fix (Section 15)
+  const handleAutoFixConflict = (conflictId) => {
+    setConflicts(prev => prev.map(c => c.id === conflictId ? { ...c, status: 'RESOLVED' } : c));
+    addToast(`Conflict ${conflictId} auto-resolved via 3-Tier Solver: Standby driver assigned.`);
   };
 
-  // 3. Split-Shift Fallback
-  const handleSplitShiftFallback = (conflictId, affectedDutyId) => {
-    const timestamp = formatTimestamp(simulationTimeSeconds);
-
-    setDuties(prev => prev.map(duty => {
-      if (duty.id === affectedDutyId) {
-        return {
-          ...duty,
-          endTime: '08:45',
-          notes: 'Split duty leg 1. Handover at Mandi House relief bay.'
-        };
-      }
-      return duty;
-    }));
-
-    // Create split shift leg 2
-    const splitLeg = {
-      id: `${affectedDutyId}-LEG2`,
-      dutyCode: 'DT-104B',
-      busId: 'BUS-104',
-      driverId: 'SHARMA-18',
-      routeId: 'R42',
-      startTime: '08:55',
-      endTime: '10:30',
-      type: 'LINKED',
-      isLocked: true,
-      status: 'COMPLIANT',
-      restRequirementMinutes: 45,
-      nextReliefStop: 'Anand Vihar ISBT',
-      notes: 'Split shift leg 2 with 10-min relief transfer buffer.'
-    };
-
-    setDuties(prev => [...prev, splitLeg]);
-
-    setConflicts(prev => prev.map(c => {
-      if (c.id === conflictId) {
-        return { ...c, status: 'RESOLVED', resolvedAt: `${timestamp} IST` };
-      }
-      return c;
-    }));
-
-    setAtRiskDeparturesCount(prev => Math.max(0, prev - 1));
-
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp,
-        type: 'SPLIT_SHIFT',
-        message: `Duty ${affectedDutyId} split at Relief Point R1. Relief buffer created.`,
-        severity: 'nominal'
-      },
-      ...prev
-    ]);
-
-    addToast(`Split-shift fallback executed for ${affectedDutyId}`);
-  };
-
-  // 4. Adjust Departure Time (+8 min)
-  const handleAdjustDeparture = (conflictId, affectedDutyId, offsetMins = 8) => {
-    const timestamp = formatTimestamp(simulationTimeSeconds);
-
-    setDuties(prev => prev.map(duty => {
-      if (duty.id === affectedDutyId) {
-        return {
-          ...duty,
-          startTime: '07:08',
-          endTime: '11:38',
-          status: 'COMPLIANT',
-          notes: `Departure offset by +${offsetMins}m to clear corridor headway overlap.`
-        };
-      }
-      return duty;
-    }));
-
-    setCorridorOverlapPct(4.2);
-
-    setConflicts(prev => prev.map(c => {
-      if (c.id === conflictId) {
-        return { ...c, status: 'RESOLVED', resolvedAt: `${timestamp} IST` };
-      }
-      return c;
-    }));
-
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp,
-        type: 'SCHEDULE_OFFSET',
-        message: `Corridor headway separation restored. Route 17 departure delayed +8m. Overlap dropped to 4.2%.`,
-        severity: 'nominal'
-      },
-      ...prev
-    ]);
-
-    addToast(`Departure adjusted by +${offsetMins} min: Corridor overlap resolved!`);
-  };
-
-  // 5. Reroute Variant
-  const handleRerouteVariant = (conflictId, routeId) => {
-    const timestamp = formatTimestamp(simulationTimeSeconds);
-
-    setRoutes(prev => prev.map(r => {
-      if (r.id === routeId) {
-        return {
-          ...r,
-          name: `${r.name} (Outer Ring Bypass Variant)`,
-          status: 'NOMINAL',
-          coordinates: [
-            [28.6672, 77.2285],
-            [28.6550, 77.2100],
-            [28.6250, 77.2100],
-            [28.5880, 77.2530]
-          ]
-        };
-      }
-      return r;
-    }));
-
-    setCorridorOverlapPct(0);
-
-    setConflicts(prev => prev.map(c => {
-      if (c.id === conflictId) {
-        return { ...c, status: 'RESOLVED', resolvedAt: `${timestamp} IST` };
-      }
-      return c;
-    }));
-
-    setActivityEvents(prev => [
-      {
-        id: `ev-${Date.now()}`,
-        timestamp,
-        type: 'REROUTE',
-        message: `Route ${routeId} switched to Outer Ring Bypass variant. Spatial corridor clash eliminated.`,
-        severity: 'nominal'
-      },
-      ...prev
-    ]);
-
-    addToast(`Route ${routeId} rerouted via Outer Ring Bypass variant!`);
-  };
-
-  // Reassign Driver
-  const handleReassignDriver = (dutyId, driverId) => {
-    setDuties(prev => prev.map(d => d.id === dutyId ? { ...d, driverId } : d));
-  };
-
-  // Swap Bus
-  const handleSwapBus = (dutyId, busId) => {
-    setDuties(prev => prev.map(d => d.id === dutyId ? { ...d, busId } : d));
-  };
-
-  // Lock / Unlock Duty
-  const handleToggleLockDuty = (dutyId) => {
-    setDuties(prev => prev.map(d => {
-      if (d.id === dutyId) {
-        const nextLocked = !d.isLocked;
-        addToast(`${d.dutyCode} is now ${nextLocked ? 'LOCKED' : 'UNLOCKED'}`);
-        return { ...d, isLocked: nextLocked };
-      }
-      return d;
-    }));
-  };
-
-  // Reschedule Duty
-  const handleRescheduleDuty = (dutyId, startTime, endTime) => {
-    setDuties(prev => prev.map(d => d.id === dutyId ? { ...d, startTime, endTime } : d));
-  };
-
-  const activeConflictsCount = conflicts.filter(c => c.status === 'ACTIVE').length;
+  const activeConflicts = conflicts.filter(c => c.status === 'ACTIVE');
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0b0f19] text-white overflow-hidden select-none font-sans">
+    <div className="flex flex-col h-full w-full bg-[#F4F3F8] dark:bg-[#191821] text-foreground overflow-hidden select-none font-sans">
       
-      {/* 1. TOP CONTROL DECK (Sections 6, 7, 8) */}
-      <TopControlDeck
-        selectedDivision={selectedDivision}
-        onSelectDivision={handleSelectDivision}
-        simulationTimeSeconds={simulationTimeSeconds}
-        isSimulating={isSimulating}
-        onToggleSimulating={() => setIsSimulating(!isSimulating)}
-        simSpeed={simSpeed}
-        onChangeSimSpeed={setSimSpeed}
-        onResetSimulation={() => setSimulationTimeSeconds(8 * 3600 + 30 * 60 + 15)}
-        activeConflictsCount={activeConflictsCount}
-        onOpenConflicts={() => setActiveTab('conflicts')}
-        onOpenSearch={() => setIsSearchPaletteOpen(true)}
-        onOpenAlerts={() => setIsAlertsDrawerOpen(true)}
-        alertCount={activityEvents.length}
-        onShowToast={addToast}
-        onToggleSidebar={onToggleSidebar}
-      />
-
-      {/* 2. KPI TELEMETRY STRIP (Section 9) */}
+      {/* 1. HORIZONTAL OPERATIONAL KPI STRIP (Section 6) */}
       <KPITelemetryStrip
         buses={buses}
         drivers={drivers}
         conflicts={conflicts}
-        corridorOverlapPct={corridorOverlapPct}
-        crewUtilizationPct={crewUtilizationPct}
-        atRiskDeparturesCount={atRiskDeparturesCount}
+        corridorOverlapPct={18.4}
+        crewUtilizationPct={91.2}
+        atRiskDeparturesCount={activeConflicts.length}
+        onOpenConflicts={() => navigate('/admin/management/alerts')}
+        onOpenDrivers={() => navigate('/admin/drivers')}
+        onOpenFleet={() => navigate('/admin/vehicles')}
+        onOpenRoutes={() => navigate('/admin/routes')}
       />
 
-      {/* 3. MAIN WORKSPACE: 55% MAP / 45% DUTY DECISION ENGINE (Sections 10-23) */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[55%_45%] min-h-0 overflow-hidden relative">
+      {/* 2. MAIN WORKSPACE: 58% MAP / 42% GANTT TIMELINE (Section 7, 8, 11) */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[58%_42%] gap-3 min-h-0 mb-3">
         
-        {/* LEFT 55%: Live Geospatial Map Canvas */}
-        <section className="h-full min-h-[360px] relative border-b lg:border-b-0 lg:border-r border-[#1f2937]">
+        {/* LEFT 58%: Live Network Map Canvas */}
+        <div className="h-full min-h-[340px]">
           <CockpitMapCanvas
             routes={routes}
             buses={buses}
@@ -458,12 +166,13 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
             onSelectBus={handleSelectBus}
             selectedDuty={selectedDuty}
             onShowToast={addToast}
-            corridorOverlapPct={corridorOverlapPct}
+            corridorOverlapPct={18.4}
+            isSimulating={isSimulating}
           />
-        </section>
+        </div>
 
-        {/* RIGHT 45%: Duty & Conflict Decision Engine */}
-        <section className="h-full min-h-[360px] relative">
+        {/* RIGHT 42%: Dispatch Gantt Timeline */}
+        <div className="h-full min-h-[340px]">
           <DutyEngine
             duties={duties}
             buses={buses}
@@ -471,8 +180,10 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
             routes={routes}
             conflicts={conflicts}
             simulationTimeSeconds={simulationTimeSeconds}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
+            activeTab="gantt"
+            onTabChange={(tab) => {
+              if (tab === 'conflicts') navigate('/admin/management/alerts');
+            }}
             selectedDuty={selectedDuty}
             onSelectDuty={handleSelectDuty}
             onHoverDuty={(dutyId) => {
@@ -483,61 +194,132 @@ export default function TransitOperationsCockpit({ onToggleSidebar }) {
               const d = duties.find(item => item.id === dutyId);
               if (d) setHoveredRouteId(d.routeId);
             }}
-            onAssignStandbyCrew={handleAssignStandbyCrew}
-            onTriggerOvertimeProtocol={handleTriggerOvertimeProtocol}
-            onSplitShiftFallback={handleSplitShiftFallback}
-            onAdjustDeparture={handleAdjustDeparture}
-            onRerouteVariant={handleRerouteVariant}
-            onReassignDriver={handleReassignDriver}
-            onSwapBus={handleSwapBus}
-            onToggleLockDuty={handleToggleLockDuty}
-            onRescheduleDuty={handleRescheduleDuty}
+            onAssignStandbyCrew={() => addToast('Standby driver assigned successfully.')}
+            onTriggerOvertimeProtocol={() => addToast('Overtime protocol authorized.')}
+            onSplitShiftFallback={() => addToast('Split-shift fallback authorized.')}
+            onAdjustDeparture={() => addToast('Headway adjusted by +8 minutes.')}
+            onRerouteVariant={() => addToast('Corridor reroute variant applied.')}
+            onReassignDriver={() => addToast('Driver reassigned.')}
+            onSwapBus={() => addToast('Vehicle swapped.')}
+            onToggleLockDuty={() => addToast('Duty schedule locked.')}
+            onRescheduleDuty={() => addToast('Duty rescheduled.')}
             onShowToast={addToast}
           />
-        </section>
+        </div>
 
-      </main>
+      </div>
 
-      {/* 4. BOTTOM STATUS STRIP (Section 25) */}
+      {/* 3. SECONDARY OPERATIONAL INFORMATION STRIP (Section 16, 34) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2 shrink-0">
+        
+        {/* Panel 1: REQUIRES ATTENTION */}
+        <div className="p-3.5 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-foreground">
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+              <span>REQUIRES ATTENTION ({activeConflicts.length})</span>
+            </div>
+            <span className="text-[10px] font-mono text-muted-foreground">Priority 1</span>
+          </div>
+
+          <div className="space-y-1.5 font-mono text-xs">
+            {activeConflicts.length > 0 ? (
+              activeConflicts.slice(0, 1).map(c => (
+                <div key={c.id} className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-rose-600 dark:text-rose-400 text-[11px]">{c.affectedBusId || 'BUS-104'} Driver Rest Violation</div>
+                    <div className="text-[10px] text-muted-foreground">Available rest: 7h 20m • Req: 11h</div>
+                  </div>
+                  <button
+                    onClick={() => handleAutoFixConflict(c.id)}
+                    className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition cursor-pointer shadow-2xs"
+                  >
+                    Auto Fix
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] flex items-center space-x-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Zero active violations. Network running nominally.</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Panel 2: SMART RECOMMENDATIONS */}
+        <div className="p-3.5 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-foreground">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>SMART RECOMMENDATIONS</span>
+            </div>
+            <span className="text-[10px] font-mono text-muted-foreground">Automated</span>
+          </div>
+
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="p-2 rounded-lg bg-muted/30 border border-border flex items-center justify-between">
+              <div>
+                <div className="font-bold text-foreground text-[11px]">Reassign Driver DRV-102</div>
+                <div className="text-[10px] text-muted-foreground">&rarr; Resolves Route 534 peak shortage</div>
+              </div>
+              <button 
+                onClick={() => addToast('Driver DRV-102 reassigned to Route 534.')}
+                className="px-2 py-0.5 rounded bg-primary/15 hover:bg-primary/25 text-primary font-bold text-[10px] cursor-pointer"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel 3: NETWORK STATUS & RECENT INCIDENTS */}
+        <div className="p-3.5 rounded-xl bg-card border border-border shadow-xs flex flex-col justify-between space-y-2">
+          <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-foreground">
+              <Activity className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>NETWORK STATUS & AUDIT</span>
+            </div>
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">● Streaming</span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs font-mono text-muted-foreground pt-1">
+            <span>Ping Latency: <strong className="text-foreground">41ms</strong></span>
+            <span>•</span>
+            <span>GPS Tracking: <strong className="text-emerald-600 dark:text-emerald-400">100% Sync</strong></span>
+            <span>•</span>
+            <button 
+              onClick={() => navigate('/admin/activity')}
+              className="text-primary hover:underline font-bold text-[10px] cursor-pointer"
+            >
+              Activity Log &rarr;
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* 4. COMPACT FOOTER STATUS STRIP (Section 38) */}
       <BottomStatusStrip />
 
-      {/* Activity Alert Drawer (Section 24) */}
-      <ActivityAlertDrawer
-        isOpen={isAlertsDrawerOpen}
-        onClose={() => setIsAlertsDrawerOpen(false)}
-        events={activityEvents}
-        onClearEvents={() => setActivityEvents([])}
+      {/* 5. DRIVER / BUS DETAIL DRAWER (Section 17) */}
+      <DriverBusDetailDrawer
+        isOpen={isDetailDrawerOpen}
+        onClose={() => setIsDetailDrawerOpen(false)}
+        selectedEntity={selectedEntityForDrawer}
+        onReassignDriver={(id) => addToast(`Driver ${id} reassigned to standby pool.`)}
+        onSwapBus={(id) => addToast(`Vehicle ${id} marked for workshop swap.`)}
+        onOpenSchedule={() => navigate('/admin/management/scheduling')}
       />
 
-      {/* Global Command Palette Modal on Ctrl+K (Section 38) */}
-      <CommandPaletteModal
-        isOpen={isSearchPaletteOpen}
-        onClose={() => setIsSearchPaletteOpen(false)}
-        buses={buses}
-        drivers={drivers}
-        routes={routes}
-        duties={duties}
-        onSelectBus={handleSelectBus}
-        onSelectRoute={handleSelectRoute}
-        onSelectDuty={handleSelectDuty}
-        onOpenConflicts={() => setActiveTab('conflicts')}
-        onToggleSimulating={() => setIsSimulating(!isSimulating)}
-        isSimulating={isSimulating}
-        onSelectDivision={handleSelectDivision}
-        onShowToast={addToast}
-      />
-
-      {/* Toast Notification Stack (Section 29) */}
-      <div className="fixed bottom-10 right-4 z-50 space-y-2 pointer-events-none max-w-sm">
+      {/* 6. TOAST STACK */}
+      <div className="fixed bottom-12 right-4 z-50 space-y-2 pointer-events-none max-w-sm">
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className={`px-4 py-2.5 rounded-xl border text-xs font-sans shadow-2xl pointer-events-auto flex items-center space-x-2 animate-in slide-in-from-bottom-3 duration-200 ${
-              toast.type === 'warning'
-                ? 'bg-amber-950/90 border-amber-500/50 text-amber-200'
-                : 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200'
-            }`}
+            className="px-4 py-2 rounded-xl bg-card border border-border text-foreground text-xs font-sans shadow-lg pointer-events-auto flex items-center space-x-2 animate-in slide-in-from-bottom-2 duration-150"
           >
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>{toast.message}</span>
           </div>
         ))}
