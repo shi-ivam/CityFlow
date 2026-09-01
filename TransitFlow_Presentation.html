@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransitFlow (V-02) — Smart Scheduling & Network Route Management</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            },
+            accent: {
+              blue: '#3b82f6',
+              amber: '#f59e0b',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              purple: '#a855f7'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['"Outfit"', '"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Plus Jakarta Sans, Outfit, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- MathJax for LaTeX mathematical formula rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* Custom Presentation Scrollbar & Core Styles */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #060913; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #0284c7; }
+
+    body {
+      background-color: #050811;
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Ambient Background Effects */
+    .slide-bg {
+      background: radial-gradient(circle at 15% 15%, rgba(14, 165, 233, 0.08) 0%, transparent 45%),
+                  radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                  #050811;
+    }
+    .grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Double-Bezel Hardware Frame Styling */
+    .deck-frame {
+      background: rgba(13, 20, 36, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .deck-card {
+      background: rgba(18, 27, 49, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    }
+    .deck-card-glow-blue {
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: 0 0 30px -5px rgba(14, 165, 233, 0.15), inset 0 1px 1px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Slide Transition Dynamics */
+    .slide-active {
+      display: flex !important;
+      animation: slideFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideFadeIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.996); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Image zoom hover */
+    .img-zoom {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .img-zoom:hover {
+      transform: scale(1.03);
+    }
+
+    /* Code Block Formatting */
+    pre, code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white select-none slide-bg">
+
+  <!-- TOP HEADER / PRESENTATION METADATA BAR -->
+  <header class="h-14 border-b border-white/5 bg-[#070b16]/80 backdrop-blur-xl px-6 sm:px-10 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <svg class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 7h8m-8 4h8m-4 4h4m3 5H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-display font-bold text-base tracking-tight text-white">TransitFlow</span>
+            <span class="text-xs font-mono font-bold text-brand-400">V – 02</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-mono tracking-wider uppercase hidden md:block">Smart Scheduling & Dual-View Spatial Route Management</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Slide Topic & Title Breadcrumb -->
+    <div class="text-xs text-slate-300 font-medium hidden sm:flex items-center space-x-2">
+      <span class="text-slate-500 font-mono" id="header-slide-index">Slide 01 of 12</span>
+      <span class="text-slate-600">&bull;</span>
+      <span class="text-white font-semibold truncate max-w-md" id="header-slide-title">Executive Summary & Operational Vision</span>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center space-x-3 font-mono text-xs">
+      <div class="bg-slate-900/90 border border-white/10 px-3 py-1 rounded-full text-slate-300 flex items-center space-x-2">
+        <span class="text-brand-400 font-bold" id="current-slide-badge">01</span>
+        <span class="text-slate-600">/</span>
+        <span class="text-slate-400">12</span>
+      </div>
+
+      <button onclick="toggleSlideGrid()" title="Slide Directory (G)" class="p-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white hover:border-brand-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      </button>
+
+      <button onclick="toggleFullScreen()" title="Fullscreen (F)" class="p-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white hover:border-brand-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- PRESENTATION PROGRESS BAR -->
+  <div class="w-full bg-slate-950 h-1 relative z-20">
+    <div id="deck-progress" class="h-full bg-gradient-to-r from-brand-600 via-sky-400 to-cyan-300 transition-all duration-300" style="width: 8.33%;"></div>
+  </div>
+
+  <!-- MAIN SLIDE DECK CONTAINER (16:9 Cinema Aspect Ratio Container) -->
+  <main class="flex-1 relative flex items-center justify-center p-3 sm:p-6 grid-pattern overflow-hidden" id="deck-main-viewport">
+    
+    <!-- ========================================================================= -->
+    <!-- SLIDE 01: TITLE & EXECUTIVE PITCH (WITH COMMAND CENTER IMAGE) -->
+    <!-- ========================================================================= -->
+    <div class="slide slide-active w-full max-w-6xl h-full flex flex-col justify-between" data-slide="1" data-title="Executive Summary & Operational Vision">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">V-02 Technical Proposal // City Bus Networks</span>
+        <span>Enterprise System Architecture</span>
+      </div>
+
+      <div class="my-auto space-y-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          
+          <!-- Left Pitch & Header (7 cols) -->
+          <div class="lg:col-span-7 space-y-3">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/25 text-sky-300 text-xs font-mono font-semibold uppercase tracking-wider">
+              <span>Unified Spatial & Temporal Operations</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight leading-[1.1]">
+              TransitFlow <span class="bg-gradient-to-r from-brand-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">— Smart Scheduling</span><br/>
+              & Spatial Route Management
+            </h1>
+            <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Eliminating the operational barrier between crew-to-bus assignments and spatial route planning. A reactive, single-operational-picture engine orchestrating <strong class="text-sky-300 font-semibold">linked & unlinked duties</strong>, <strong class="text-amber-300 font-semibold">mandated rest tracking</strong>, <strong class="text-emerald-300 font-semibold">spatial overlap detection</strong>, and <strong class="text-rose-300 font-semibold">automated fallback resolution</strong>.
+            </p>
+          </div>
+
+          <!-- Right Cinematic Command Center Visualization (5 cols) -->
+          <div class="lg:col-span-5">
+            <div class="deck-frame rounded-2xl overflow-hidden relative group cursor-pointer" onclick="openImageModal('./assets/transit_command_center.jpg', 'TransitFlow Unified Command Center Operations')">
+              <img src="./assets/transit_command_center.jpg" alt="TransitFlow Command Center" class="w-full h-48 sm:h-56 object-cover img-zoom">
+              <div class="absolute inset-0 bg-gradient-to-t from-[#070b16] via-transparent to-transparent"></div>
+              <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                <span class="text-[11px] font-mono font-semibold text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">Unified GIS & Roster Command Center</span>
+                <span class="text-[10px] font-mono text-brand-400">&nearr; Expand</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4 Core Architectural Capabilities Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+          
+          <div class="deck-card p-3.5 rounded-xl space-y-1.5 border-t-2 border-t-sky-400">
+            <span class="text-[11px] font-mono text-sky-400 font-bold uppercase tracking-wider">01 // Architecture</span>
+            <h3 class="text-xs font-display font-bold text-white">Dual-View Paradigm</h3>
+            <p class="text-[11px] text-slate-400 leading-normal">Spatial GIS alterations reactively validate crew shift rosters; crew constraints dynamically test route viability.</p>
+          </div>
+
+          <div class="deck-card p-3.5 rounded-xl space-y-1.5 border-t-2 border-t-amber-400">
+            <span class="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-wider">02 // Scheduling</span>
+            <h3 class="text-xs font-display font-bold text-white">Linked & Unlinked Duties</h3>
+            <p class="text-[11px] text-slate-400 leading-normal">Deterministic support for 1:1 locked crew-bus shifts and dynamic interchange hub swaps with 15-min handoff buffers.</p>
+          </div>
+
+          <div class="deck-card p-3.5 rounded-xl space-y-1.5 border-t-2 border-t-emerald-400">
+            <span class="text-[11px] font-mono text-emerald-400 font-bold uppercase tracking-wider">03 // Spatial GIS</span>
+            <h3 class="text-xs font-display font-bold text-white">PostGIS Overlap Engine</h3>
+            <p class="text-[11px] text-slate-400 leading-normal">Automated 50m corridor buffer calculations detecting shared road segments and concurrent timetable collisions.</p>
+          </div>
+
+          <div class="deck-card p-3.5 rounded-xl space-y-1.5 border-t-2 border-t-rose-400">
+            <span class="text-[11px] font-mono text-rose-400 font-bold uppercase tracking-wider">04 // Governance</span>
+            <h3 class="text-xs font-display font-bold text-white">3-Tier Fallback Solver</h3>
+            <p class="text-[11px] text-slate-400 leading-normal">Automated reserve standby query &rarr; duty deconstruction &rarr; escalated dispatch lock for zero blind spots.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3">
+        <div class="font-mono">
+          <span>Technology: <strong class="text-slate-300">React.js &bull; Node.js (Fastify/Express) &bull; PostgreSQL 16 + PostGIS &bull; Deck.gl</strong></span>
+        </div>
+        <div class="font-mono text-slate-400">
+          <span>Press <kbd class="px-1.5 py-0.5 bg-slate-900 text-brand-400 rounded border border-white/10">&rarr;</kbd> or <kbd class="px-1.5 py-0.5 bg-slate-900 text-brand-400 rounded border border-white/10">Space</kbd> to proceed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 02: THE OPERATIONAL PROBLEM & UNIFIED PARADIGM -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="2" data-title="The Operational Dilemma & Dual-View Vision">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">01 // Problem Statement</span>
+        <span>Siloed Transit Architecture vs. Unified Reactivity</span>
+      </div>
+
+      <div class="my-auto space-y-5">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">The Fatal Disconnect in Urban Fleet Management</h2>
+          <p class="text-sm text-slate-300 mt-1 max-w-3xl">Traditional transit operators run route planning (GIS teams) and crew scheduling (dispatchers) in isolated software silos. This structural divide creates cascading operational failures.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- The Legacy Fragmented Model -->
+          <div class="deck-card p-5 rounded-2xl border-l-4 border-l-rose-500 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">Traditional Fragmented Architecture</span>
+              <span class="text-[11px] font-mono text-slate-500">Multi-Tool Latency</span>
+            </div>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="flex items-start space-x-2">
+                <span class="text-rose-400 font-bold">&times;</span>
+                <span><strong>Blind Network Alterations:</strong> GIS route modifications occur without knowing if qualified, legally rested drivers exist to staff them.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-rose-400 font-bold">&times;</span>
+                <span><strong>Undetected Route Overlaps:</strong> Overlapping bus corridors cannibalize passenger demand and create headways clashes.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-rose-400 font-bold">&times;</span>
+                <span><strong>Post-Publication Rest Violations:</strong> Mandated 11-hour driver rest windows are checked via manual spreadsheets after shifts are assigned.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-rose-400 font-bold">&times;</span>
+                <span><strong>3.8-Hour Roster Resolution Lag:</strong> Manual dispatcher phone calls and spreadsheets required to re-assign missing crew.</span>
+              </li>
+            </ul>
+            <div class="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/40 text-xs font-mono text-rose-300">
+              Operational Cost: 18.4% Deadhead Miles &bull; Union Penalties &bull; Phantom Corridor Bunching
+            </div>
+          </div>
+
+          <!-- The TransitFlow Dual-View Solution -->
+          <div class="deck-card p-5 rounded-2xl border-l-4 border-l-sky-400 space-y-3 deck-card-glow-blue">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-sky-400 uppercase tracking-wider">TransitFlow Dual-View Paradigm</span>
+              <span class="text-[11px] font-mono text-emerald-400 font-semibold">Sub-Second Reactive Loop</span>
+            </div>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="flex items-start space-x-2">
+                <span class="text-emerald-400 font-bold">&check;</span>
+                <span><strong>Unified Reactive Operational Picture:</strong> Modifying a route vector automatically tests crew shift legality and updates rosters in real time.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-emerald-400 font-bold">&check;</span>
+                <span><strong>Automated PostGIS Overlap Detection:</strong> Sub-50ms corridor intersection calculations identify shared roads and timetable conflicts.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-emerald-400 font-bold">&check;</span>
+                <span><strong>Deterministic Rest Guardrails:</strong> Algorithmic validation blocks shift confirmation if driver rest &lt; 11 continuous hours.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-emerald-400 font-bold">&check;</span>
+                <span><strong>3-Tier Automated Fallback:</strong> Instant standby auto-assignment or duty deconstruction in &lt; 1.2 seconds.</span>
+              </li>
+            </ul>
+            <div class="p-2.5 rounded-lg bg-sky-950/40 border border-sky-800/40 text-xs font-mono text-sky-300">
+              Operational Gain: 100% Regulatory Rest Compliance &bull; Zero Blind Overlaps &bull; Single Source of Truth
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Core Thesis Banner -->
+        <div class="deck-frame p-3.5 rounded-xl flex items-center justify-between">
+          <div class="space-y-0.5">
+            <span class="text-xs font-bold text-white">The Dual-View Architectural Invariant</span>
+            <p class="text-xs text-slate-400">"A route without an assigned, rested crew is an unviable geometry. A crew without an optimized route is idle deadhead."</p>
+          </div>
+          <button onclick="simulateReactiveCycle()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-mono font-semibold transition-all shrink-0">
+            <span id="reactive-btn-text">Test Reactive Sync Loop</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 01 &bull; Operational Challenge Formulation</span>
+        <span>TransitFlow System Whitepaper</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 03: SYSTEM ARCHITECTURE & FULL TECH STACK -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="3" data-title="System Architecture & Technical Stack">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">02 // Technical Architecture</span>
+        <span>Decoupled Reactive Layers & Spatial GIS Solver</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Full-Stack Reactive System Architecture</h2>
+          <p class="text-sm text-slate-300 mt-1">High-performance decoupled layers delivering 60 FPS vector map rendering synchronized with transactional constraint solving.</p>
+        </div>
+
+        <!-- 3 Tier Architecture Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          
+          <!-- Presentation Tier -->
+          <div class="deck-card p-4 rounded-xl space-y-3 cursor-pointer hover:border-sky-400 transition-all" onclick="inspectArch('frontend')">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 class="text-sm font-display font-bold text-white">1. Presentation Layer</h3>
+              <span class="text-[10px] font-mono text-sky-300 bg-sky-950/80 px-2 py-0.5 rounded border border-sky-800">React &bull; Deck.gl</span>
+            </div>
+            <div class="space-y-2 text-xs text-slate-300 font-mono">
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-sky-300">Vector GIS:</strong> Hardware-accelerated Deck.gl WebGL 2.0 LineString paths and interactive drawing polygon layers.
+              </div>
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-sky-300">Gantt Timeline:</strong> Virtualized timeline with bidirectional click/hover event sync with spatial map.
+              </div>
+            </div>
+          </div>
+
+          <!-- Application & Solver Tier -->
+          <div class="deck-card p-4 rounded-xl space-y-3 cursor-pointer hover:border-amber-400 transition-all deck-card-glow-blue" onclick="inspectArch('backend')">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 class="text-sm font-display font-bold text-white">2. Node.js API & Solver</h3>
+              <span class="text-[10px] font-mono text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">Fastify / Express</span>
+            </div>
+            <div class="space-y-2 text-xs text-slate-300 font-mono">
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-amber-300">Constraint Engine:</strong> Deterministic 11-hour rest validator, shift duration solver, and 15-min handoff buffer checks.
+              </div>
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-amber-300">WebSocket Dispatch:</strong> Real-time event bus broadcasting overlap alerts and shift reassignment diffs.
+              </div>
+            </div>
+          </div>
+
+          <!-- Spatial Database Tier -->
+          <div class="deck-card p-4 rounded-xl space-y-3 cursor-pointer hover:border-emerald-400 transition-all" onclick="inspectArch('database')">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 class="text-sm font-display font-bold text-white">3. PostgreSQL 16 + PostGIS</h3>
+              <span class="text-[10px] font-mono text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">GiST 2D R-Tree</span>
+            </div>
+            <div class="space-y-2 text-xs text-slate-300 font-mono">
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-emerald-300">Spatial Indexing:</strong> `GEOMETRY(LineString, 4326)` with 2D GiST indexes for logarithmic overlap bounding box checks.
+              </div>
+              <div class="p-2 rounded bg-slate-950/80 border border-white/5">
+                <strong class="text-emerald-300">Database Constraints:</strong> Enforced SQL `CHECK (mandatory_rest_end > end_time)` for hard data integrity.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live Latency & Performance SLA Banner -->
+        <div id="arch-detail-box" class="deck-frame p-3 rounded-xl text-xs font-mono text-slate-300 flex items-center justify-between">
+          <div>
+            <span class="text-brand-400 font-bold">SYSTEM SLA:</span>
+            <span> Spatial Overlap Query: <strong class="text-emerald-400">&lt; 38ms</strong> &bull; WebSocket Event Propagation: <strong class="text-sky-400">&lt; 15ms</strong> &bull; Gantt Rendering: <strong class="text-amber-400">60 FPS</strong></span>
+          </div>
+          <span class="text-[10px] text-slate-500">Click any card to inspect implementation details</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 02 &bull; Enterprise Technical Topology</span>
+        <span>Zero-Lag Reactive State Loop</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 04: RELATIONAL & SPATIAL DATA SCHEMA (POSTGRESQL + POSTGIS) -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="4" data-title="Data Schema Blueprint (PostgreSQL + PostGIS)">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">03 // Database Design</span>
+        <span>Production PostgreSQL 16 + PostGIS Spatial Schema</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">PostgreSQL + PostGIS Schema Design</h2>
+            <p class="text-sm text-slate-300 mt-0.5">Strict transactional modeling of spatial line geometries, crew master records, and duty assignments.</p>
+          </div>
+          <div class="flex space-x-1.5 font-mono text-xs">
+            <button onclick="switchSchemaTab('crew')" id="tab-crew" class="px-2.5 py-1 rounded bg-brand-600 text-white font-semibold transition-all">crew_members</button>
+            <button onclick="switchSchemaTab('routes')" id="tab-routes" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white transition-all">routes</button>
+            <button onclick="switchSchemaTab('duty')" id="tab-duty" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white transition-all">duty_assignments</button>
+            <button onclick="switchSchemaTab('indexes')" id="tab-indexes" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white transition-all">indexes & constraints</button>
+          </div>
+        </div>
+
+        <!-- Code Window Display -->
+        <div class="deck-frame rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+          <div class="bg-slate-950/90 px-4 py-2 flex items-center justify-between border-b border-white/5 text-xs font-mono text-slate-400">
+            <div class="flex items-center space-x-2">
+              <span class="text-slate-300 font-semibold" id="schema-filename">schema_crew_members.sql</span>
+            </div>
+            <span class="text-[11px] text-brand-400">PostgreSQL 16 / PostGIS 3.4 Spatial Extensions</span>
+          </div>
+
+          <pre class="p-4 font-mono text-xs sm:text-sm text-slate-200 overflow-x-auto leading-relaxed bg-[#080d19]"><code id="schema-code-block">-- 1. Crew Master & Mandated Rest Tracking
+CREATE TABLE crew_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name VARCHAR(255) NOT NULL,
+    license_number VARCHAR(100) UNIQUE NOT NULL,
+    max_weekly_hours INT DEFAULT 48,
+    last_shift_end TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);</code></pre>
+        </div>
+
+        <!-- Key Highlights Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+          <div class="deck-card p-3 rounded-lg border-l-2 border-brand-400">
+            <span class="text-brand-400 font-bold">GiST Spatial Indexing</span>
+            <p class="text-slate-300 text-[11px] mt-0.5"><code class="text-sky-300">idx_routes_path ON routes USING GIST (path);</code> Enables spatial queries in $O(\log N)$ logarithmic time.</p>
+          </div>
+          <div class="deck-card p-3 rounded-lg border-l-2 border-amber-400">
+            <span class="text-amber-400 font-bold">Custom ENUM Invariants</span>
+            <p class="text-slate-300 text-[11px] mt-0.5"><code class="text-amber-300">duty_type</code> ('LINKED', 'UNLINKED') and <code class="text-amber-300">duty_status</code> ('SCHEDULED', 'ACTIVE', 'CONFLICT', 'UNASSIGNED').</p>
+          </div>
+          <div class="deck-card p-3 rounded-lg border-l-2 border-rose-400">
+            <span class="text-rose-400 font-bold">Database Check Constraints</span>
+            <p class="text-slate-300 text-[11px] mt-0.5"><code class="text-rose-300">CHECK (mandatory_rest_end > end_time)</code> Rejects illegal shift configurations at the storage layer.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 03 &bull; Database Blueprint & GiST Spatial Indexes</span>
+        <span>ACID & Spatial Geometry Standard</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 05: DUAL DUTY SCHEDULING ENGINE (WITH FLEET INTERCHANGE HUB IMAGE) -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="5" data-title="Dual Duty Engine: Linked vs. Unlinked">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">04 // Duty Scheduling Engine</span>
+        <span>Linked vs. Unlinked Duty Constraints & Visual Grammar</span>
+      </div>
+
+      <div class="my-auto space-y-3.5">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Dual Duty Scheduling Engine</h2>
+          <p class="text-sm text-slate-300 mt-0.5">Flexible operational scheduling accommodating continuous crew-vehicle locks and multi-bus interchange cycles.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Left: Comparative Duty Cards (7 cols) -->
+          <div class="lg:col-span-7 space-y-3">
+            
+            <!-- Linked Duty Card -->
+            <div class="deck-card p-3.5 rounded-xl border-2 border-blue-500/80 bg-blue-950/20 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-blue-300 uppercase tracking-wider">LINKED DUTY (1:1 Locked Pairing)</span>
+                <span class="text-[10px] text-blue-400 font-mono">Solid Blue Border</span>
+              </div>
+              <p class="text-xs text-slate-300">
+                Single crew member locked to a single bus for full shift duration.
+              </p>
+              <div class="p-2 rounded bg-slate-950/90 border border-blue-500/30 text-[11px] font-mono text-blue-300">
+                Rule: `crew_id` & `bus_id` maintain 1:1 invariant &bull; 0 min deadhead swap.
+              </div>
+              <div class="w-full h-7 rounded-lg bg-blue-600/30 border-2 border-blue-500 flex items-center justify-between px-3 text-[10px] font-mono text-blue-200 font-semibold shadow-inner">
+                <span>[ Crew A | Bus 101 ]</span>
+                <span class="text-[9px] opacity-75">━━━━ Continuous Shift (8.0h) ━━━━&gt;</span>
+                <span>[ Shift End ]</span>
+              </div>
+            </div>
+
+            <!-- Unlinked Duty Card -->
+            <div class="deck-card p-3.5 rounded-xl border-2 border-dashed border-amber-500/80 bg-amber-950/20 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">UNLINKED DUTY (Interchange Handoff)</span>
+                <span class="text-[10px] text-amber-400 font-mono">Dashed Amber Border</span>
+              </div>
+              <p class="text-xs text-slate-300">
+                Crew switches buses at transit interchange hubs with mandatory 15-min handoff buffer.
+              </p>
+              <div class="p-2 rounded bg-slate-950/90 border border-amber-500/30 text-[11px] font-mono text-amber-300">
+                Rule: Min. 15-min buffer &bull; Spatial interchange node validated via PostGIS.
+              </div>
+              <div class="w-full h-7 flex items-center space-x-1 font-mono text-[10px]">
+                <div class="flex-1 h-full rounded-l-lg bg-amber-600/30 border border-dashed border-amber-400 flex items-center justify-center text-amber-200 font-semibold">
+                  [Crew A | Bus 101]
+                </div>
+                <div class="px-2 h-full bg-amber-950 border border-amber-500 rounded flex items-center justify-center text-amber-300 text-[9px] font-bold">
+                  15m Buffer
+                </div>
+                <div class="flex-1 h-full rounded-r-lg bg-amber-600/30 border border-dashed border-amber-400 flex items-center justify-center text-amber-200 font-semibold">
+                  [Crew A | Bus 204]
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right: Visual Fleet Interchange Hub Showcase (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col justify-between">
+            <div class="deck-frame rounded-2xl overflow-hidden relative group cursor-pointer h-full min-h-[220px]" onclick="openImageModal('./assets/transit_fleet_hub.jpg', 'Modern Transit Interchange Hub & Shift Schedule')">
+              <img src="./assets/transit_fleet_hub.jpg" alt="Transit Interchange Hub" class="w-full h-full object-cover img-zoom">
+              <div class="absolute inset-0 bg-gradient-to-t from-[#070b16] via-transparent to-transparent"></div>
+              <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                <span class="text-[11px] font-mono font-semibold text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">Interchange Hub Node Operations</span>
+                <span class="text-[10px] font-mono text-amber-400">&nearr; Expand</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline Live Duty Checker Feedback Box -->
+        <div class="deck-frame p-3 rounded-xl flex items-center justify-between text-xs font-mono">
+          <div class="flex items-center space-x-3">
+            <span class="text-brand-400 font-bold">LIVE DUTY SOLVER TESTER:</span>
+            <span class="text-slate-300" id="duty-tester-output">Click a mode to evaluate how the constraint engine validates shift invariants.</span>
+          </div>
+          <div class="flex space-x-2 shrink-0">
+            <button onclick="testDutyMode('linked')" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs transition-all">Evaluate Linked Shift</button>
+            <button onclick="testDutyMode('unlinked')" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs transition-all">Evaluate Unlinked Swap</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-2 font-mono">
+        <span>Section 04 &bull; Crew-to-Bus Shift Invariant Rules</span>
+        <span>Dual Duty Compliance Engine</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 06: MANDATED REST PERIOD COMPLIANCE & VALIDATOR ENGINE -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="6" data-title="Mandated Rest Period Compliance Engine">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">05 // Rest Compliance Engine</span>
+        <span>Statutory 11-Hour Continuous Rest Verification & Solver</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Mandated Rest Period Verification</h2>
+          <p class="text-sm text-slate-300 mt-1">Automated compliance tracking enforcing the statutory <strong class="text-sky-300">11-hour continuous rest interval</strong> between shifts.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Validator Code Specification -->
+          <div class="lg:col-span-6 deck-card p-4 rounded-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="text-xs font-mono font-bold text-sky-400">Node.js Rest Period Validator Function</span>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">Deterministic Guard</span>
+            </div>
+            <pre class="p-3 bg-slate-950/90 rounded-lg font-mono text-xs text-slate-200 overflow-x-auto leading-relaxed border border-white/5"><code><span class="text-purple-400">function</span> <span class="text-sky-300">validateRestPeriod</span>(lastShiftEnd, newShiftStart, minRestHours = <span class="text-amber-300">11</span>) {
+  <span class="text-purple-400">const</span> restMillis = minRestHours * <span class="text-amber-300">60</span> * <span class="text-amber-300">60</span> * <span class="text-amber-300">1000</span>;
+  <span class="text-purple-400">const</span> actualRest = <span class="text-purple-400">new</span> <span class="text-sky-300">Date</span>(newShiftStart) - <span class="text-purple-400">new</span> <span class="text-sky-300">Date</span>(lastShiftEnd);
+  
+  <span class="text-purple-400">return</span> {
+    isCompliant: actualRest >= restMillis,
+    actualRestHours: (actualRest / <span class="text-amber-300">3600000</span>).toFixed(<span class="text-amber-300">2</span>),
+    deficitHours: actualRest < restMillis ? 
+      ((restMillis - actualRest) / <span class="text-amber-300">3600000</span>).toFixed(<span class="text-amber-300">2</span>) : <span class="text-amber-300">0</span>
+  };
+}</code></pre>
+            <div class="text-xs text-slate-400 font-mono">
+              <strong class="text-slate-200">Enforcement Hook:</strong> Triggered on all dispatch drag-and-drop actions and automated shift solver runs.
+            </div>
+          </div>
+
+          <!-- Interactive Live Rest Calculator Widget -->
+          <div class="lg:col-span-6 deck-card p-4 rounded-xl space-y-3 bg-slate-900/80 border border-white/10 deck-card-glow-blue">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="text-xs font-mono font-bold text-white">Live Shift Rest Interval Calculator</span>
+              <span class="text-[10px] font-mono text-slate-400">Test with Judges</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+              <div>
+                <label class="block text-slate-400 text-[11px] mb-1">Prior Shift End Time:</label>
+                <input type="time" id="rest-prev-end" value="22:00" onchange="runRestCalculator()" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-white focus:border-brand-400 outline-none">
+              </div>
+              <div>
+                <label class="block text-slate-400 text-[11px] mb-1">Proposed Shift Start Time:</label>
+                <input type="time" id="rest-next-start" value="07:30" onchange="runRestCalculator()" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-white focus:border-brand-400 outline-none">
+              </div>
+            </div>
+
+            <!-- Dynamic Result Card -->
+            <div id="rest-result-card" class="p-3.5 rounded-xl border flex items-center justify-between bg-rose-950/40 border-rose-600 text-rose-300 transition-all">
+              <div>
+                <div class="text-xs font-mono font-bold" id="rest-status-text">REST VIOLATION DETECTED</div>
+                <div class="text-xs text-slate-300 mt-0.5" id="rest-detail-text">
+                  Actual Rest: <strong>9.50 Hours</strong> (Short by 1.50 Hours).
+                </div>
+              </div>
+              <div class="text-right font-mono">
+                <div class="text-xl font-extrabold text-rose-400" id="rest-hours-badge">9.50h</div>
+                <div class="text-[10px] text-slate-400">Req: 11.0h</div>
+              </div>
+            </div>
+
+            <!-- System Action Triggered -->
+            <div class="p-2.5 rounded-lg bg-slate-950 border border-white/10 text-xs font-mono text-slate-300 flex items-center justify-between" id="rest-action-box">
+              <span>System Response: <strong class="text-rose-400">Lock Shift & Trigger Tier-1 Fallback</strong></span>
+              <span class="text-[10px] text-amber-400 font-semibold">AUTO-ESCALATED</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="deck-frame p-3 rounded-xl flex items-center justify-between text-xs font-mono text-slate-300">
+          <div>
+            <span>REGULATORY MANDATE: <strong class="text-emerald-400">100% Zero-Rest-Violation Target</strong></span>
+            <span class="ml-4">DATABASE INTERLOCK: <strong class="text-sky-300">PostgreSQL CHECK Constraint</strong></span>
+          </div>
+          <span class="text-slate-500">DOT & Labor Union Compliant</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 05 &bull; Driver Fatigue & Safety Rules</span>
+        <span>Deterministic Labor Protection</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 07: SPATIAL ROUTE PLANNING & OVERLAP ENGINE (WITH 3D VECTOR MAP IMAGE) -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="7" data-title="Spatial Route Planning & Overlap Engine">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">06 // Spatial GIS Engine</span>
+        <span>PostGIS Vector Overlap & Temporal Collision Analysis</span>
+      </div>
+
+      <div class="my-auto space-y-3.5">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Spatial Vector Overlap Engine</h2>
+          <p class="text-sm text-slate-300 mt-0.5">Automatic 50-meter GIS corridor buffer calculations detecting geographic road-sharing and timetable collisions.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Left: PostGIS Query & Buffer Slider (7 cols) -->
+          <div class="lg:col-span-7 space-y-3">
+            <div class="deck-card p-3 rounded-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-white/10 pb-1.5">
+                <span class="text-xs font-mono font-bold text-emerald-400">PostGIS ST_Buffer & ST_Intersection SQL</span>
+                <span class="text-[10px] font-mono text-sky-300 bg-sky-950/80 px-2 py-0.5 rounded border border-sky-800">50m Corridor</span>
+              </div>
+              <pre class="p-2.5 bg-slate-950/90 rounded-lg font-mono text-[11px] text-slate-200 overflow-x-auto leading-tight border border-white/5"><code><span class="text-purple-400">SELECT</span> r.id, r.route_code,
+  <span class="text-sky-300">ST_Length</span>(<span class="text-sky-300">ST_Intersection</span>(r.path, <span class="text-sky-300">ST_Buffer</span>(<span class="text-sky-300">ST_GeomFromText</span>($1, <span class="text-amber-300">4326</span>)::geography, <span class="text-amber-300">50</span>)::geometry)) <span class="text-purple-400">AS</span> overlap_meters,
+  (<span class="text-sky-300">ST_Length</span>(<span class="text-sky-300">ST_Intersection</span>(r.path, <span class="text-sky-300">ST_Buffer</span>(...)::geometry)) / <span class="text-sky-300">ST_Length</span>(r.path)) * <span class="text-amber-300">100</span> <span class="text-purple-400">AS</span> overlap_pct
+<span class="text-purple-400">FROM</span> routes r <span class="text-purple-400">WHERE</span> <span class="text-sky-300">ST_Intersects</span>(r.path, <span class="text-sky-300">ST_Buffer</span>(...)::geometry);</code></pre>
+            </div>
+
+            <!-- Buffer Adjuster Widget -->
+            <div class="deck-card p-3 rounded-xl space-y-2 bg-slate-900/80 border border-white/10">
+              <div class="flex justify-between text-xs font-mono text-slate-300">
+                <span>Corridor Buffer Radius:</span>
+                <span id="buffer-val-label" class="text-brand-400 font-bold">50 Meters</span>
+              </div>
+              <input type="range" id="buffer-slider" min="10" max="100" value="50" oninput="updateBufferSim()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400">
+              
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                <div class="p-1.5 rounded bg-slate-950 border border-white/5">
+                  <div class="text-[10px] text-slate-400">Intersection Segment:</div>
+                  <div class="text-amber-400 font-bold" id="sim-overlap-len">3,420 Meters</div>
+                </div>
+                <div class="p-1.5 rounded bg-slate-950 border border-white/5">
+                  <div class="text-[10px] text-slate-400">Network Overlap %:</div>
+                  <div class="text-rose-400 font-bold" id="sim-overlap-pct">42.8% (HIGH CONFLICT)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: 3D Spatial Vector Map Showcase (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col justify-between">
+            <div class="deck-frame rounded-2xl overflow-hidden relative group cursor-pointer h-full min-h-[220px]" onclick="openImageModal('./assets/spatial_route_map.jpg', '3D Spatial Vector Route Map with 50m Buffer Envelopes')">
+              <img src="./assets/spatial_route_map.jpg" alt="Spatial Route Vector Map" class="w-full h-full object-cover img-zoom">
+              <div class="absolute inset-0 bg-gradient-to-t from-[#070b16] via-transparent to-transparent"></div>
+              <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                <span class="text-[11px] font-mono font-semibold text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">3D Vector Route Buffer Envelopes</span>
+                <span class="text-[10px] font-mono text-brand-400">&nearr; Expand</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="deck-frame p-2.5 rounded-xl flex items-center justify-between text-xs font-mono text-slate-300">
+          <div>
+            <span class="text-brand-400 font-bold">DUAL-CHECK PIPELINE:</span>
+            <span> 1. Spatial Buffer Intersection (PostGIS) &rarr; 2. Temporal Collision Verification (Timetable Windows)</span>
+          </div>
+          <span class="text-emerald-400 font-semibold">Zero False Positives</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-2 font-mono">
+        <span>Section 06 &bull; GIS Geometry & Overlap Calculations</span>
+        <span>PostGIS Geography Engine</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 08: SINGLE UNIFIED OPERATIONAL DASHBOARD (INTERACTIVE WORKBENCH) -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="8" data-title="Single Unified Operational Dashboard">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">07 // Unified Dashboard</span>
+        <span>Interactive Bidirectional Sync: Deck.gl Map &times; Gantt Timeline</span>
+      </div>
+
+      <div class="my-auto space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Unified Operational Dashboard</h2>
+            <p class="text-xs sm:text-sm text-slate-300">Bidirectional reactive sync: Click any route or duty card to cross-isolate spatial & temporal states.</p>
+          </div>
+          <div class="hidden sm:flex items-center space-x-3 font-mono text-xs">
+            <span class="text-blue-400">&bull; Linked Duty</span>
+            <span class="text-amber-400">&bull; Unlinked Duty</span>
+            <span class="text-rose-400">&bull; Rest Conflict</span>
+          </div>
+        </div>
+
+        <!-- Dual Pane Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 h-[340px]">
+          
+          <!-- Left: Deck.gl Simulated Spatial Vector Map (6 cols) -->
+          <div class="lg:col-span-6 deck-frame rounded-2xl p-3 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex items-center justify-between z-10">
+              <span class="text-xs font-mono font-bold text-sky-400">VECTOR ROUTE EDITOR (Deck.gl)</span>
+              <span class="text-[10px] font-mono text-slate-400">EPSG:4326 GeoJSON</span>
+            </div>
+
+            <!-- SVG Vector Map Canvas -->
+            <div class="my-auto relative h-48 bg-[#070b16] rounded-xl border border-white/10 flex items-center justify-center overflow-hidden">
+              <svg class="w-full h-full" viewBox="0 0 360 180">
+                <defs>
+                  <pattern id="deck-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#121d33" stroke-width="0.8"/>
+                  </pattern>
+                </defs>
+                <rect width="360" height="180" fill="url(#deck-grid)" />
+
+                <!-- Route 101 (Active Metro Line) -->
+                <g id="map-route-101" class="cursor-pointer transition-all duration-300" onclick="selectDashboardItem('101')">
+                  <path d="M 30 140 Q 110 130 180 90 T 330 40" fill="none" stroke="#3b82f6" stroke-width="4" id="path-101"/>
+                  <circle cx="30" cy="140" r="4" fill="#3b82f6" />
+                  <circle cx="330" cy="40" r="4" fill="#3b82f6" />
+                  <text x="40" y="130" fill="#93c5fd" font-size="9" font-family="monospace" font-weight="bold">Route 101 (Active Metro)</text>
+                </g>
+
+                <!-- Route 204 (Suburban Express - Unlinked) -->
+                <g id="map-route-204" class="cursor-pointer transition-all duration-300" onclick="selectDashboardItem('204')">
+                  <path d="M 40 40 Q 120 70 200 90 T 320 150" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-dasharray="6,4" id="path-204"/>
+                  <circle cx="200" cy="90" r="7" fill="#f59e0b" fill-opacity="0.3" stroke="#f59e0b" stroke-width="1.5" />
+                  <text x="210" y="85" fill="#fcd34d" font-size="8" font-family="monospace">Central Hub [15m Swap]</text>
+                  <text x="45" y="32" fill="#fcd34d" font-size="9" font-family="monospace" font-weight="bold">Route 204 (Express)</text>
+                </g>
+
+                <!-- Proposed Route B (Conflict Line) -->
+                <g id="map-route-conflict" class="cursor-pointer transition-all duration-300" onclick="selectDashboardItem('conflict')">
+                  <path d="M 120 160 Q 180 90 260 90 T 340 100" fill="none" stroke="#f43f5e" stroke-width="3" id="path-conflict"/>
+                  <circle cx="180" cy="90" r="9" fill="#f43f5e" fill-opacity="0.3" stroke="#f43f5e" stroke-width="1.5" />
+                  <text x="120" y="172" fill="#fca5a5" font-size="9" font-family="monospace" font-weight="bold">Proposed Route B [CONFLICT]</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="text-[10px] text-slate-400 font-mono flex items-center justify-between z-10">
+              <span id="map-status-caption">Click a route above to cross-isolate Gantt duty roster</span>
+              <span class="text-brand-400 font-semibold">GIS Reactive Feedback</span>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Gantt Crew Schedule (6 cols) -->
+          <div class="lg:col-span-6 deck-frame rounded-2xl p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-amber-400">CREW & BUS GANTT TIMELINE</span>
+              <span class="text-[10px] font-mono text-slate-400">Shift Window: 06:00 - 18:00</span>
+            </div>
+
+            <!-- Timeline Rows -->
+            <div class="space-y-2.5 my-auto text-xs font-mono">
+              
+              <!-- Crew A Row (Linked Duty) -->
+              <div id="gantt-row-101" class="p-2 rounded-xl bg-slate-950/80 border border-white/5 cursor-pointer hover:border-blue-400 transition-all" onclick="selectDashboardItem('101')">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-slate-200 font-semibold">Crew A (John Doe) &bull; Bus #101</span>
+                  <span class="text-blue-400 font-mono text-[10px]">LINKED DUTY (Route 101)</span>
+                </div>
+                <div class="w-full bg-slate-900 h-5 rounded-lg overflow-hidden p-0.5">
+                  <div class="h-full w-4/5 rounded bg-blue-600 border border-blue-400 flex items-center px-2 text-[10px] text-white font-bold">
+                    06:00 - 14:00 (Continuous Shift 8h)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crew B Row (Unlinked Duty) -->
+              <div id="gantt-row-204" class="p-2 rounded-xl bg-slate-950/80 border border-white/5 cursor-pointer hover:border-amber-400 transition-all" onclick="selectDashboardItem('204')">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-slate-200 font-semibold">Crew B (Jane Smith) &bull; Bus #204 &rarr; #308</span>
+                  <span class="text-amber-400 font-mono text-[10px]">UNLINKED (Route 204)</span>
+                </div>
+                <div class="w-full bg-slate-900 h-5 rounded-lg overflow-hidden p-0.5 flex space-x-1">
+                  <div class="h-full w-2/5 rounded bg-amber-600/60 border border-dashed border-amber-400 flex items-center px-1 text-[9px] text-amber-200">
+                    Bus 204 (4h)
+                  </div>
+                  <div class="h-full w-12 rounded bg-amber-950 border border-amber-500 flex items-center justify-center text-[8px] text-amber-300 font-bold">
+                    15m Swap
+                  </div>
+                  <div class="h-full flex-1 rounded bg-amber-600/60 border border-dashed border-amber-400 flex items-center px-1 text-[9px] text-amber-200">
+                    Bus 308 (3.5h)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crew C Row (Rest Conflict Alert) -->
+              <div id="gantt-row-conflict" class="p-2 rounded-xl bg-rose-950/30 border border-rose-800/60 cursor-pointer hover:border-rose-400 transition-all" onclick="selectDashboardItem('conflict')">
+                <div class="flex justify-between text-[11px] mb-1">
+                  <span class="text-rose-200 font-semibold">Crew C (Carlos R.) &bull; Proposed Bus #112</span>
+                  <span class="text-rose-400 font-mono text-[10px] font-bold">REST CONFLICT (9.5h &lt; 11h)</span>
+                </div>
+                <div class="w-full bg-slate-900 h-5 rounded-lg overflow-hidden p-0.5">
+                  <div class="h-full w-3/4 rounded bg-rose-600/80 border border-rose-400 flex items-center justify-between px-2 text-[10px] text-white font-bold">
+                    <span>08:00 - 16:00 (VIOLATION: Rest Deficit)</span>
+                    <span class="text-[9px] bg-rose-900 px-1.5 py-0.5 rounded font-mono">FALLBACK TRIGGERED</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="text-[10px] text-slate-400 font-mono flex justify-between">
+              <span>Sync State: <strong class="text-emerald-400">Bidirectional Redux / Deck.gl</strong></span>
+              <button onclick="resetDashboardSelection()" class="text-brand-400 hover:underline">Reset View</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Real-Time Aggregate Summary Footer -->
+        <div class="deck-card p-2.5 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono text-slate-300">
+          <div>Active Routes: <strong class="text-white">24 Lines</strong></div>
+          <div>Crew Utilization: <strong class="text-emerald-400">87.4%</strong></div>
+          <div>Net Network Coverage: <strong class="text-sky-400">412.8 km</strong></div>
+          <div>Active Conflicts: <strong class="text-rose-400">1 Detected</strong></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-2 font-mono">
+        <span>Section 07 &bull; Unified Dispatcher Interface</span>
+        <span>Dual-View Operational Picture</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 09: OPERATIONAL SUMMARY ANALYTICS (WITH BI DASHBOARD IMAGE) -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="9" data-title="Operational Summary Analytics & Formulas">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">08 // Analytics & KPIs</span>
+        <span>Mathematical Metrics & Live Calculation Formulation</span>
+      </div>
+
+      <div class="my-auto space-y-3.5">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Operational Summary Analytics</h2>
+          <p class="text-sm text-slate-300 mt-0.5">Real-time business intelligence metrics mathematically computed from spatial line geometries and temporal duty logs.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Left: 3 Math KPI Cards (7 cols) -->
+          <div class="lg:col-span-7 space-y-2.5">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <!-- Metric 1: Crew Utilization Rate -->
+              <div class="deck-card p-3 rounded-xl space-y-1.5 border-t-2 border-t-sky-400">
+                <span class="text-[10px] font-mono text-sky-400 font-bold uppercase">1. Crew Util ($CU$)</span>
+                <div class="p-2 bg-slate-950/90 rounded border border-white/5 text-center font-mono text-[10px] text-sky-300">
+                  $$CU = \frac{\sum T_{duty}}{\sum T_{avail}} \times 100$$
+                </div>
+                <div class="text-[10px] font-mono text-slate-300 text-center">Score: <strong class="text-sky-300 font-bold">87.4%</strong></div>
+              </div>
+
+              <!-- Metric 2: Network Route Coverage -->
+              <div class="deck-card p-3 rounded-xl space-y-1.5 border-t-2 border-t-emerald-400">
+                <span class="text-[10px] font-mono text-emerald-400 font-bold uppercase">2. Net Coverage ($NRC$)</span>
+                <div class="p-2 bg-slate-950/90 rounded border border-white/5 text-center font-mono text-[10px] text-emerald-300">
+                  $$NRC = \text{ST\_Union}(\text{path})$$
+                </div>
+                <div class="text-[10px] font-mono text-slate-300 text-center">Reach: <strong class="text-emerald-300 font-bold">412.8 km</strong></div>
+              </div>
+
+              <!-- Metric 3: Deadhead Ratio -->
+              <div class="deck-card p-3 rounded-xl space-y-1.5 border-t-2 border-t-amber-400">
+                <span class="text-[10px] font-mono text-amber-400 font-bold uppercase">3. Deadhead ($DR$)</span>
+                <div class="p-2 bg-slate-950/90 rounded border border-white/5 text-center font-mono text-[10px] text-amber-300">
+                  $$DR = \frac{T_{deadhead}}{T_{revenue}} \times 100$$
+                </div>
+                <div class="text-[10px] font-mono text-slate-300 text-center">Waste: <strong class="text-amber-300 font-bold">5.8%</strong></div>
+              </div>
+            </div>
+
+            <!-- Interactive Sensitivity Sliders -->
+            <div class="deck-frame p-3 rounded-xl space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] font-mono text-brand-400 font-bold">
+                <span>INTERACTIVE SENSITIVITY CALCULATOR:</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                <div>
+                  <label class="text-slate-400">Duty: <strong id="kpi-sched-val" class="text-sky-300">3,800h</strong></label>
+                  <input type="range" id="kpi-sched-slider" min="2000" max="5000" value="3800" oninput="recalcKPIs()" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-sky-400">
+                </div>
+                <div>
+                  <label class="text-slate-400">Contract: <strong id="kpi-contract-val" class="text-emerald-300">4,350h</strong></label>
+                  <input type="range" id="kpi-contract-slider" min="3000" max="6000" value="4350" oninput="recalcKPIs()" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-emerald-400">
+                </div>
+                <div>
+                  <label class="text-slate-400">Deadhead: <strong id="kpi-deadhead-val" class="text-amber-300">220m</strong></label>
+                  <input type="range" id="kpi-deadhead-slider" min="50" max="600" value="220" oninput="recalcKPIs()" class="w-full h-1 bg-slate-800 rounded appearance-none cursor-pointer accent-amber-400">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right: High-Tech Analytics BI Visualization (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col justify-between">
+            <div class="deck-frame rounded-2xl overflow-hidden relative group cursor-pointer h-full min-h-[220px]" onclick="openImageModal('./assets/transit_analytics_kpi.jpg', 'Smart City Transit BI Network KPI Dashboard')">
+              <img src="./assets/transit_analytics_kpi.jpg" alt="Transit Analytics KPI Dashboard" class="w-full h-full object-cover img-zoom">
+              <div class="absolute inset-0 bg-gradient-to-t from-[#070b16] via-transparent to-transparent"></div>
+              <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
+                <span class="text-[11px] font-mono font-semibold text-white bg-black/60 backdrop-blur px-2.5 py-1 rounded-full border border-white/10">Smart City Transit BI Dashboard</span>
+                <span class="text-[10px] font-mono text-emerald-400">&nearr; Expand</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-2 font-mono">
+        <span>Section 08 &bull; Mathematical Rigor & Fleet Efficiency</span>
+        <span>Data-Driven Operational Analytics</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 10: AUTOMATED CONFLICT RESOLUTION & 3-TIER FALLBACK WORKFLOW -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="10" data-title="Automated Conflict Resolution & Fallback Logic">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">09 // Automated Fallback Solver</span>
+        <span>Deterministic 3-Tier Conflict Mitigation Decision Tree</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Automated Conflict Resolution Workflow</h2>
+          <p class="text-sm text-slate-300 mt-1">Multi-tier deterministic fallback logic executing whenever a driver rest violation or crew shortage is detected.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          
+          <!-- Tier 1: Standby Reserve Pool -->
+          <div class="deck-card p-4 rounded-2xl space-y-2.5 border-l-4 border-l-purple-500 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-purple-400 uppercase tracking-wider">TIER 1 &bull; STANDBY POOL</span>
+                <span class="text-xs text-purple-300 font-mono">Auto-Assign</span>
+              </div>
+              <h3 class="text-sm font-display font-bold text-white mt-1">Query Reserve Standby Pool</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Queries active reserve crew with valid rest (<code class="text-purple-300">last_shift_end &ge; 11h</code>) and zero concurrent duty assignments.
+              </p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/80 border border-purple-500/30 text-xs font-mono text-slate-300 space-y-1">
+              <div class="text-purple-300 font-bold">SQL Execution:</div>
+              <div class="text-[10px] text-slate-400 truncate">SELECT * FROM crew_members WHERE last_shift_end &lt; NOW() - INTERVAL '11 hours' AND status = 'STANDBY' LIMIT 1;</div>
+            </div>
+            <div class="text-xs text-emerald-400 font-mono font-semibold">&check; Seamless automated swap &mdash; 0 min delay</div>
+          </div>
+
+          <!-- Tier 2: Duty Deconstruction -->
+          <div class="deck-card p-4 rounded-2xl space-y-2.5 border-l-4 border-l-amber-500 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">TIER 2 &bull; DUTY SPLITTING</span>
+                <span class="text-xs text-amber-300 font-mono">Deconstruction</span>
+              </div>
+              <h3 class="text-sm font-display font-bold text-white mt-1">Split to Unlinked Shift</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                If no single driver can cover the full 8h shift, the engine splits the Linked shift into an <strong class="text-amber-300">Unlinked Duty</strong> at an interchange hub.
+              </p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/80 border border-amber-500/30 text-xs font-mono text-slate-300 space-y-1">
+              <div class="text-amber-300 font-bold">Shift Split:</div>
+              <div class="text-[10px] text-slate-400">Leg 1: Driver X (4h) &bull; [15m Handoff Hub] &bull; Leg 2: Driver Y (4h)</div>
+            </div>
+            <div class="text-xs text-amber-400 font-mono font-semibold">&check; Preserves route without full cancellation</div>
+          </div>
+
+          <!-- Tier 3: Hard Constraint Escalation -->
+          <div class="deck-card p-4 rounded-2xl space-y-2.5 border-l-4 border-l-rose-500 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">TIER 3 &bull; ESCALATION LOCK</span>
+                <span class="text-xs text-rose-300 font-mono">Dispatch Lock</span>
+              </div>
+              <h3 class="text-sm font-display font-bold text-white mt-1">System Lock & Alert</h3>
+              <p class="text-xs text-slate-400 mt-1">
+                If all automated fallbacks fail, duty drops to <code class="text-rose-400">UNASSIGNED_CONFLICT</code>, triggering emergency dispatch broadcast.
+              </p>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/80 border border-rose-500/30 text-xs font-mono text-slate-300 space-y-1">
+              <div class="text-rose-300 font-bold">Safety Interlock:</div>
+              <div class="text-[10px] text-slate-400">Blocks departure confirmation until operations manager resolves conflict.</div>
+            </div>
+            <div class="text-xs text-rose-400 font-mono font-semibold">&check; 100% Zero-Rogue-Departure Safety Guarantee</div>
+          </div>
+
+        </div>
+
+        <!-- Interactive Fallback Workflow Stepper -->
+        <div class="deck-frame p-3.5 rounded-xl space-y-2 font-mono text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-brand-400 font-bold">LIVE FALLBACK RESOLUTION SIMULATOR:</span>
+            <div class="flex space-x-2">
+              <button onclick="runFallbackSimulation('step1')" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs transition-all">Simulate Tier 1 (Standby)</button>
+              <button onclick="runFallbackSimulation('step2')" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded text-xs transition-all">Simulate Tier 2 (Split Shift)</button>
+              <button onclick="runFallbackSimulation('step3')" class="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs transition-all">Simulate Tier 3 (Escalation)</button>
+            </div>
+          </div>
+          <div id="fallback-sim-output" class="p-2.5 rounded-lg bg-slate-950 border border-white/5 text-slate-300 text-xs">
+            System State: Click a tier button above to simulate how TransitFlow resolves unexpected driver rest violations in real time.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 09 &bull; Fail-Safe Architectural Design</span>
+        <span>Deterministic Multi-Tier Fallback</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 11: OPERATIONAL RESILIENCY & EDGE-CASE MATRIX -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="11" data-title="Operational Edge Cases & Resiliency Matrix">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">10 // Edge-Case Governance</span>
+        <span>Runtime Integrity & Anomaly Mitigation Matrix</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Edge Case Governance & Resiliency</h2>
+          <p class="text-sm text-slate-300 mt-1">Pre-configured deterministic handling of real-world urban transit disruptions and operational friction.</p>
+        </div>
+
+        <!-- Edge Case Table -->
+        <div class="deck-frame rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr class="bg-slate-950/90 text-slate-300 border-b border-white/5">
+                  <th class="p-3 font-semibold text-brand-400">Operational Edge Case</th>
+                  <th class="p-3 font-semibold text-sky-400">Detection Mechanism</th>
+                  <th class="p-3 font-semibold text-amber-400">Automated System Mitigation</th>
+                  <th class="p-3 font-semibold text-emerald-400">Fail-Safe State</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5 text-slate-300">
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="p-3 font-bold text-white">1. Driver Traffic Overrun (Shift Delay)</td>
+                  <td class="p-3 text-slate-400">GPS telemetry exceeds scheduled end time</td>
+                  <td class="p-3">Automatically advances next day's shift start time to preserve 11h rest</td>
+                  <td class="p-3 text-emerald-400 font-bold">Zero Rest Penalty</td>
+                </tr>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="p-3 font-bold text-white">2. Interchange Hub Road Blockage</td>
+                  <td class="p-3 text-slate-400">PostGIS dynamic polygon exclusion zone</td>
+                  <td class="p-3">Redirects unlinked 15m handoff to nearest secondary hub node</td>
+                  <td class="p-3 text-amber-400 font-bold">Rerouted Handoff</td>
+                </tr>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="p-3 font-bold text-white">3. Standby Pool Exhaustion</td>
+                  <td class="p-3 text-slate-400">Reserve pool SQL count = 0</td>
+                  <td class="p-3">Automated duty splitting into unlinked shifts across part-time roster</td>
+                  <td class="p-3 text-sky-400 font-bold">Shift Deconstruction</td>
+                </tr>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="p-3 font-bold text-white">4. Corridor Headway Bunching Overlap</td>
+                  <td class="p-3 text-slate-400">PostGIS &gt; 50% shared road length + concurrent hours</td>
+                  <td class="p-3">Staggers scheduled departure headways by &plusmn; 7.5 mins to prevent bus bunching</td>
+                  <td class="p-3 text-emerald-400 font-bold">Headway De-confliction</td>
+                </tr>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="p-3 font-bold text-white">5. Vehicle Breakdown Mid-Route</td>
+                  <td class="p-3 text-slate-400">Fleet status toggled to 'MAINTENANCE'</td>
+                  <td class="p-3">Converts active linked duty to unlinked with depot replacement unit</td>
+                  <td class="p-3 text-amber-400 font-bold">Fleet Replacement Swap</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="deck-frame p-3 rounded-xl flex items-center justify-between text-xs font-mono text-slate-300">
+          <div>
+            <span class="text-brand-400 font-bold">RELIABILITY TARGET:</span>
+            <span> 99.98% Schedule Uptime &bull; Guaranteed Zero Undetected Labor Violations</span>
+          </div>
+          <span class="text-emerald-400 font-semibold">Autonomous Defense Matrix</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 10 &bull; Edge-Case Governance & Enterprise SLA</span>
+        <span>Robust Fault-Tolerant Operations</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE 12: IMPLEMENTATION ROADMAP & MEASURABLE BUSINESS IMPACT -->
+    <!-- ========================================================================= -->
+    <div class="slide hidden w-full max-w-6xl h-full flex flex-col justify-between" data-slide="12" data-title="Implementation Roadmap & Business Impact">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-white/5 pb-2">
+        <span class="text-brand-400 font-semibold tracking-wider uppercase">11 // Delivery & Value</span>
+        <span>16-Week Phased Rollout & Quantified Business Impact</span>
+      </div>
+
+      <div class="my-auto space-y-4">
+        <div>
+          <h2 class="text-2xl sm:text-4xl font-display font-extrabold text-white">Implementation Roadmap & Impact</h2>
+          <p class="text-sm text-slate-300 mt-1">Structured 16-week phased deployment delivering immediate operational efficiency and regulatory certainty.</p>
+        </div>
+
+        <!-- 4 Phase Delivery Timeline -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="deck-card p-4 rounded-xl space-y-2 border-t-2 border-t-brand-400">
+            <div class="flex justify-between items-center text-[11px] font-mono">
+              <span class="text-brand-400 font-bold">PHASE 1 (W1-4)</span>
+              <span class="text-slate-500">Core GIS</span>
+            </div>
+            <h4 class="text-xs font-display font-bold text-white">Spatial Engine & Schema</h4>
+            <p class="text-[11px] text-slate-400 leading-normal">PostGIS setup, LineString vector storage, GiST indexing, ST_Buffer/ST_Intersection microservice.</p>
+          </div>
+
+          <div class="deck-card p-4 rounded-xl space-y-2 border-t-2 border-t-sky-400">
+            <div class="flex justify-between items-center text-[11px] font-mono">
+              <span class="text-sky-400 font-bold">PHASE 2 (W5-8)</span>
+              <span class="text-slate-500">Scheduling</span>
+            </div>
+            <h4 class="text-xs font-display font-bold text-white">Dual Duty & Rest Solver</h4>
+            <p class="text-[11px] text-slate-400 leading-normal">Linked/Unlinked duty solver, 11-hour rest validator, interchange 15-min handoff buffer check constraints.</p>
+          </div>
+
+          <div class="deck-card p-4 rounded-xl space-y-2 border-t-2 border-t-amber-400">
+            <div class="flex justify-between items-center text-[11px] font-mono">
+              <span class="text-amber-400 font-bold">PHASE 3 (W9-12)</span>
+              <span class="text-slate-500">UI / Sync</span>
+            </div>
+            <h4 class="text-xs font-display font-bold text-white">Unified Dual Dashboard</h4>
+            <p class="text-[11px] text-slate-400 leading-normal">Deck.gl vector map drawing editor + Redux virtualized Gantt timeline with bidirectional event sync.</p>
+          </div>
+
+          <div class="deck-card p-4 rounded-xl space-y-2 border-t-2 border-t-emerald-400">
+            <div class="flex justify-between items-center text-[11px] font-mono">
+              <span class="text-emerald-400 font-bold">PHASE 4 (W13-16)</span>
+              <span class="text-slate-500">Production</span>
+            </div>
+            <h4 class="text-xs font-display font-bold text-white">Fallback & Fleet Pilot</h4>
+            <p class="text-[11px] text-slate-400 leading-normal">3-tier fallback automation, WebSocket live alerts, enterprise fleet integration & dispatcher training.</p>
+          </div>
+        </div>
+
+        <!-- Measurable Business ROI Impact Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div class="deck-card p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/20">
+            <div class="text-2xl font-extrabold text-emerald-400 font-mono">-28.4%</div>
+            <div class="text-[11px] font-semibold text-white mt-0.5">Deadhead Fuel & Wear</div>
+            <div class="text-[10px] text-slate-400">Optimized unlinked handoffs</div>
+          </div>
+          <div class="deck-card p-3 rounded-xl border border-sky-500/30 bg-sky-950/20">
+            <div class="text-2xl font-extrabold text-sky-400 font-mono">100%</div>
+            <div class="text-[11px] font-semibold text-white mt-0.5">Rest Compliance</div>
+            <div class="text-[10px] text-slate-400">Zero labor union fines</div>
+          </div>
+          <div class="deck-card p-3 rounded-xl border border-amber-500/30 bg-amber-950/20">
+            <div class="text-2xl font-extrabold text-amber-400 font-mono">3.4x</div>
+            <div class="text-[11px] font-semibold text-white mt-0.5">Faster Route Planning</div>
+            <div class="text-[10px] text-slate-400">From days to sub-seconds</div>
+          </div>
+          <div class="deck-card p-3 rounded-xl border border-purple-500/30 bg-purple-950/20">
+            <div class="text-2xl font-extrabold text-purple-400 font-mono">+15.2%</div>
+            <div class="text-[11px] font-semibold text-white mt-0.5">Crew Utilization</div>
+            <div class="text-[10px] text-slate-400">Optimized duty hours</div>
+          </div>
+        </div>
+
+        <!-- Closing Action -->
+        <div class="deck-frame p-3.5 rounded-xl flex items-center justify-between text-xs">
+          <div class="space-y-0.5">
+            <span class="font-bold text-white">TransitFlow: Ready for Enterprise Urban Fleet Deployment</span>
+            <p class="text-slate-400 text-[11px]">Production-grade architecture with PostgreSQL 16 + PostGIS & React.js.</p>
+          </div>
+          <button onclick="goToSlide(1)" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-mono font-semibold transition-all shadow-lg shadow-brand-500/20">
+            Restart Presentation &circlearrowleft;
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 font-mono">
+        <span>Section 11 &bull; Executive Delivery & Measurable ROI</span>
+        <span>TransitFlow PRD Complete</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM PRESENTER NAVIGATION DOCK -->
+  <footer class="h-16 border-t border-white/5 bg-[#070b16]/90 backdrop-blur-xl px-6 sm:px-10 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center space-x-3">
+      <button onclick="prevSlide()" id="btn-prev" class="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-mono font-semibold flex items-center space-x-1.5 transition-all border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span>Previous</span>
+      </button>
+
+      <button onclick="nextSlide()" id="btn-next" class="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-mono font-semibold flex items-center space-x-1.5 transition-all shadow-md shadow-brand-600/30 border border-brand-500/50">
+        <span>Next Slide</span>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- Slide Thumb Dot Indicators (Desktop) -->
+    <div class="hidden md:flex items-center space-x-2" id="slide-dots-container">
+      <!-- Generated via JS for all 12 slides -->
+    </div>
+
+    <div class="flex items-center space-x-4 text-xs font-mono text-slate-400">
+      <span class="hidden sm:inline">Use <kbd class="px-1.5 py-0.5 bg-slate-900 rounded border border-white/10 text-slate-300">&larr;</kbd> <kbd class="px-1.5 py-0.5 bg-slate-900 rounded border border-white/10 text-slate-300">&rarr;</kbd> keys</span>
+      <button onclick="toggleSlideGrid()" class="text-slate-400 hover:text-white" title="Slide Grid (G)">All Slides (G)</button>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- SLIDE GRID DIRECTORY OVERVIEW MODAL -->
+  <!-- ========================================================================= -->
+  <div id="slide-grid-modal" class="fixed inset-0 bg-black/85 backdrop-blur-xl z-50 hidden flex items-center justify-center p-6 transition-all duration-300">
+    <div class="bg-slate-900 border border-white/10 rounded-2xl max-w-5xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="font-display font-bold text-white text-base">Slide Navigator & Directory</span>
+          <span class="text-xs font-mono text-brand-400 bg-brand-950 px-2 py-0.5 rounded border border-brand-800">12 Slides</span>
+        </div>
+        <button onclick="toggleSlideGrid()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 overflow-y-auto" id="grid-thumbnails-container">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- HIGH-RES IMAGE LIGHTBOX MODAL (FOR PRESENTING TO JUDGES) -->
+  <!-- ========================================================================= -->
+  <div id="image-lightbox-modal" class="fixed inset-0 bg-black/90 backdrop-blur-2xl z-50 hidden flex flex-col items-center justify-center p-4 sm:p-8 transition-all duration-300" onclick="closeImageModal()">
+    <div class="relative max-w-5xl w-full flex flex-col items-center" onclick="event.stopPropagation()">
+      <div class="w-full flex justify-between items-center mb-3">
+        <span id="lightbox-caption" class="text-sm font-display font-bold text-white font-mono">Image View</span>
+        <button onclick="closeImageModal()" class="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-slate-800 border border-white/10 font-mono text-xs">
+          Close [Esc] &times;
+        </button>
+      </div>
+      <div class="w-full rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-black">
+        <img id="lightbox-img" src="" alt="Expanded View" class="w-full max-h-[75vh] object-contain">
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT CONTROLLERS & INTERACTIVITY -->
+  <!-- ========================================================================= -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+    const slideTitles = [
+      "Executive Summary & Operational Vision",
+      "The Operational Dilemma & Dual-View Vision",
+      "System Architecture & Technical Stack",
+      "Data Schema Blueprint (PostgreSQL + PostGIS)",
+      "Dual Duty Engine: Linked vs. Unlinked",
+      "Mandated Rest Period Compliance Engine",
+      "Spatial Route Planning & Overlap Engine",
+      "Single Unified Operational Dashboard",
+      "Operational Summary Analytics & Formulas",
+      "Automated Conflict Resolution & Fallback Logic",
+      "Operational Edge Cases & Resiliency Matrix",
+      "Implementation Roadmap & Business Impact"
+    ];
+
+    const schemaSnippets = {
+      crew: `-- 1. Crew Master & Mandated Rest Tracking
+CREATE TABLE crew_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name VARCHAR(255) NOT NULL,
+    license_number VARCHAR(100) UNIQUE NOT NULL,
+    max_weekly_hours INT DEFAULT 48,
+    last_shift_end TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);`,
+      routes: `-- 2. Bus Routes (Spatial LineString Geometries with 50m corridor)
+CREATE TABLE routes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    route_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    path GEOMETRY(LineString, 4326) NOT NULL,
+    buffer_meters INT DEFAULT 50,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Bus Fleet Catalog
+CREATE TABLE buses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bus_number VARCHAR(50) UNIQUE NOT NULL,
+    capacity INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'AVAILABLE'
+);`,
+      duty: `-- 3. Duty Assignments (Linked & Unlinked Shift Solver)
+CREATE TYPE duty_type AS ENUM ('LINKED', 'UNLINKED');
+CREATE TYPE duty_status AS ENUM ('SCHEDULED', 'ACTIVE', 'CONFLICT', 'UNASSIGNED');
+
+CREATE TABLE duty_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    duty_type duty_type NOT NULL,
+    crew_id UUID REFERENCES crew_members(id),
+    bus_id UUID REFERENCES buses(id),
+    route_id UUID REFERENCES routes(id),
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    mandatory_rest_end TIMESTAMP WITH TIME ZONE NOT NULL,
+    status duty_status DEFAULT 'SCHEDULED',
+    CONSTRAINT rest_period_check CHECK (mandatory_rest_end > end_time)
+);`,
+      indexes: `-- 4. Spatial Indexing & Fast Temporal Range Query Indexes
+CREATE INDEX idx_routes_path ON routes USING GIST (path);
+CREATE INDEX idx_duty_times ON duty_assignments (start_time, end_time);
+
+-- PostGIS GiST 2D R-Tree provides logarithmic search for:
+-- ST_Intersects, ST_Buffer, and ST_Intersection queries.`
+    };
+
+    function initPresentation() {
+      renderDots();
+      renderGridThumbnails();
+      updateSlideView();
+      runRestCalculator();
+      recalcKPIs();
+
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.key === 'Escape') {
+          closeImageModal();
+          closeSlideGrid();
+        } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === 'g' || e.key === 'G') {
+          toggleSlideGrid();
+        } else if (e.key === 'f' || e.key === 'F') {
+          toggleFullScreen();
+        } else if (e.key >= '1' && e.key <= '9') {
+          goToSlide(parseInt(e.key));
+        }
+      });
+    }
+
+    function goToSlide(slideNum) {
+      if (slideNum < 1 || slideNum > totalSlides) return;
+      currentSlide = slideNum;
+      updateSlideView();
+      closeSlideGrid();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlideView();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlideView();
+      }
+    }
+
+    function updateSlideView() {
+      const slides = document.querySelectorAll('.slide');
+      slides.forEach(slide => {
+        slide.classList.add('hidden');
+        slide.classList.remove('slide-active');
+      });
+
+      const activeSlide = document.querySelector(`.slide[data-slide="${currentSlide}"]`);
+      if (activeSlide) {
+        activeSlide.classList.remove('hidden');
+        activeSlide.classList.add('slide-active');
+      }
+
+      const formattedNum = currentSlide < 10 ? `0${currentSlide}` : currentSlide;
+      document.getElementById('current-slide-badge').textContent = formattedNum;
+      document.getElementById('header-slide-index').textContent = `Slide ${formattedNum} of 12`;
+      document.getElementById('header-slide-title').textContent = slideTitles[currentSlide - 1];
+
+      const progressPct = (currentSlide / totalSlides) * 100;
+      document.getElementById('deck-progress').style.width = `${progressPct}%`;
+
+      document.getElementById('btn-prev').disabled = (currentSlide === 1);
+      if (currentSlide === totalSlides) {
+        document.getElementById('btn-next').innerHTML = `<span>End Deck</span>`;
+      } else {
+        document.getElementById('btn-next').innerHTML = `<span>Next Slide</span><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+      }
+
+      updateDots();
+
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise().catch(() => {});
+      }
+    }
+
+    function renderDots() {
+      const container = document.getElementById('slide-dots-container');
+      container.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `h-1.5 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-brand-400 w-6' : 'bg-slate-800 hover:bg-slate-600 w-1.5'}`;
+        dot.title = `Slide ${i}: ${slideTitles[i-1]}`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      const dots = document.getElementById('slide-dots-container').children;
+      for (let i = 0; i < dots.length; i++) {
+        const slideIndex = i + 1;
+        if (slideIndex === currentSlide) {
+          dots[i].className = 'h-1.5 rounded-full bg-brand-400 w-6 transition-all duration-300';
+        } else {
+          dots[i].className = 'h-1.5 rounded-full bg-slate-800 hover:bg-slate-600 w-1.5 transition-all duration-300';
+        }
+      }
+    }
+
+    function renderGridThumbnails() {
+      const grid = document.getElementById('grid-thumbnails-container');
+      grid.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const thumb = document.createElement('div');
+        thumb.className = `p-3 rounded-xl border cursor-pointer transition-all ${i === currentSlide ? 'bg-brand-950/60 border-brand-400 shadow-lg shadow-brand-500/20' : 'bg-slate-800/60 border-white/5 hover:border-white/20'}`;
+        thumb.onclick = () => goToSlide(i);
+        thumb.innerHTML = `
+          <div class="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1">
+            <span>SLIDE ${i < 10 ? `0${i}` : i}</span>
+            <span class="w-1.5 h-1.5 rounded-full ${i === currentSlide ? 'bg-brand-400' : 'bg-slate-600'}"></span>
+          </div>
+          <div class="text-xs font-display font-semibold text-white truncate">${slideTitles[i-1]}</div>
+        `;
+        grid.appendChild(thumb);
+      }
+    }
+
+    function toggleSlideGrid() {
+      const modal = document.getElementById('slide-grid-modal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        renderGridThumbnails();
+      }
+    }
+    function closeSlideGrid() {
+      document.getElementById('slide-grid-modal').classList.add('hidden');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Image Lightbox
+    function openImageModal(src, caption) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-caption').textContent = caption;
+      document.getElementById('image-lightbox-modal').classList.remove('hidden');
+    }
+    function closeImageModal() {
+      document.getElementById('image-lightbox-modal').classList.add('hidden');
+    }
+
+    // ==========================================
+    // INTERACTIVE PRESENTATION WIDGETS
+    // ==========================================
+
+    // Slide 2: Reactive Simulator
+    function simulateReactiveCycle() {
+      const btn = document.getElementById('reactive-btn-text');
+      btn.textContent = "Validating Network Constraint Graph...";
+      setTimeout(() => {
+        btn.textContent = "GIS & Rosters Synchronized (< 0.8s)";
+        setTimeout(() => {
+          btn.textContent = "Test Reactive Sync Loop";
+        }, 2500);
+      }, 700);
+    }
+
+    // Slide 3: Architecture Inspector
+    function inspectArch(layer) {
+      const box = document.getElementById('arch-detail-box');
+      if (layer === 'frontend') {
+        box.innerHTML = `<div><span class="text-sky-400 font-bold">FRONTEND LAYER:</span> Deck.gl utilizes WebGL 2.0 instanced vertex shaders for 60 FPS vector paths. Virtualized Gantt chart is memoized via Redux selectors for zero-jank scrolling.</div><span class="text-[10px] text-slate-400 font-mono">Hardware-Accelerated</span>`;
+      } else if (layer === 'backend') {
+        box.innerHTML = `<div><span class="text-amber-400 font-bold">SOLVER LAYER:</span> Node.js worker threads execute custom shift constraint solvers. WebSocket event bus streams binary delta packets (&lt; 2KB payload per route adjustment).</div><span class="text-[10px] text-slate-400 font-mono">Microsecond Event Bus</span>`;
+      } else if (layer === 'database') {
+        box.innerHTML = `<div><span class="text-emerald-400 font-bold">POSTGIS LAYER:</span> GiST (Generalized Search Tree) creates 2D spatial bounding boxes. Spatial intersections execute in O(log N) rather than sequential O(N) full-table scans.</div><span class="text-[10px] text-slate-400 font-mono">Sub-50ms Overlap Query</span>`;
+      }
+    }
+
+    // Slide 4: SQL Schema Tab Switcher
+    function switchSchemaTab(tab) {
+      const tabs = ['crew', 'routes', 'duty', 'indexes'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.className = 'px-2.5 py-1 rounded bg-brand-600 text-white font-semibold transition-all';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white transition-all';
+        }
+      });
+      document.getElementById('schema-code-block').textContent = schemaSnippets[tab];
+      document.getElementById('schema-filename').textContent = `schema_${tab}.sql`;
+    }
+
+    // Slide 5: Inline Duty Tester
+    function testDutyMode(type) {
+      const output = document.getElementById('duty-tester-output');
+      if (type === 'linked') {
+        output.innerHTML = `<span class="text-blue-300 font-bold">LINKED DUTY VERIFIED:</span> Driver John Doe is locked to Bus #101 across continuous shift (06:00 - 14:00). 1:1 pairing invariant satisfied.`;
+      } else {
+        output.innerHTML = `<span class="text-amber-300 font-bold">UNLINKED DUTY VERIFIED:</span> Driver Jane Smith operates Bus #204 (4h), executes 15-min handoff buffer at Central Hub, and assumes Bus #308 (3.5h). Interchange geometry verified via PostGIS.`;
+      }
+    }
+
+    // Slide 6: Mandated Rest Calculator
+    function runRestCalculator() {
+      const prevEnd = document.getElementById('rest-prev-end').value || "22:00";
+      const nextStart = document.getElementById('rest-next-start').value || "07:30";
+
+      const [pEndH, pEndM] = prevEnd.split(':').map(Number);
+      const [nStartH, nStartM] = nextStart.split(':').map(Number);
+
+      let pEndMins = pEndH * 60 + pEndM;
+      let nStartMins = nStartH * 60 + nStartM;
+
+      let diffMins = nStartMins - pEndMins;
+      if (diffMins < 0) diffMins += 24 * 60;
+
+      const restHours = diffMins / 60;
+      const isCompliant = restHours >= 11.0;
+
+      const card = document.getElementById('rest-result-card');
+      const badge = document.getElementById('rest-hours-badge');
+      const statusText = document.getElementById('rest-status-text');
+      const detailText = document.getElementById('rest-detail-text');
+      const actionBox = document.getElementById('rest-action-box');
+
+      badge.textContent = `${restHours.toFixed(2)}h`;
+
+      if (isCompliant) {
+        card.className = "p-3.5 rounded-xl border flex items-center justify-between bg-emerald-950/40 border-emerald-600 text-emerald-300 transition-all";
+        badge.className = "text-xl font-extrabold text-emerald-400 font-mono";
+        statusText.textContent = "REST PERIOD COMPLIANT";
+        detailText.innerHTML = `Actual Rest: <strong>${restHours.toFixed(2)} Hours</strong> (&ge; 11.0 Hours Mandated).`;
+        actionBox.innerHTML = `<span>System Response: <strong class="text-emerald-400">Authorize Shift & Confirm Dispatch</strong></span><span class="text-[10px] text-emerald-400 font-semibold font-mono">PASSED</span>`;
+      } else {
+        const deficit = (11.0 - restHours).toFixed(2);
+        card.className = "p-3.5 rounded-xl border flex items-center justify-between bg-rose-950/40 border-rose-600 text-rose-300 transition-all";
+        badge.className = "text-xl font-extrabold text-rose-400 font-mono";
+        statusText.textContent = "REST VIOLATION DETECTED";
+        detailText.innerHTML = `Actual Rest: <strong>${restHours.toFixed(2)} Hours</strong> (Deficit: ${deficit} Hours).`;
+        actionBox.innerHTML = `<span>System Response: <strong class="text-rose-400">Lock Shift & Trigger Tier-1 Fallback</strong></span><span class="text-[10px] text-amber-400 font-semibold font-mono">AUTO-ESCALATED</span>`;
+      }
+    }
+
+    // Slide 7: Overlap Simulator
+    function updateBufferSim() {
+      const radius = document.getElementById('buffer-slider').value;
+      document.getElementById('buffer-val-label').textContent = `${radius} Meters`;
+
+      const length = Math.round(2800 + (radius * 12.4));
+      const pct = (35 + (radius * 0.15)).toFixed(1);
+
+      document.getElementById('sim-overlap-len').textContent = `${length.toLocaleString()} Meters`;
+      document.getElementById('sim-overlap-pct').textContent = `${pct}% ${pct > 40 ? '(HIGH CONFLICT)' : '(MODERATE)'}`;
+    }
+
+    // Slide 8: Bidirectional Unified Dashboard Sync
+    function selectDashboardItem(id) {
+      ['101', '204', 'conflict'].forEach(key => {
+        document.getElementById(`gantt-row-${key}`).classList.remove('ring-2', 'ring-brand-400', 'bg-slate-900');
+        const path = document.getElementById(`path-${key}`);
+        if (path) path.setAttribute('stroke-width', key === '101' ? '4' : '3');
+      });
+
+      if (id === '101') {
+        document.getElementById('gantt-row-101').classList.add('ring-2', 'ring-brand-400', 'bg-slate-900');
+        document.getElementById('path-101').setAttribute('stroke-width', '7');
+        document.getElementById('map-status-caption').innerHTML = `<span class="text-sky-300 font-bold">Selected: Route 101</span> &bull; Synchronized with Crew A (John Doe, Linked Bus 101)`;
+      } else if (id === '204') {
+        document.getElementById('gantt-row-204').classList.add('ring-2', 'ring-amber-400', 'bg-slate-900');
+        document.getElementById('path-204').setAttribute('stroke-width', '6');
+        document.getElementById('map-status-caption').innerHTML = `<span class="text-amber-300 font-bold">Selected: Route 204</span> &bull; Synchronized with Crew B (Jane Smith, Unlinked Handoff)`;
+      } else if (id === 'conflict') {
+        document.getElementById('gantt-row-conflict').classList.add('ring-2', 'ring-rose-400', 'bg-rose-950/60');
+        document.getElementById('path-conflict').setAttribute('stroke-width', '6');
+        document.getElementById('map-status-caption').innerHTML = `<span class="text-rose-400 font-bold">Selected: Proposed Route B</span> &bull; Rest Conflict Alert (Crew C Rest Deficit)`;
+      }
+    }
+
+    function resetDashboardSelection() {
+      ['101', '204', 'conflict'].forEach(key => {
+        document.getElementById(`gantt-row-${key}`).classList.remove('ring-2', 'ring-brand-400', 'ring-amber-400', 'ring-rose-400', 'bg-slate-900', 'bg-rose-950/60');
+        const path = document.getElementById(`path-${key}`);
+        if (path) path.setAttribute('stroke-width', key === '101' ? '4' : (key === '204' ? '3.5' : '3'));
+      });
+      document.getElementById('map-status-caption').textContent = "Click a route above to cross-isolate Gantt duty roster";
+    }
+
+    // Slide 9: KPI Recalculator
+    function recalcKPIs() {
+      const sched = parseFloat(document.getElementById('kpi-sched-slider').value);
+      const contract = parseFloat(document.getElementById('kpi-contract-slider').value);
+      const deadhead = parseFloat(document.getElementById('kpi-deadhead-slider').value);
+
+      document.getElementById('kpi-sched-val').textContent = `${sched.toLocaleString()} hrs`;
+      document.getElementById('kpi-contract-val').textContent = `${contract.toLocaleString()} hrs`;
+      document.getElementById('kpi-deadhead-val').textContent = `${deadhead} mins`;
+    }
+
+    // Slide 10: Fallback Workflow Simulation
+    function runFallbackSimulation(step) {
+      const output = document.getElementById('fallback-sim-output');
+      if (step === 'step1') {
+        output.innerHTML = `
+          <div class="text-purple-400 font-bold">TIER 1 EXECUTION: Standby Reserve Pool Auto-Assignment</div>
+          <div class="text-slate-300 mt-0.5">Found Standby Driver: <strong>Sarah Jenkins (#CR-904)</strong> &bull; Last Shift Ended: 14.5 hrs ago (&ge; 11h requirement).</div>
+          <div class="text-emerald-400 font-semibold mt-0.5">Result: Driver Auto-Assigned to Shift. Route operational with zero schedule delay.</div>
+        `;
+      } else if (step === 'step2') {
+        output.innerHTML = `
+          <div class="text-amber-400 font-bold">TIER 2 EXECUTION: Standby Pool Empty &rarr; Duty Deconstruction</div>
+          <div class="text-slate-300 mt-0.5">Splitting 8-hour Linked Shift into 2 Unlinked Shift Blocks at Central Interchange Hub.</div>
+          <div class="text-slate-300 mt-0.5">Leg 1 assigned to Driver M. Torres (4h) &bull; 15m Buffer &bull; Leg 2 assigned to Driver L. Vance (4h).</div>
+          <div class="text-amber-300 font-semibold mt-0.5">Result: Unlinked Shift created. Route operating with full legal rest compliance.</div>
+        `;
+      } else if (step === 'step3') {
+        output.innerHTML = `
+          <div class="text-rose-400 font-bold">TIER 3 ESCALATION: Standby Empty & Deconstruction Infeasible</div>
+          <div class="text-slate-300 mt-0.5">Duty state updated to <code class="text-rose-300 bg-rose-950 px-1 rounded">UNASSIGNED_CONFLICT</code>. Departure interlock engaged.</div>
+          <div class="text-rose-300 mt-0.5">High-priority WebSocket event dispatched to Operations Manager console for manual re-routing or extra reserve call-in.</div>
+        `;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initPresentation);
+  </script>
+</body>
+</html>

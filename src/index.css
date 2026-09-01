@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #050811;
+    color: #f1f5f9;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070b16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
+}
+
+/* Leaflet Dark Customizations */
+.leaflet-container {
+  background-color: #060913 !important;
+  font-family: inherit;
+}
+.leaflet-bar a {
+  background-color: #0d1527 !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.leaflet-bar a:hover {
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
+}
+.leaflet-popup-content-wrapper {
+  background: #0c1424 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7) !important;
+}
+.leaflet-popup-tip {
+  background: #0c1424 !important;
+}
+
+/* Custom animated pulse for bus markers */
+@keyframes bus-ping {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+.bus-ping-circle {
+  animation: bus-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Glow Utilities */
+.shadow-glow-sky {
+  box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.3);
+}
+.shadow-glow-amber {
+  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
+}
+.shadow-glow-rose {
+  box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35);
+}
+.shadow-glow-emerald {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3);
+}
+.shadow-glow-purple {
+  box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.3);
+}
+
+/* Dark styling for OpenStreetMap tiles */
+.dark-osm-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
