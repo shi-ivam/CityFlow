@@ -4,55 +4,55 @@
 
 @layer base {
   :root {
-    /* Custom Palette Light Theme: Soft Alabaster Sage & Slate Steel */
-    --background: 68 25% 97%;
-    --foreground: 211 40% 16%;
+    /* Custom Palette Light Theme: Crisp, Airy, Minimal & Simple */
+    --background: 210 20% 98.5%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 211 40% 16%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 211 40% 16%;
+    --popover-foreground: 215 25% 15%;
 
     /* Primary Accent: Slate Steel #456990 */
     --primary: 211 35% 42%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Opal Mist #A6CFD5 */
-    --secondary: 188 39% 88%;
-    --secondary-foreground: 211 40% 16%;
+    /* Secondary: Soft Opal Mist #A6CFD5 */
+    --secondary: 188 35% 94%;
+    --secondary-foreground: 211 35% 25%;
 
-    /* Muted: Alabaster Sage #EDF0DA */
-    --muted: 68 43% 92%;
-    --muted-foreground: 211 20% 45%;
+    /* Muted: Soft Alabaster Sage #EDF0DA */
+    --muted: 68 25% 95%;
+    --muted-foreground: 215 15% 48%;
 
-    /* Accent: Ice Sky #C1EEFF */
-    --accent: 196 100% 92%;
-    --accent-foreground: 211 45% 18%;
+    /* Accent: Delicate Ice Sky #C1EEFF */
+    --accent: 196 90% 95%;
+    --accent-foreground: 211 40% 20%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 188 25% 85%;
-    --input: 188 25% 85%;
+    --border: 210 15% 91%;
+    --input: 210 15% 91%;
     --ring: 211 35% 42%;
 
-    /* Transit Domain Tokens: Mint Frost #E4FDE1 */
-    --duty-linked-bg: 114 88% 94%;
-    --duty-linked-border: 114 45% 70%;
-    --duty-linked-text: 114 70% 20%;
+    /* Transit Domain Tokens */
+    --duty-linked-bg: 114 70% 94%;
+    --duty-linked-border: 114 40% 75%;
+    --duty-linked-text: 114 65% 18%;
 
-    --duty-unlinked-bg: 68 43% 90%;
-    --duty-unlinked-border: 68 30% 65%;
-    --duty-unlinked-text: 211 40% 25%;
+    --duty-unlinked-bg: 68 30% 94%;
+    --duty-unlinked-border: 68 25% 75%;
+    --duty-unlinked-text: 215 25% 25%;
 
-    --rest-valid-bg: 114 88% 94%;
-    --rest-valid-text: 114 70% 20%;
+    --rest-valid-bg: 114 70% 94%;
+    --rest-valid-text: 114 65% 18%;
 
-    --rest-violation-bg: 0 85% 94%;
-    --rest-violation-text: 0 75% 35%;
+    --rest-violation-bg: 0 80% 95%;
+    --rest-violation-text: 0 70% 35%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
     /* Custom Project Palette (#E4FDE1, #456990, #C1EEFF, #EDF0DA, #A6CFD5) */
     --palette-mint: #E4FDE1;

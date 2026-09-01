@@ -873,7 +873,7 @@ const AdminControlCenter: React.FC<{
 // MAIN APP ROUTER CONTAINER
 // ----------------------------------------------------
 export const App: React.FC = () => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
 
   const handleToggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));

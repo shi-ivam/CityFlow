@@ -68,7 +68,9 @@ export default function AdminHeader({
         {/* Chennai (MTC) Location Badge */}
         <div className="flex items-center bg-muted/60 border border-border rounded-md px-2.5 py-1 space-x-1.5 font-mono text-xs text-foreground">
           <MapPin className="w-3.5 h-3.5 text-primary" />
-          <span className="font-bold text-foreground">Chennai (MTC)</span>
+          <span className="font-bold text-foreground">
+            {selectedCity === 'chennai' ? 'Chennai (MTC)' : 'Delhi Operations'}
+          </span>
         </div>
 
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden sm:inline" />
