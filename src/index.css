@@ -49,6 +49,13 @@
     --rest-violation-text: 0 0% 98%;
 
     --radius: 0.375rem;
+
+    /* Custom Project Palette (#E4FDE1, #456990, #C1EEFF, #EDF0DA, #A6CFD5) */
+    --palette-mint: #E4FDE1;
+    --palette-slate: #456990;
+    --palette-ice: #C1EEFF;
+    --palette-sage: #EDF0DA;
+    --palette-opal: #A6CFD5;
   }
 
   .dark {

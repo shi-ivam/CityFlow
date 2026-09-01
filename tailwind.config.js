@@ -74,6 +74,13 @@ export default {
             text: 'hsl(var(--rest-violation-text))',
           },
         },
+        palette: {
+          mint: '#E4FDE1',
+          slate: '#456990',
+          ice: '#C1EEFF',
+          sage: '#EDF0DA',
+          opal: '#A6CFD5',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

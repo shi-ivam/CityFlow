@@ -587,6 +587,12 @@ video {
   --rest-violation-bg: 0 0% 9%;
   --rest-violation-text: 0 0% 98%;
   --radius: 0.375rem;
+  /* Custom Project Palette (#E4FDE1, #456990, #C1EEFF, #EDF0DA, #A6CFD5) */
+  --palette-mint: #E4FDE1;
+  --palette-slate: #456990;
+  --palette-ice: #C1EEFF;
+  --palette-sage: #EDF0DA;
+  --palette-opal: #A6CFD5;
 }
 
 .dark {
@@ -1960,12 +1966,31 @@ code, kbd, pre, .font-mono {
   border-color: hsl(var(--input));
 }
 
+.border-muted {
+  border-color: hsl(var(--muted));
+}
+
 .border-muted-foreground {
   border-color: hsl(var(--muted-foreground));
 }
 
 .border-orange-500\/30 {
   border-color: rgb(249 115 22 / 0.3);
+}
+
+.border-palette-ice {
+  --tw-border-opacity: 1;
+  border-color: rgb(193 238 255 / var(--tw-border-opacity, 1));
+}
+
+.border-palette-opal {
+  --tw-border-opacity: 1;
+  border-color: rgb(166 207 213 / var(--tw-border-opacity, 1));
+}
+
+.border-palette-slate {
+  --tw-border-opacity: 1;
+  border-color: rgb(69 105 144 / var(--tw-border-opacity, 1));
 }
 
 .border-primary {
@@ -2311,6 +2336,31 @@ code, kbd, pre, .font-mono {
 
 .bg-orange-500\/15 {
   background-color: rgb(249 115 22 / 0.15);
+}
+
+.bg-palette-ice {
+  --tw-bg-opacity: 1;
+  background-color: rgb(193 238 255 / var(--tw-bg-opacity, 1));
+}
+
+.bg-palette-mint {
+  --tw-bg-opacity: 1;
+  background-color: rgb(228 253 225 / var(--tw-bg-opacity, 1));
+}
+
+.bg-palette-opal {
+  --tw-bg-opacity: 1;
+  background-color: rgb(166 207 213 / var(--tw-bg-opacity, 1));
+}
+
+.bg-palette-sage {
+  --tw-bg-opacity: 1;
+  background-color: rgb(237 240 218 / var(--tw-bg-opacity, 1));
+}
+
+.bg-palette-slate {
+  --tw-bg-opacity: 1;
+  background-color: rgb(69 105 144 / var(--tw-bg-opacity, 1));
 }
 
 .bg-popover {
@@ -2951,6 +3001,11 @@ code, kbd, pre, .font-mono {
   color: rgb(6 95 70 / var(--tw-text-opacity, 1));
 }
 
+.text-emerald-950 {
+  --tw-text-opacity: 1;
+  color: rgb(2 44 34 / var(--tw-text-opacity, 1));
+}
+
 .text-foreground {
   color: hsl(var(--foreground));
 }
@@ -2984,6 +3039,16 @@ code, kbd, pre, .font-mono {
 .text-orange-800 {
   --tw-text-opacity: 1;
   color: rgb(154 52 18 / var(--tw-text-opacity, 1));
+}
+
+.text-palette-opal {
+  --tw-text-opacity: 1;
+  color: rgb(166 207 213 / var(--tw-text-opacity, 1));
+}
+
+.text-palette-slate {
+  --tw-text-opacity: 1;
+  color: rgb(69 105 144 / var(--tw-text-opacity, 1));
 }
 
 .text-popover-foreground {
@@ -3036,6 +3101,11 @@ code, kbd, pre, .font-mono {
 .text-slate-700 {
   --tw-text-opacity: 1;
   color: rgb(51 65 85 / var(--tw-text-opacity, 1));
+}
+
+.text-slate-900 {
+  --tw-text-opacity: 1;
+  color: rgb(15 23 42 / var(--tw-text-opacity, 1));
 }
 
 .text-white {
