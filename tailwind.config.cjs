@@ -1,18 +1,11 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: ['class'],
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    container: {
-      center: true,
-      padding: '1.5rem',
-      screens: {
-        '2xl': '1440px',
-      },
-    },
     extend: {
       fontFamily: {
         sans: ['Roboto', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Arial', 'sans-serif'],
@@ -52,28 +45,6 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        duty: {
-          linked: {
-            bg: 'hsl(var(--duty-linked-bg))',
-            border: 'hsl(var(--duty-linked-border))',
-            text: 'hsl(var(--duty-linked-text))',
-          },
-          unlinked: {
-            bg: 'hsl(var(--duty-unlinked-bg))',
-            border: 'hsl(var(--duty-unlinked-border))',
-            text: 'hsl(var(--duty-unlinked-text))',
-          },
-        },
-        rest: {
-          valid: {
-            bg: 'hsl(var(--rest-valid-bg))',
-            text: 'hsl(var(--rest-valid-text))',
-          },
-          violation: {
-            bg: 'hsl(var(--rest-violation-bg))',
-            text: 'hsl(var(--rest-violation-text))',
-          },
-        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -83,4 +54,4 @@ export default {
     },
   },
   plugins: [],
-}
+};
