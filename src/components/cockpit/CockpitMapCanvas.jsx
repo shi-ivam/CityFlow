@@ -319,13 +319,13 @@ export default function CockpitMapCanvas({
   }, [drawnPoints]);
 
   return (
-    <div className="relative w-full h-full min-h-[480px] bg-[#0b0f19] overflow-hidden select-none">
+    <div className="relative w-full h-full min-h-[480px] bg-[#18191D] overflow-hidden select-none">
       
       {/* Leaflet Map DOM Container */}
       <div ref={mapContainerRef} className="w-full h-full cockpit-map" />
 
       {/* Floating Map Drawing Toolbar */}
-      <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1 rounded-lg bg-[#111827]/90 backdrop-blur border border-[#1f2937] shadow-xl text-xs font-sans">
+      <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1 rounded-lg bg-[#212227]/95 backdrop-blur-md border border-[#32353E] shadow-xl text-xs font-sans">
         <button
           onClick={() => {
             const nextMode = !isDrawingMode;
@@ -336,8 +336,8 @@ export default function CockpitMapCanvas({
           }}
           className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition ${
             isDrawingMode 
-              ? 'bg-sky-500 text-white shadow-md' 
-              : 'text-slate-300 hover:text-white hover:bg-[#1f2937]'
+              ? 'bg-[#AAB9CF] text-[#18191D] font-bold shadow-xs' 
+              : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
           }`}
           title="Simulate drawing a new route variant"
         >
@@ -352,8 +352,8 @@ export default function CockpitMapCanvas({
           }}
           className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium transition ${
             snapToRoad 
-              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
-              : 'text-slate-400 hover:text-white hover:bg-[#1f2937]'
+              ? 'bg-[#AAB9CF]/20 text-[#AAB9CF] border border-[#AAB9CF]/40' 
+              : 'text-[#8E9BAE] hover:text-white hover:bg-[#282A31]'
           }`}
           title="Toggle corridor road-snapping algorithm"
         >
@@ -366,25 +366,24 @@ export default function CockpitMapCanvas({
             setShowOverlapHUD(true);
             onShowToast('Corridor Overlap: Simulated 23.4% overlap on Central Arterial corridor.');
           }}
-          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-[#1f2937] transition"
+          className="flex items-center space-x-1 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#AAB9CF] hover:text-white hover:bg-[#282A31] transition"
           title="Calculate spatial overlap against active network"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Sparkles className="w-3.5 h-3.5 text-[#AAB9CF]" />
           <span>Calc Overlap</span>
         </button>
 
-        {(drawnPoints.length > 0 || isDrawingMode) && (
+        {drawnPoints.length > 0 && (
           <button
             onClick={() => {
               setDrawnPoints([]);
               setIsDrawingMode(false);
-              setShowOverlapHUD(false);
               onShowToast('Cleared temporary route variant.');
             }}
-            className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium text-rose-400 hover:bg-rose-500/20 transition"
-            title="Clear temporary variant"
+            className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-xs font-medium text-rose-400 hover:text-white hover:bg-rose-500/20 transition"
+            title="Clear drawn waypoints"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
             <span>Clear</span>
           </button>
         )}

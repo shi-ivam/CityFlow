@@ -80,6 +80,11 @@ export default {
           ice: '#C1EEFF',
           sage: '#EDF0DA',
           opal: '#A6CFD5',
+          periwinkle: '#AAB9CF',
+          gunmetal: '#212227',
+          charcoal: '#18191D',
+          surface: '#27282F',
+          border: '#32353E',
         },
       },
       borderRadius: {

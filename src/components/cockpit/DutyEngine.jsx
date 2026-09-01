@@ -78,19 +78,19 @@ export default function DutyEngine({
   const resolvedConflicts = conflicts.filter(c => c.status === 'RESOLVED');
 
   return (
-    <div className="flex flex-col h-full bg-[#111827] border-l border-[#1f2937] overflow-hidden select-none font-sans text-white">
+    <div className="flex flex-col h-full bg-[#18191D] border-l border-[#2B2D35] overflow-hidden select-none font-sans text-[#F1F5F9]">
       
       {/* Top Header: Tabs & Mode Toggles */}
-      <div className="h-12 px-4 bg-[#0e1422] border-b border-[#1f2937] flex items-center justify-between shrink-0">
+      <div className="h-12 px-4 bg-[#212227] border-b border-[#2B2D35] flex items-center justify-between shrink-0">
         
         {/* Navigation Tabs */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1.5">
           <button
             onClick={() => onTabChange('gantt')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
               activeTab === 'gantt'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-[#1f2937]'
+                ? 'bg-[#AAB9CF] text-[#18191D] shadow-xs'
+                : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -101,8 +101,8 @@ export default function DutyEngine({
             onClick={() => onTabChange('conflicts')}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition relative ${
               activeTab === 'conflicts'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-[#1f2937]'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'text-[#AAB9CF] hover:text-white hover:bg-[#282A31]'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
@@ -117,27 +117,27 @@ export default function DutyEngine({
 
         {/* View Mode Toggle: Bus vs Driver (Visible in Gantt tab) */}
         {activeTab === 'gantt' && (
-          <div className="flex items-center space-x-1 bg-[#0b0f19] p-0.5 rounded-lg border border-[#1f2937] text-xs">
+          <div className="flex items-center space-x-1 bg-[#18191D] p-0.5 rounded-lg border border-[#2B2D35] text-xs">
             <button
               onClick={() => setViewMode('bus')}
               className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
                 viewMode === 'bus'
-                  ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#212227] text-[#F1F5F9] font-bold border border-[#32353E] shadow-xs'
+                  : 'text-[#8E9BAE] hover:text-white'
               }`}
             >
-              <Bus className="w-3 h-3" />
+              <Bus className="w-3 h-3 text-[#AAB9CF]" />
               <span>Bus View</span>
             </button>
             <button
               onClick={() => setViewMode('driver')}
               className={`flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
                 viewMode === 'driver'
-                  ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/40'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#212227] text-[#F1F5F9] font-bold border border-[#32353E] shadow-xs'
+                  : 'text-[#8E9BAE] hover:text-white'
               }`}
             >
-              <Users className="w-3 h-3" />
+              <Users className="w-3 h-3 text-[#AAB9CF]" />
               <span>Driver View</span>
             </button>
           </div>
@@ -152,29 +152,29 @@ export default function DutyEngine({
           <div className="p-3 space-y-3">
             
             {/* Legend Strip */}
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 px-1 border-b border-[#1f2937] pb-2">
+            <div className="flex items-center justify-between text-[10px] font-mono text-[#AAB9CF] px-1 border-b border-[#2B2D35] pb-2">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-indigo-600 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded bg-[#2B3C56] border border-[#AAB9CF] inline-block" />
                   <span>Linked Duty</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-amber-500/40 border border-amber-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded bg-amber-500/30 border border-amber-500 inline-block" />
                   <span>Unlinked Duty</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-slate-600 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded bg-[#2A2C34] border border-[#3B3E49] inline-block" />
                   <span>Mandatory Rest</span>
                 </div>
               </div>
-              <div className="text-emerald-400 font-bold">
+              <div className="text-[#AAB9CF] font-bold">
                 NOW: {Math.floor(simulationTimeSeconds / 3600)}:{String(Math.floor((simulationTimeSeconds % 3600) / 60)).padStart(2, '0')}
               </div>
             </div>
 
             {/* Timeline Header Ruler */}
-            <div className="relative h-6 bg-[#0b0f19] rounded border border-[#1f2937] flex items-center text-[10px] font-mono text-slate-500 px-20">
-              <div className="absolute left-1 text-[10px] text-slate-400 font-bold">
+            <div className="relative h-6 bg-[#212227] rounded border border-[#2B2D35] flex items-center text-[10px] font-mono text-[#8E9BAE] px-20">
+              <div className="absolute left-2 text-[10px] text-[#AAB9CF] font-bold">
                 {viewMode === 'bus' ? 'FLEET' : 'CREW'}
               </div>
               <div className="flex-1 flex justify-between relative pl-4">
@@ -195,23 +195,23 @@ export default function DutyEngine({
                   return (
                     <div
                       key={bus.id}
-                      className={`relative h-11 bg-[#0e1422] rounded-lg border flex items-center p-1 transition-all ${
+                      className={`relative h-11 bg-[#212227] rounded-lg border flex items-center p-1 transition-all ${
                         isConflictBus 
-                          ? 'border-rose-500/40 bg-rose-950/10' 
-                          : 'border-[#1f2937] hover:border-slate-600'
+                          ? 'border-rose-500/50 bg-rose-950/20' 
+                          : 'border-[#32353E] hover:border-[#AAB9CF]/50'
                       }`}
                     >
                       {/* Row Label */}
                       <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col">
-                        <span className="font-bold text-white flex items-center gap-1">
+                        <span className="font-bold text-[#F1F5F9] flex items-center gap-1">
                           {bus.id}
                           {isConflictBus && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
                         </span>
-                        <span className="text-[9px] text-slate-400">{bus.model.split(' ')[0]}</span>
+                        <span className="text-[9px] text-[#8E9BAE]">{bus.model.split(' ')[0]}</span>
                       </div>
 
                       {/* Timeline Track */}
-                      <div className="flex-1 h-full relative border-l border-[#1f2937] pl-1 overflow-hidden">
+                      <div className="flex-1 h-full relative border-l border-[#2B2D35] pl-1 overflow-hidden">
                         {/* Now Scrubber Line */}
                         <div
                           className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-20 pointer-events-none"
@@ -240,9 +240,9 @@ export default function DutyEngine({
                                 duty.type === 'LINKED'
                                   ? (hasConflict 
                                       ? 'bg-rose-600 text-white border border-rose-400 animate-pulse' 
-                                      : 'bg-indigo-600 text-white border border-indigo-400/50')
-                                  : 'bg-amber-500/20 text-amber-200 border border-amber-500/60 bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(245,158,11,0.15)_4px,rgba(245,158,11,0.15)_8px)]'
-                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-125'}`}
+                                      : 'bg-[#2B3C56] text-[#F1F5F9] border border-[#AAB9CF]/70 shadow-xs')
+                                  : 'bg-[#43351C] text-amber-200 border border-amber-500/60 shadow-xs bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(245,158,11,0.15)_4px,rgba(245,158,11,0.15)_8px)]'
+                              } ${isSelected ? 'ring-2 ring-[#AAB9CF] z-30 scale-y-105' : 'hover:brightness-125'}`}
                               title={`${duty.id} | Driver: ${duty.driverId} | ${duty.startTime} - ${duty.endTime}`}
                             >
                               <div className="truncate flex items-center space-x-1">
@@ -267,23 +267,23 @@ export default function DutyEngine({
                   return (
                     <div
                       key={driver.id}
-                      className={`relative h-11 bg-[#0e1422] rounded-lg border flex items-center p-1 transition-all ${
+                      className={`relative h-11 bg-[#212227] rounded-lg border flex items-center p-1 transition-all ${
                         isConflictDriver 
-                          ? 'border-rose-500/40 bg-rose-950/10' 
-                          : 'border-[#1f2937] hover:border-slate-600'
+                          ? 'border-rose-500/50 bg-rose-950/20' 
+                          : 'border-[#32353E] hover:border-[#AAB9CF]/50'
                       }`}
                     >
                       {/* Row Label */}
                       <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col">
-                        <span className="font-bold text-white truncate flex items-center gap-1">
+                        <span className="font-bold text-[#F1F5F9] truncate flex items-center gap-1">
                           {driver.id}
                           {isConflictDriver && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
                         </span>
-                        <span className="text-[9px] text-slate-400">{driver.status}</span>
+                        <span className="text-[9px] text-[#8E9BAE]">{driver.status}</span>
                       </div>
 
                       {/* Timeline Track */}
-                      <div className="flex-1 h-full relative border-l border-[#1f2937] pl-1 overflow-hidden">
+                      <div className="flex-1 h-full relative border-l border-[#2B2D35] pl-1 overflow-hidden">
                         {/* Now Scrubber Line */}
                         <div
                           className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-20 pointer-events-none"
@@ -509,50 +509,50 @@ export default function DutyEngine({
                 {activeConflicts.map((conflict) => (
                   <div
                     key={conflict.id}
-                    className={`rounded-xl border p-4 shadow-xl space-y-3 transition-all ${
+                    className={`rounded-xl border p-4 shadow-lg space-y-3 transition-all ${
                       conflict.severity === 'CRITICAL'
-                        ? 'bg-rose-950/20 border-rose-500/40'
-                        : 'bg-amber-950/20 border-amber-500/40'
+                        ? 'bg-[#261A1D] border-rose-500/40'
+                        : 'bg-[#262017] border-amber-500/40'
                     }`}
                   >
                     {/* Conflict Card Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-2">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                          conflict.severity === 'CRITICAL' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-black'
+                          conflict.severity === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                         }`}>
                           {conflict.severity === 'CRITICAL' ? '🔴 CRITICAL' : '🟠 WARNING'}
                         </span>
-                        <span className="font-mono font-bold text-xs text-white">{conflict.code}</span>
-                        <span className="text-xs text-slate-400">• Departure: <strong className="text-white font-mono">{conflict.departureTime}</strong></span>
+                        <span className="font-mono font-bold text-xs text-[#F1F5F9]">{conflict.code}</span>
+                        <span className="text-xs text-[#AAB9CF]">• Departure: <strong className="text-white font-mono">{conflict.departureTime}</strong></span>
                       </div>
-                      <div className="text-xs font-mono text-slate-400">
+                      <div className="text-xs font-mono text-[#AAB9CF]">
                         Bus: <strong className="text-white">{conflict.affectedBusId}</strong>
                       </div>
                     </div>
 
                     {/* Conflict Description & Affected Context */}
                     <div className="space-y-1 text-xs">
-                      <div className="font-semibold text-slate-100">{conflict.issue}</div>
-                      <div className="text-slate-400 text-[11px]">{conflict.impact}</div>
-                      <div className="text-indigo-300 font-mono text-[11px] pt-1">
-                        Driver: <strong>{conflict.driverName} ({conflict.driverId})</strong>
+                      <div className="font-semibold text-[#F1F5F9]">{conflict.issue}</div>
+                      <div className="text-[#AAB9CF] text-[11px]">{conflict.impact}</div>
+                      <div className="text-[#AAB9CF] font-mono text-[11px] pt-1">
+                        Driver: <strong className="text-white">{conflict.driverName} ({conflict.driverId})</strong>
                       </div>
                     </div>
 
                     {/* Recommendation Banner */}
-                    <div className="p-2 rounded-lg bg-[#0b0f19] border border-[#1f2937] text-xs flex items-center justify-between">
-                      <span className="text-slate-400">Recommended Fallback:</span>
+                    <div className="p-2.5 rounded-lg bg-[#18191D] border border-[#32353E] text-xs flex items-center justify-between">
+                      <span className="text-[#AAB9CF]">Recommended Fallback:</span>
                       <span className="font-bold text-emerald-400">{conflict.recommendation}</span>
                     </div>
 
                     {/* FALLBACK ACTIONS THAT ACTUALLY WORK (Section 21) */}
-                    <div className="pt-2 border-t border-[#1f2937] flex flex-wrap gap-2">
+                    <div className="pt-2 border-t border-[#32353E] flex flex-wrap gap-2">
                       {conflict.id === 'CF-204' && (
                         <>
                           <button
                             onClick={() => onAssignStandbyCrew(conflict.id, 'SHARMA-18', conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition shadow-md active:scale-95"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition shadow-xs active:scale-95"
                           >
                             <Users className="w-3.5 h-3.5" />
                             <span>Assign Standby Crew</span>
@@ -560,7 +560,7 @@ export default function DutyEngine({
 
                           <button
                             onClick={() => onTriggerOvertimeProtocol(conflict.id, conflict.driverId, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs font-bold transition shadow-md active:scale-95"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs font-bold transition shadow-xs active:scale-95"
                           >
                             <Zap className="w-3.5 h-3.5" />
                             <span>Overtime Protocol</span>
@@ -568,7 +568,7 @@ export default function DutyEngine({
 
                           <button
                             onClick={() => onSplitShiftFallback(conflict.id, conflict.affectedDutyId)}
-                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition shadow-md active:scale-95"
+                            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#2B3C56] hover:bg-[#364B6B] text-[#F1F5F9] border border-[#AAB9CF]/50 font-mono text-xs font-bold transition shadow-xs active:scale-95"
                           >
                             <Footprints className="w-3.5 h-3.5" />
                             <span>Split-Shift Fallback</span>

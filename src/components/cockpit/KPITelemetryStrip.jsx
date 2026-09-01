@@ -5,10 +5,7 @@ import {
   Route, 
   Percent, 
   AlertTriangle, 
-  ShieldAlert,
-  Clock,
-  Activity,
-  CheckCircle2
+  Clock
 } from 'lucide-react';
 
 export default function KPITelemetryStrip({
@@ -30,31 +27,31 @@ export default function KPITelemetryStrip({
   const activeConflictsCount = conflicts.filter(c => c.status === 'ACTIVE').length;
 
   return (
-    <div className="bg-[#0e1422] border-b border-[#1f2937] px-4 sm:px-6 py-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 text-white font-sans text-xs select-none">
+    <div className="bg-[#18191D] border-b border-[#2B2D35] px-3 sm:px-5 py-2.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-[#F1F5F9] font-sans text-xs select-none">
       
       {/* KPI 1: Active Buses */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className="w-7 h-7 rounded-md bg-indigo-500/15 text-indigo-400 flex items-center justify-center shrink-0">
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className="w-7 h-7 rounded-md bg-[#AAB9CF]/15 text-[#AAB9CF] flex items-center justify-center shrink-0 border border-[#AAB9CF]/20">
           <Bus className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             Active Buses
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5">
-            <span className="font-mono font-bold text-sm text-white">{activeBusesCount} / {totalBusesCount}</span>
+            <span className="font-mono font-bold text-sm text-[#F1F5F9]">{activeBusesCount} / {totalBusesCount}</span>
             <span className="text-[10px] font-mono text-emerald-400 font-semibold">({busDeploymentPct}%)</span>
           </div>
         </div>
       </div>
 
       {/* KPI 2: Driver Status */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className="w-7 h-7 rounded-md bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className="w-7 h-7 rounded-md bg-[#AAB9CF]/15 text-[#AAB9CF] flex items-center justify-center shrink-0 border border-[#AAB9CF]/20">
           <Users className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             Driver Status
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5 text-[11px] font-mono">
@@ -62,81 +59,83 @@ export default function KPITelemetryStrip({
             <span className="text-slate-500">•</span>
             <span className="text-amber-400 font-bold">{breakDriversCount} BRK</span>
             <span className="text-slate-500">•</span>
-            <span className="text-cyan-400 font-bold">{standbyDriversCount} SBY</span>
+            <span className="text-[#AAB9CF] font-bold">{standbyDriversCount} SBY</span>
           </div>
         </div>
       </div>
 
       {/* KPI 3: Corridor Overlap */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className="w-7 h-7 rounded-md bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className="w-7 h-7 rounded-md bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/25">
           <Route className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             Corridor Overlap
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5">
             <span className={`font-mono font-bold text-sm ${corridorOverlapPct > 15 ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {corridorOverlapPct.toFixed(1)}%
+              {corridorOverlapPct}%
             </span>
-            <span className="text-[10px] font-mono text-slate-400">Avg Corridor</span>
+            <span className="text-[10px] font-mono text-[#8E9BAE]">Avg Corridor</span>
           </div>
         </div>
       </div>
 
       {/* KPI 4: Crew Utilization */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className="w-7 h-7 rounded-md bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className="w-7 h-7 rounded-md bg-[#AAB9CF]/15 text-[#AAB9CF] flex items-center justify-center shrink-0 border border-[#AAB9CF]/20">
           <Percent className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             Crew Utilization
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5">
-            <span className="font-mono font-bold text-sm text-emerald-400">{crewUtilizationPct.toFixed(1)}%</span>
-            <span className="text-[10px] font-mono text-slate-400">Target &gt;88%</span>
+            <span className="font-mono font-bold text-sm text-[#F1F5F9]">{crewUtilizationPct}%</span>
+            <span className="text-[10px] font-mono text-[#8E9BAE]">Target &gt;88%</span>
           </div>
         </div>
       </div>
 
       {/* KPI 5: At-Risk Departures */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-          atRiskDeparturesCount > 0 ? 'bg-rose-500/15 text-rose-400' : 'bg-emerald-500/15 text-emerald-400'
-        }`}>
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className="w-7 h-7 rounded-md bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/25">
           <Clock className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             At-Risk Departures
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5">
             <span className={`font-mono font-bold text-sm ${atRiskDeparturesCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
               {atRiskDeparturesCount}
             </span>
-            <span className="text-[10px] font-mono text-slate-400">Next 60m</span>
+            <span className="text-[10px] font-mono text-[#8E9BAE]">Next 60m</span>
           </div>
         </div>
       </div>
 
       {/* KPI 6: Active Conflicts */}
-      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1f2937]/80">
-        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-          activeConflictsCount > 0 ? 'bg-rose-500/15 text-rose-400 animate-pulse' : 'bg-emerald-500/15 text-emerald-400'
+      <div className="flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-[#212227] border border-[#32353E] shadow-xs">
+        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 border ${
+          activeConflictsCount > 0 
+            ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' 
+            : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
         }`}>
-          {activeConflictsCount > 0 ? <ShieldAlert className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+          <AlertTriangle className="w-3.5 h-3.5" />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider truncate">
+          <div className="text-[10px] font-mono uppercase text-[#AAB9CF] font-semibold tracking-wider truncate">
             Active Conflicts
           </div>
           <div className="flex items-center space-x-1.5 mt-0.5">
             <span className={`font-mono font-bold text-sm ${activeConflictsCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
               {activeConflictsCount}
             </span>
-            <span className="text-[10px] font-mono text-slate-400">{activeConflictsCount === 0 ? 'Nominal' : 'Action Req'}</span>
+            <span className="text-[10px] font-mono text-[#8E9BAE]">
+              {activeConflictsCount > 0 ? 'Action Req' : 'Nominal'}
+            </span>
           </div>
         </div>
       </div>

@@ -54,7 +54,12 @@
 
     --radius: 0.375rem;
 
-    /* Custom Project Palette (#E4FDE1, #456990, #C1EEFF, #EDF0DA, #A6CFD5) */
+    /* Custom Project Palette (#AAB9CF, #212227) */
+    --palette-periwinkle: #AAB9CF;
+    --palette-gunmetal: #212227;
+    --palette-charcoal: #18191D;
+    --palette-surface: #27282F;
+    --palette-border: #32353E;
     --palette-mint: #E4FDE1;
     --palette-slate: #456990;
     --palette-ice: #C1EEFF;
@@ -63,51 +68,51 @@
   }
 
   .dark {
-    /* Custom Palette Dark Theme: Deep Slate Navy & Luminous Ice/Mint Accents */
-    --background: 211 35% 10%;
-    --foreground: 68 35% 95%;
+    /* Soothing Gunmetal & Soft Periwinkle Slate (#212227 & #AAB9CF) */
+    --background: 230 9% 10%; /* #18191D */
+    --foreground: 210 40% 96%; /* #F1F5F9 */
 
-    --card: 211 32% 14%;
-    --card-foreground: 68 35% 95%;
+    --card: 230 8% 14%; /* #212227 */
+    --card-foreground: 210 40% 96%;
 
-    --popover: 211 34% 12%;
-    --popover-foreground: 68 35% 95%;
+    --popover: 230 8% 15%;
+    --popover-foreground: 210 40% 96%;
 
-    /* Primary Accent: Ice Sky #C1EEFF with high contrast */
-    --primary: 196 100% 88%;
-    --primary-foreground: 211 45% 12%;
+    /* Primary Accent: Soft Periwinkle #AAB9CF */
+    --primary: 216 28% 74%; /* #AAB9CF */
+    --primary-foreground: 230 8% 12%;
 
-    /* Secondary: Slate Steel #456990 */
-    --secondary: 211 30% 22%;
-    --secondary-foreground: 68 35% 95%;
+    /* Secondary: Gunmetal Elevated #27282F */
+    --secondary: 230 8% 17%;
+    --secondary-foreground: 216 28% 74%;
 
-    --muted: 211 25% 18%;
-    --muted-foreground: 188 20% 65%;
+    --muted: 230 8% 16%;
+    --muted-foreground: 216 14% 65%;
 
-    /* Accent: Opal Mist tinted surface */
-    --accent: 211 30% 22%;
-    --accent-foreground: 196 100% 88%;
+    /* Accent */
+    --accent: 216 28% 74%;
+    --accent-foreground: 230 8% 12%;
 
-    --destructive: 0 65% 45%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 211 25% 20%;
-    --input: 211 25% 22%;
-    --ring: 196 100% 88%;
+    --border: 230 11% 22%; /* #32353E */
+    --input: 230 11% 20%;
+    --ring: 216 28% 74%;
 
     /* Transit Domain Tokens */
-    --duty-linked-bg: 211 35% 24%;
-    --duty-linked-border: 188 39% 55%;
-    --duty-linked-text: 196 100% 88%;
+    --duty-linked-bg: 216 28% 25%;
+    --duty-linked-border: 216 28% 65%;
+    --duty-linked-text: 216 35% 85%;
 
-    --duty-unlinked-bg: 211 25% 18%;
-    --duty-unlinked-border: 211 25% 32%;
-    --duty-unlinked-text: 68 30% 80%;
+    --duty-unlinked-bg: 38 40% 20%;
+    --duty-unlinked-border: 38 60% 45%;
+    --duty-unlinked-text: 38 90% 80%;
 
-    --rest-valid-bg: 114 45% 16%;
-    --rest-valid-text: 114 88% 85%;
+    --rest-valid-bg: 150 35% 18%;
+    --rest-valid-text: 150 70% 80%;
 
-    --rest-violation-bg: 0 50% 18%;
+    --rest-violation-bg: 0 45% 20%;
     --rest-violation-text: 0 80% 80%;
   }
 
@@ -242,12 +247,12 @@ kbd {
   background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1) 6px, rgba(239, 68, 68, 0.2) 6px, rgba(239, 68, 68, 0.2) 12px);
 }
 
-/* Dark Control-Room Geospatial Map Tiles (Watermark-free, Deep Obsidian/Slate) */
+/* Dark Control-Room Geospatial Map Tiles (Soothing Gunmetal & Slate) */
 .leaflet-container {
-  background: #0b0f19 !important;
+  background: #18191D !important;
 }
 
 .cockpit-map .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(75%) contrast(120%) grayscale(90%) !important;
+  filter: invert(100%) hue-rotate(185deg) brightness(78%) contrast(118%) grayscale(92%) !important;
 }
 
