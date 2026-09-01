@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import GlobalSearchModal from './GlobalSearchModal';
+import ActivityAlertDrawer from '../cockpit/ActivityAlertDrawer';
 
 export default function AdminLayout({
   children,
@@ -25,14 +26,14 @@ export default function AdminLayout({
   selectedCity = 'delhi',
   onSelectCity
 }) {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const location = useLocation();
 
   const isCockpit = location.pathname === '/admin' || 
                     location.pathname === '/admin/' || 
-                    location.pathname === '/admin/dashboard' || 
-                    location.pathname === '/admin/operations';
+                    location.pathname === '/admin/dashboard';
 
   const enhancedChildren = React.isValidElement(children)
     ? React.cloneElement(children, {
@@ -41,8 +42,15 @@ export default function AdminLayout({
       })
     : children;
 
+  const mockActivityEvents = [
+    { id: '1', type: 'SOLVER', message: 'Automated 3-tier constraint solver verified 11h rest gap for Shift A.', timestamp: '08:42 AM', severity: 'nominal' },
+    { id: '2', type: 'ROSTER', message: 'Driver Rajesh Kumar assigned to Route 534 (Corridor Mehrauli).', timestamp: '08:35 AM', severity: 'nominal' },
+    { id: '3', type: 'REST', message: 'Driver DRV-1021 flagged for pending rest compliance check.', timestamp: '08:15 AM', severity: 'warning' },
+    { id: '4', type: 'FLEET', message: 'Bus BUS-104 scheduled for preventive workshop inspection.', timestamp: '07:50 AM', severity: 'nominal' }
+  ];
+
   return (
-    <div className={`h-screen w-screen flex bg-[#0b0f19] text-foreground font-sans antialiased overflow-hidden select-none ${darkMode ? 'dark' : ''}`}>
+    <div className={`h-screen w-screen flex bg-[#F5F4F8] dark:bg-[#191821] text-foreground font-sans antialiased overflow-hidden select-none ${darkMode ? 'dark' : ''}`}>
       
       {/* Sidebar: In cockpit mode, off-canvas drawer; in sub-modules, docked sidebar */}
       {isCockpit ? (
@@ -87,7 +95,8 @@ export default function AdminLayout({
             setSimSpeed={setSimSpeed}
             conflictsCount={conflictsCount}
             onOpenFallbackModal={onOpenFallbackModal}
-            onOpenPRDModal={onOpenPRDModal}
+            onOpenAlerts={() => setIsAlertsOpen(true)}
+            alertCount={mockActivityEvents.length}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
             selectedCity={selectedCity}
@@ -113,6 +122,14 @@ export default function AdminLayout({
           activeConflicts={activeConflicts}
         />
       )}
+
+      {/* Activity Alert Drawer */}
+      <ActivityAlertDrawer
+        isOpen={isAlertsOpen}
+        onClose={() => setIsAlertsOpen(false)}
+        events={mockActivityEvents}
+        onClearEvents={() => {}}
+      />
 
     </div>
   );

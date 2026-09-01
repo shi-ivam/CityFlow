@@ -32,6 +32,8 @@ import AdminOperations from './pages/admin/AdminOperations';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminAlerts from './pages/admin/AdminAlerts';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminReports from './pages/admin/AdminReports';
+import AdminActivity from './pages/admin/AdminActivity';
 
 import FallbackSolverModal from './components/FallbackSolverModal';
 import PRDModal from './components/PRDModal';
@@ -836,6 +838,8 @@ const AdminControlCenter: React.FC<{
           }
         />
         <Route path="/analytics" element={<AdminAnalytics routes={routes} busFleet={busFleet} crewMembers={crewMembers} />} />
+        <Route path="/reports" element={<AdminReports dutyAssignments={dutyAssignments} crewMembers={crewMembers} busFleet={busFleet} routes={routes} activeConflicts={activeConflicts} />} />
+        <Route path="/activity" element={<AdminActivity />} />
         <Route path="/alerts" element={<AdminAlerts activeConflicts={activeConflicts} onOpenFallbackModal={() => setIsFallbackModalOpen(true)} />} />
         <Route path="/settings" element={<AdminSettings />} />
 

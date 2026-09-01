@@ -4,107 +4,105 @@
 
 @layer base {
   :root {
-    /* Custom Palette Light Theme: Crisp, Airy, Minimal & Simple */
-    --background: 210 20% 98.5%;
-    --foreground: 215 25% 15%;
+    /* Lavender-Grey Design System (Light Mode: Soft, Premium, Professional) */
+    --background: 252 20% 97%; /* #F5F4F8 */
+    --foreground: 255 18% 13%; /* #1D1A27 Deep Charcoal */
 
-    --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card: 0 0% 100%; /* #FFFFFF Crisp Surface */
+    --card-foreground: 255 18% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 255 18% 13%;
 
-    /* Primary Accent: Slate Steel #456990 */
-    --primary: 211 35% 42%;
+    /* Lavender / Purple Accent */
+    --primary: 262 45% 55%; /* #7E57C2 */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Soft Opal Mist #A6CFD5 */
-    --secondary: 188 35% 94%;
-    --secondary-foreground: 211 35% 25%;
+    /* Secondary: Soft Lavender Grey Panel */
+    --secondary: 252 22% 93%; /* #ECE9F2 */
+    --secondary-foreground: 255 15% 25%;
 
-    /* Muted: Soft Alabaster Sage #EDF0DA */
-    --muted: 68 25% 95%;
-    --muted-foreground: 215 15% 48%;
+    /* Muted Slate Lavender */
+    --muted: 252 18% 92%; /* #E8E5EE */
+    --muted-foreground: 255 10% 45%; /* #6F6B7D */
 
-    /* Accent: Delicate Ice Sky #C1EEFF */
-    --accent: 196 90% 95%;
-    --accent-foreground: 211 40% 20%;
+    /* Accent & Highlights */
+    --accent: 255 35% 94%;
+    --accent-foreground: 262 45% 35%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 15% 91%;
-    --input: 210 15% 91%;
-    --ring: 211 35% 42%;
+    /* Muted Lavender Grey Borders */
+    --border: 252 16% 87%; /* #DDD9E7 */
+    --input: 252 16% 87%;
+    --ring: 262 45% 55%;
 
     /* Transit Domain Tokens */
-    --duty-linked-bg: 114 70% 94%;
-    --duty-linked-border: 114 40% 75%;
-    --duty-linked-text: 114 65% 18%;
+    --duty-linked-bg: 252 35% 94%;
+    --duty-linked-border: 262 40% 75%;
+    --duty-linked-text: 262 50% 25%;
 
-    --duty-unlinked-bg: 68 30% 94%;
-    --duty-unlinked-border: 68 25% 75%;
-    --duty-unlinked-text: 215 25% 25%;
+    --duty-unlinked-bg: 38 75% 94%;
+    --duty-unlinked-border: 38 60% 75%;
+    --duty-unlinked-text: 38 80% 25%;
 
-    --rest-valid-bg: 114 70% 94%;
-    --rest-valid-text: 114 65% 18%;
+    --rest-valid-bg: 150 50% 94%;
+    --rest-valid-text: 150 70% 20%;
 
     --rest-violation-bg: 0 80% 95%;
     --rest-violation-text: 0 70% 35%;
 
-    --radius: 0.375rem;
+    --radius: 0.5rem;
 
-    /* Custom Project Palette (#AAB9CF, #212227, #8693AB) */
-    --palette-periwinkle: #AAB9CF;
-    --palette-gunmetal: #212227;
-    --palette-steel: #8693AB;
-    --palette-charcoal: #18191D;
-    --palette-surface: #27282F;
-    --palette-border: #8693AB;
+    /* Custom Project Palette Tokens */
+    --palette-lavender-base: #F5F4F8;
+    --palette-lavender-surface: #FFFFFF;
+    --palette-lavender-panel: #ECE9F2;
+    --palette-lavender-border: #DDD9E7;
+    --palette-lavender-accent: #7E57C2;
     --palette-mint: #E4FDE1;
     --palette-slate: #456990;
-    --palette-ice: #C1EEFF;
-    --palette-sage: #EDF0DA;
-    --palette-opal: #A6CFD5;
+    --palette-steel: #8693AB;
   }
 
   .dark {
-    /* Soothing Gunmetal & Soft Periwinkle Slate (#212227, #AAB9CF, #8693AB) */
-    --background: 230 9% 10%; /* #18191D */
-    --foreground: 210 40% 96%; /* #F1F5F9 */
+    /* Lavender-Grey Dark Mode (Enterprise Control Room: Deep Lavender Charcoal) */
+    --background: 250 14% 11%; /* #191821 */
+    --foreground: 250 20% 96%; /* #F3F2F7 */
 
-    --card: 230 8% 14%; /* #212227 */
-    --card-foreground: 210 40% 96%;
+    --card: 250 12% 16%; /* #24222E */
+    --card-foreground: 250 20% 96%;
 
-    --popover: 230 8% 15%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 250 12% 17%;
+    --popover-foreground: 250 20% 96%;
 
-    /* Primary Accent: Soft Periwinkle #AAB9CF */
-    --primary: 216 28% 74%; /* #AAB9CF */
-    --primary-foreground: 230 8% 12%;
+    /* Luminous Lavender Accent */
+    --primary: 260 55% 72%; /* #B39DDB */
+    --primary-foreground: 250 15% 10%;
 
-    /* Secondary: Gunmetal Elevated #27282F */
-    --secondary: 230 8% 17%;
-    --secondary-foreground: 216 28% 74%;
+    /* Elevated Lavender Slate Secondary */
+    --secondary: 250 11% 20%; /* #2D2A3A */
+    --secondary-foreground: 250 25% 85%;
 
-    --muted: 230 8% 16%;
-    --muted-foreground: 219 18% 60%; /* #8693AB */
+    --muted: 250 11% 18%; /* #282633 */
+    --muted-foreground: 250 12% 65%; /* #9E9AAF */
 
-    /* Accent */
-    --accent: 216 28% 74%;
-    --accent-foreground: 230 8% 12%;
+    --accent: 250 16% 22%;
+    --accent-foreground: 250 25% 90%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 219 18% 60%; /* #8693AB */
-    --input: 219 18% 60%; /* #8693AB */
-    --ring: 216 28% 74%;
+    /* Luminous Lavender-Slate Border */
+    --border: 250 12% 26%; /* #3B374A */
+    --input: 250 12% 26%;
+    --ring: 260 55% 72%;
 
     /* Transit Domain Tokens */
-    --duty-linked-bg: 216 28% 25%;
-    --duty-linked-border: 216 28% 65%;
-    --duty-linked-text: 216 35% 85%;
+    --duty-linked-bg: 250 22% 22%;
+    --duty-linked-border: 260 40% 55%;
+    --duty-linked-text: 250 30% 90%;
 
     --duty-unlinked-bg: 38 40% 20%;
     --duty-unlinked-border: 38 60% 45%;
@@ -248,12 +246,12 @@ kbd {
   background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1) 6px, rgba(239, 68, 68, 0.2) 6px, rgba(239, 68, 68, 0.2) 12px);
 }
 
-/* Dark Control-Room Geospatial Map Tiles (Soothing Gunmetal & Slate) */
+/* Dark Control-Room Geospatial Map Tiles (Lavender Slate Theme) */
 .leaflet-container {
-  background: #18191D !important;
+  background: hsl(var(--background)) !important;
 }
 
-.cockpit-map .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(185deg) brightness(78%) contrast(118%) grayscale(92%) !important;
+.dark .cockpit-map .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(220deg) brightness(80%) contrast(115%) grayscale(85%) !important;
 }
 
