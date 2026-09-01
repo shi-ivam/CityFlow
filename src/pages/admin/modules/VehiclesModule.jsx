@@ -754,6 +754,7 @@ export default function VehiclesModule({
         vehicle={assignTargetVehicle}
         routes={routes}
         crewMembers={crewMembers}
+        allVehicles={busFleet}
         onSaveAssignment={handleSaveAssignment}
       />
 

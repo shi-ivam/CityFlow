@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Route, UserCheck, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
+import { validateVehicleAssignment } from '../../../services/vehicleService';
 
 export default function VehicleAssignmentModal({
   isOpen,
@@ -7,6 +8,7 @@ export default function VehicleAssignmentModal({
   vehicle,
   routes = [],
   crewMembers = [],
+  allVehicles = [],
   onSaveAssignment
 }) {
   if (!isOpen || !vehicle) return null;
@@ -17,10 +19,12 @@ export default function VehicleAssignmentModal({
   const [depot, setDepot] = useState(vehicle.depot || 'Kashmere Gate ISBT');
 
   const selectedDriver = crewMembers.find(c => c.id === selectedDriverId) || crewMembers[0];
-  const hasDriverRestViolation = selectedDriver?.status === 'REST_VIOLATION' || selectedDriver?.accumulatedHours >= 8;
+  const validation = validateVehicleAssignment(vehicle, selectedDriver, shiftTime, allVehicles);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validation.isValid) return;
+
     onSaveAssignment({
       vehicleId: vehicle.id,
       assignedRoute: selectedRouteCode,
@@ -93,16 +97,29 @@ export default function VehicleAssignmentModal({
             </select>
           </div>
 
-          {/* Conflict Warning Banner if Driver has rest violation */}
-          {hasDriverRestViolation && (
+          {/* Validation Errors (Blocking) */}
+          {validation.errors.length > 0 && (
             <div className="p-3 rounded bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 space-y-1">
               <div className="flex items-center space-x-1.5 font-bold">
                 <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>Rest Period Compliance Warning</span>
+                <span>Assignment Blocked</span>
               </div>
-              <p className="text-[11px] font-sans">
-                {selectedDriver?.fullName || 'Selected Driver'} has accumulated {selectedDriver?.accumulatedHours || 8}h of driving duty and requires a mandatory 11-hour rest window before next shift dispatch.
-              </p>
+              {validation.errors.map((err, i) => (
+                <p key={i} className="text-[11px] font-sans">{err}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Validation Warnings (Operational Notice) */}
+          {validation.warnings.length > 0 && (
+            <div className="p-3 rounded bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 space-y-1">
+              <div className="flex items-center space-x-1.5 font-bold">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Operational Notice</span>
+              </div>
+              {validation.warnings.map((warn, i) => (
+                <p key={i} className="text-[11px] font-sans">{warn}</p>
+              ))}
             </div>
           )}
 
@@ -150,7 +167,8 @@ export default function VehicleAssignmentModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded bg-primary text-primary-foreground font-bold hover:opacity-90 transition cursor-pointer flex items-center space-x-1"
+              disabled={!validation.isValid}
+              className="px-4 py-1.5 rounded bg-primary text-primary-foreground font-bold hover:opacity-90 disabled:opacity-50 transition cursor-pointer flex items-center space-x-1 shadow-xs"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Confirm Assignment</span>

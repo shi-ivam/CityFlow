@@ -1,26 +1,19 @@
 import React from 'react';
 import { Bus, CheckCircle2, Clock, Wrench, ShieldAlert, Zap, Activity } from 'lucide-react';
+import { calculateFleetMetrics } from '../../../services/vehicleService';
 
 export default function FleetKPICards({ 
   busFleet = [], 
   activeFilter = 'ALL', 
   onSelectFilter 
 }) {
-  const total = busFleet.length;
-  const inService = busFleet.filter(b => b.status === 'IN_SERVICE').length;
-  const standby = busFleet.filter(b => b.status === 'STANDBY_READY' || b.status === 'AVAILABLE').length;
-  const maintenance = busFleet.filter(b => b.status === 'MAINTENANCE').length;
-  const moving = busFleet.filter(b => b.status === 'IN_SERVICE' && (b.speedKmH > 0)).length;
-  const maintenanceDueSoon = busFleet.filter(b => (b.nextServiceDate && (new Date(b.nextServiceDate) - new Date() < 15 * 86400000))).length;
-  
-  const utilizationPct = total > 0 ? ((inService / total) * 100).toFixed(1) : 0;
-  const availabilityPct = total > 0 ? (((inService + standby) / total) * 100).toFixed(1) : 0;
+  const metrics = calculateFleetMetrics(busFleet);
 
   const cards = [
     {
       id: 'ALL',
       label: 'TOTAL FLEET',
-      value: total,
+      value: metrics.total,
       subtext: '100% registered assets',
       icon: Bus,
       color: 'text-foreground',
@@ -30,17 +23,17 @@ export default function FleetKPICards({
     {
       id: 'IN_SERVICE',
       label: 'IN SERVICE',
-      value: inService,
-      subtext: `${utilizationPct}% fleet utilization`,
+      value: metrics.inService,
+      subtext: `${metrics.utilizationPct}% fleet utilization`,
       icon: CheckCircle2,
       color: 'text-emerald-600 dark:text-emerald-400',
       borderActive: 'border-emerald-500 ring-1 ring-emerald-500/30',
-      badge: `${moving} Moving`,
+      badge: `${metrics.moving} Moving`,
     },
     {
       id: 'STANDBY_READY',
       label: 'STANDBY',
-      value: standby,
+      value: metrics.standby,
       subtext: 'Ready for emergency dispatch',
       icon: Clock,
       color: 'text-amber-600 dark:text-amber-400',
@@ -50,17 +43,17 @@ export default function FleetKPICards({
     {
       id: 'MAINTENANCE',
       label: 'MAINTENANCE',
-      value: maintenance,
-      subtext: maintenance === 0 ? '0 critical issues' : `${maintenance} in workshop`,
+      value: metrics.maintenance,
+      subtext: metrics.maintenance === 0 ? '0 critical issues' : `${metrics.maintenance} in workshop`,
       icon: Wrench,
       color: 'text-rose-600 dark:text-rose-400',
       borderActive: 'border-rose-500 ring-1 ring-rose-500/30',
-      badge: `${maintenanceDueSoon} Due Soon`,
+      badge: `${metrics.maintenanceDueSoon} Due Soon`,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-sans">
       {cards.map((card) => {
         const Icon = card.icon;
         const isSelected = activeFilter === card.id;
@@ -68,7 +61,7 @@ export default function FleetKPICards({
         return (
           <button
             key={card.id}
-            onClick={() => onSelectFilter && onSelectFilter(card.id)}
+            onClick={() => onSelectFilter && onSelectFilter(isSelected ? 'ALL' : card.id)}
             className={`text-left p-4 rounded-lg bg-card border transition-all cursor-pointer relative overflow-hidden group hover:border-foreground/30 shadow-xs ${
               isSelected ? card.borderActive : 'border-border'
             }`}
