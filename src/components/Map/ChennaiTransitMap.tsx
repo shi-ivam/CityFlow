@@ -1029,7 +1029,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
           <div className="flex items-center justify-between px-3 py-2 bg-foreground text-background font-mono text-xs font-bold">
             <div className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5" />
-              <span>LIVE TELEMETRY // {activeSelectedBus.id}</span>
+              <span>{activeSelectedBus.id}</span>
             </div>
             <button
               onClick={resetToInitialView}
