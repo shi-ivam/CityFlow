@@ -26,137 +26,131 @@ export default function MetricsBanner({
   const complianceScore = conflictsCount === 0 ? 100 : Math.max(0, 100 - (conflictsCount * 12.5));
 
   return (
-    <div className="bg-[#080e1e]/95 border-b border-white/10 px-4 lg:px-6 py-2.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 z-20 shrink-0">
+    <div className="bg-[#FFFFFF] border-b border-[#EAEAEA] px-4 lg:px-8 py-2.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 z-20 shrink-0">
       
-      {/* 1. Crew Utilization Rate (CU) */}
-      <div className="bg-slate-900/80 rounded-xl p-2.5 border border-white/5 flex items-center justify-between group hover:border-brand-500/30 transition">
+      {/* 1. Crew Utilization Rate */}
+      <div className="bg-[#FBFBFA] rounded-[8px] p-2.5 border border-[#EAEAEA] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-            <Users className="w-3.5 h-3.5 text-brand-400" />
+          <div className="text-[11px] font-mono text-[#787774] flex items-center space-x-1.5">
+            <Users className="w-3 h-3 text-[#111111]" />
             <span>Crew Util. (CU)</span>
           </div>
-          <div className="flex items-baseline space-x-1.5 mt-0.5">
-            <span className="text-lg font-display font-black text-white">{crewUtilization.rate}%</span>
-            <span className="text-[10px] text-slate-400 font-mono">({crewUtilization.totalDutyHours}h / {crewUtilization.totalContractedHours}h)</span>
+          <div className="flex items-baseline space-x-1 mt-0.5">
+            <span className="text-base font-bold text-[#111111] font-mono">{crewUtilization.rate}%</span>
+            <span className="text-[10px] text-[#787774] font-mono">({crewUtilization.totalDutyHours}h / {crewUtilization.totalContractedHours}h)</span>
           </div>
         </div>
-        <div className="w-9 h-9 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-xs font-mono">
+        <span className="px-1.5 py-0.5 rounded-[4px] bg-[#E1F3FE] text-[#1F6C9F] text-[10px] font-mono font-bold">
           CU
-        </div>
+        </span>
       </div>
 
-      {/* 2. Network Route Coverage */}
-      <div className="bg-slate-900/80 rounded-xl p-2.5 border border-white/5 flex items-center justify-between group hover:border-emerald-500/30 transition">
+      {/* 2. Network Reach */}
+      <div className="bg-[#FBFBFA] rounded-[8px] p-2.5 border border-[#EAEAEA] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-            <Map className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="text-[11px] font-mono text-[#787774] flex items-center space-x-1.5">
+            <Map className="w-3 h-3 text-[#111111]" />
             <span>Network Reach</span>
           </div>
-          <div className="flex items-baseline space-x-1.5 mt-0.5">
-            <span className="text-lg font-display font-black text-white">{networkCoverageKm}</span>
-            <span className="text-xs text-slate-400 font-mono">km unique</span>
+          <div className="flex items-baseline space-x-1 mt-0.5">
+            <span className="text-base font-bold text-[#111111] font-mono">{networkCoverageKm}</span>
+            <span className="text-[10px] text-[#787774] font-mono">km unique</span>
           </div>
         </div>
-        <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-xs font-mono">
+        <span className="px-1.5 py-0.5 rounded-[4px] bg-[#EDF3EC] text-[#346538] text-[10px] font-mono font-bold">
           GIS
-        </div>
+        </span>
       </div>
 
       {/* 3. Deadhead Ratio */}
-      <div className="bg-slate-900/80 rounded-xl p-2.5 border border-white/5 flex items-center justify-between group hover:border-amber-500/30 transition">
+      <div className="bg-[#FBFBFA] rounded-[8px] p-2.5 border border-[#EAEAEA] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+          <div className="text-[11px] font-mono text-[#787774] flex items-center space-x-1.5">
+            <Clock className="w-3 h-3 text-[#111111]" />
             <span>Deadhead Ratio</span>
           </div>
-          <div className="flex items-baseline space-x-1.5 mt-0.5">
-            <span className="text-lg font-display font-black text-white">{deadheadRatio}%</span>
-            <span className="text-[10px] text-amber-400/80 font-mono">15m Hubs</span>
+          <div className="flex items-baseline space-x-1 mt-0.5">
+            <span className="text-base font-bold text-[#111111] font-mono">{deadheadRatio}%</span>
+            <span className="text-[10px] text-[#787774] font-mono">15m Hubs</span>
           </div>
         </div>
-        <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-xs font-mono">
+        <span className="px-1.5 py-0.5 rounded-[4px] bg-[#FBF3DB] text-[#956400] text-[10px] font-mono font-bold">
           HUB
-        </div>
+        </span>
       </div>
 
-      {/* 4. Linked vs Unlinked Duties */}
-      <div className="bg-slate-900/80 rounded-xl p-2.5 border border-white/5 flex items-center justify-between group hover:border-sky-500/30 transition">
+      {/* 4. Duty Structure (Linked vs Unlinked) */}
+      <div className="bg-[#FBFBFA] rounded-[8px] p-2.5 border border-[#EAEAEA] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-            <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
+          <div className="text-[11px] font-mono text-[#787774] flex items-center space-x-1.5">
+            <TrendingUp className="w-3 h-3 text-[#111111]" />
             <span>Duty Structure</span>
           </div>
-          <div className="flex items-center space-x-2 mt-0.5">
-            <div className="flex items-center space-x-1 text-xs font-mono font-bold text-sky-400" title="Linked Duties (Solid Blue)">
-              <Link2 className="w-3 h-3" />
-              <span>{linkedDutiesCount}L</span>
-            </div>
-            <span className="text-slate-600">/</span>
-            <div className="flex items-center space-x-1 text-xs font-mono font-bold text-amber-400" title="Unlinked Duties (Dashed Amber)">
-              <Unlink className="w-3 h-3" />
-              <span>{unlinkedDutiesCount}U</span>
-            </div>
+          <div className="flex items-center space-x-1.5 mt-0.5 text-xs font-mono font-bold">
+            <span className="text-[#1F6C9F]">{linkedDutiesCount}L Linked</span>
+            <span className="text-[#EAEAEA]">/</span>
+            <span className="text-[#956400]">{unlinkedDutiesCount}U Hub</span>
           </div>
         </div>
         <div className="flex flex-col space-y-1">
-          <span className="w-4 h-1 rounded bg-sky-400" title="Linked"></span>
-          <span className="w-4 h-1 rounded bg-amber-400 border-dashed" title="Unlinked"></span>
+          <span className="w-3 h-1 rounded-[2px] bg-[#1F6C9F]"></span>
+          <span className="w-3 h-1 rounded-[2px] bg-[#956400]"></span>
         </div>
       </div>
 
-      {/* 5. Active Fleet In Service */}
-      <div className="bg-slate-900/80 rounded-xl p-2.5 border border-white/5 flex items-center justify-between group hover:border-cyan-500/30 transition">
+      {/* 5. Fleet In Service */}
+      <div className="bg-[#FBFBFA] rounded-[8px] p-2.5 border border-[#EAEAEA] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-slate-400">
-            <Bus className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="text-[11px] font-mono text-[#787774] flex items-center space-x-1.5">
+            <Bus className="w-3 h-3 text-[#111111]" />
             <span>Fleet Active</span>
           </div>
-          <div className="flex items-baseline space-x-1.5 mt-0.5">
-            <span className="text-lg font-display font-black text-white">{activeBusesCount}</span>
-            <span className="text-xs text-slate-400 font-mono">/ {totalBusesCount} EVs</span>
+          <div className="flex items-baseline space-x-1 mt-0.5">
+            <span className="text-base font-bold text-[#111111] font-mono">{activeBusesCount}</span>
+            <span className="text-[10px] text-[#787774] font-mono">/ {totalBusesCount} EVs</span>
           </div>
         </div>
-        <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-xs font-mono">
+        <span className="px-1.5 py-0.5 rounded-[4px] bg-[#F7F6F3] text-[#787774] border border-[#EAEAEA] text-[10px] font-mono font-bold">
           EV
-        </div>
+        </span>
       </div>
 
-      {/* 6. Rest Compliance & Safety Score */}
+      {/* 6. Rest Safety */}
       <div 
         onClick={conflictsCount > 0 ? onOpenFallbackModal : undefined}
-        className={`rounded-xl p-2.5 border flex items-center justify-between transition cursor-pointer ${
+        className={`rounded-[8px] p-2.5 border flex items-center justify-between transition cursor-pointer ${
           conflictsCount > 0 
-            ? 'bg-rose-950/40 border-rose-500/50 hover:bg-rose-950/60 shadow-lg shadow-rose-950/50' 
-            : 'bg-slate-900/80 border-white/5 hover:border-emerald-500/30'
+            ? 'bg-[#FDEBEC] border-[#F7D2D4] text-[#9F2F2D]' 
+            : 'bg-[#FBFBFA] border-[#EAEAEA]'
         }`}
       >
         <div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-mono">
+          <div className="text-[11px] font-mono flex items-center space-x-1.5">
             {conflictsCount > 0 ? (
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
+              <AlertTriangle className="w-3 h-3 text-[#9F2F2D]" />
             ) : (
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <ShieldCheck className="w-3 h-3 text-[#346538]" />
             )}
-            <span className={conflictsCount > 0 ? "text-rose-300 font-bold" : "text-slate-400"}>
+            <span className={conflictsCount > 0 ? "text-[#9F2F2D] font-bold" : "text-[#787774]"}>
               Rest Safety (11h)
             </span>
           </div>
-          <div className="flex items-baseline space-x-1.5 mt-0.5">
-            <span className={`text-lg font-display font-black ${conflictsCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+          <div className="flex items-baseline space-x-1 mt-0.5">
+            <span className={`text-base font-bold font-mono ${conflictsCount > 0 ? 'text-[#9F2F2D]' : 'text-[#346538]'}`}>
               {complianceScore}%
             </span>
             {conflictsCount > 0 && (
-              <span className="text-[10px] text-rose-300 font-mono font-bold bg-rose-900/80 px-1.5 py-0.2 rounded">
-                {conflictsCount} VIOLATION
+              <span className="text-[10px] text-[#9F2F2D] font-mono font-bold">
+                (1 VIOLATION)
               </span>
             )}
           </div>
         </div>
-        <div className={`w-9 h-9 rounded-lg border flex items-center justify-center font-bold text-xs font-mono ${
-          conflictsCount > 0 ? 'bg-rose-500/20 border-rose-500 text-rose-300' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+        <span className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-bold ${
+          conflictsCount > 0 ? 'bg-[#9F2F2D] text-white' : 'bg-[#EDF3EC] text-[#346538]'
         }`}>
           {conflictsCount > 0 ? 'FIX' : '100%'}
-        </div>
+        </span>
       </div>
 
     </div>

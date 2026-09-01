@@ -1,87 +1,138 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-canvas: #FBFBFA;
+    --bg-surface: #FFFFFF;
+    --bg-surface-subtle: #F7F6F3;
+    --border-light: #EAEAEA;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --text-primary: #111111;
+    --text-secondary: #787774;
+    --text-muted: #9B9A97;
+
+    /* Spot Pastels */
+    --pastel-blue-bg: #E1F3FE;
+    --pastel-blue-text: #1F6C9F;
+    --pastel-blue-border: #BCDFF6;
+
+    --pastel-yellow-bg: #FBF3DB;
+    --pastel-yellow-text: #956400;
+    --pastel-yellow-border: #F3E4BA;
+
+    --pastel-red-bg: #FDEBEC;
+    --pastel-red-text: #9F2F2D;
+    --pastel-red-border: #F7D2D4;
+
+    --pastel-green-bg: #EDF3EC;
+    --pastel-green-text: #346538;
+    --pastel-green-border: #D5E5D4;
+
+    --pastel-purple-bg: #F3EBF9;
+    --pastel-purple-text: #6E3294;
+    --pastel-purple-border: #DFCEEC;
+  }
+
   body {
-    background-color: #050811;
-    color: #f1f5f9;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 60%);
-    background-attachment: fixed;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Newsreader', 'Playfair Display', serif;
+    letter-spacing: -0.03em;
+  }
+
+  code, kbd, pre, .font-mono {
+    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
   }
 }
 
-/* Custom Scrollbars */
+/* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #070b16;
+  background: #FBFBFA;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #EAEAEA;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: #D0D0D0;
 }
 
-/* Leaflet Dark Customizations */
+/* Micro Keyboard Key */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-family: 'Geist Mono', monospace;
+  background-color: #F7F6F3;
+  color: #787774;
+  border: 1px solid #EAEAEA;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Leaflet Clean Positron / Minimalist Map Customizations */
 .leaflet-container {
-  background-color: #060913 !important;
+  background-color: #FBFBFA !important;
   font-family: inherit;
 }
+.leaflet-bar {
+  border: 1px solid #EAEAEA !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+}
 .leaflet-bar a {
-  background-color: #0d1527 !important;
-  color: #94a3b8 !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: #FFFFFF !important;
+  color: #111111 !important;
+  border-bottom: 1px solid #EAEAEA !important;
 }
 .leaflet-bar a:hover {
-  background-color: #1e293b !important;
-  color: #38bdf8 !important;
+  background-color: #F7F6F3 !important;
+  color: #111111 !important;
 }
 .leaflet-popup-content-wrapper {
-  background: #0c1424 !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 12px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7) !important;
+  background: #FFFFFF !important;
+  color: #111111 !important;
+  border: 1px solid #EAEAEA;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 .leaflet-popup-tip {
-  background: #0c1424 !important;
+  background: #FFFFFF !important;
 }
 
-/* Custom animated pulse for bus markers */
-@keyframes bus-ping {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
-.bus-ping-circle {
-  animation: bus-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+/* Positron Clean Grayscale Map Tiles */
+.minimal-osm-tiles {
+  filter: grayscale(0.9) contrast(1.05) brightness(1.02);
 }
 
-/* Glow Utilities */
-.shadow-glow-sky {
-  box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.3);
+/* Pulse animation */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.08); }
 }
-.shadow-glow-amber {
-  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.3);
-}
-.shadow-glow-rose {
-  box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.35);
-}
-.shadow-glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3);
-}
-.shadow-glow-purple {
-  box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.3);
+.animate-subtle-pulse {
+  animation: subtle-pulse 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-/* Dark styling for OpenStreetMap tiles */
-.dark-osm-tiles {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+/* Fade in animation */
+@keyframes editorialFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: editorialFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

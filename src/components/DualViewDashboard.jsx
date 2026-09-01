@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Columns, 
-  Maximize2, 
   Map, 
-  CalendarClock, 
-  Layers, 
-  Sparkles, 
-  SlidersHorizontal,
-  Info
+  CalendarClock 
 } from 'lucide-react';
 import RouteMap from './RouteMap';
 import GanttTimeline from './GanttTimeline';
@@ -38,55 +33,55 @@ export default function DualViewDashboard({
   const [layoutMode, setLayoutMode] = useState('SPLIT_50_50'); // 'SPLIT_50_50', 'MAP_MAXIMIZED', 'GANTT_MAXIMIZED'
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-7.5rem)] overflow-hidden">
+    <div className="flex-1 flex flex-col h-[calc(100vh-6.75rem)] overflow-hidden bg-[#FBFBFA]">
       
       {/* Sub-header Controls Bar */}
-      <div className="h-10 bg-[#090f1f] border-b border-white/5 px-4 flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
+      <div className="h-9 bg-[#FFFFFF] border-b border-[#EAEAEA] px-4 lg:px-8 flex items-center justify-between text-xs font-mono text-[#787774] shrink-0">
         
-        {/* Dual-View Synchronized Status */}
+        {/* Dual-View Status */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-brand-400"></span>
-            <span className="text-white font-bold">Bi-directional Reactive Sync</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#111111]"></span>
+            <span className="text-[#111111] font-semibold">Bi-directional Reactive Sync</span>
           </div>
-          <span className="text-slate-600">|</span>
-          <span className="hidden sm:inline text-[11px] text-slate-400">
-            Spatial vector modifications re-validate shift rosters; crew rest constraints validate route viability.
+          <span className="text-[#EAEAEA]">|</span>
+          <span className="hidden sm:inline text-[11px] text-[#787774]">
+            Spatial changes re-evaluate shift rosters; driver rest constraints validate route viability.
           </span>
         </div>
 
         {/* Layout Mode Switcher */}
-        <div className="flex items-center space-x-1 bg-slate-900 p-0.5 rounded-lg border border-white/10">
+        <div className="flex items-center space-x-0.5 bg-[#F7F6F3] p-0.5 rounded-[4px] border border-[#EAEAEA]">
           <button
             onClick={() => setLayoutMode('SPLIT_50_50')}
-            className={`p-1 rounded flex items-center space-x-1 text-[11px] ${
-              layoutMode === 'SPLIT_50_50' ? 'bg-brand-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+            className={`px-2 py-0.5 rounded-[3px] flex items-center space-x-1 text-[11px] font-medium ${
+              layoutMode === 'SPLIT_50_50' ? 'bg-[#FFFFFF] text-[#111111] font-semibold shadow-xs border border-[#EAEAEA]' : 'text-[#787774] hover:text-[#111111]'
             }`}
             title="Split 50/50 Dual View"
           >
-            <Columns className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Dual 50/50</span>
+            <Columns className="w-3 h-3" />
+            <span className="hidden md:inline">Split 50/50</span>
           </button>
 
           <button
             onClick={() => setLayoutMode('MAP_MAXIMIZED')}
-            className={`p-1 rounded flex items-center space-x-1 text-[11px] ${
-              layoutMode === 'MAP_MAXIMIZED' ? 'bg-brand-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+            className={`px-2 py-0.5 rounded-[3px] flex items-center space-x-1 text-[11px] font-medium ${
+              layoutMode === 'MAP_MAXIMIZED' ? 'bg-[#FFFFFF] text-[#111111] font-semibold shadow-xs border border-[#EAEAEA]' : 'text-[#787774] hover:text-[#111111]'
             }`}
-            title="Maximize GIS Map View"
+            title="Focus Map"
           >
-            <Map className="w-3.5 h-3.5" />
+            <Map className="w-3 h-3" />
             <span className="hidden md:inline">Focus Map</span>
           </button>
 
           <button
             onClick={() => setLayoutMode('GANTT_MAXIMIZED')}
-            className={`p-1 rounded flex items-center space-x-1 text-[11px] ${
-              layoutMode === 'GANTT_MAXIMIZED' ? 'bg-brand-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+            className={`px-2 py-0.5 rounded-[3px] flex items-center space-x-1 text-[11px] font-medium ${
+              layoutMode === 'GANTT_MAXIMIZED' ? 'bg-[#FFFFFF] text-[#111111] font-semibold shadow-xs border border-[#EAEAEA]' : 'text-[#787774] hover:text-[#111111]'
             }`}
-            title="Maximize Gantt Schedule View"
+            title="Focus Gantt"
           >
-            <CalendarClock className="w-3.5 h-3.5" />
+            <CalendarClock className="w-3 h-3" />
             <span className="hidden md:inline">Focus Gantt</span>
           </button>
         </div>
@@ -96,11 +91,11 @@ export default function DualViewDashboard({
       {/* Main Dual-View Container */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden relative">
         
-        {/* Left GIS Spatial Map Pane */}
+        {/* Left Spatial Map */}
         {(layoutMode === 'SPLIT_50_50' || layoutMode === 'MAP_MAXIMIZED') && (
           <div className={`${
             layoutMode === 'MAP_MAXIMIZED' ? 'col-span-12' : 'col-span-12 lg:col-span-6'
-          } h-full relative border-r border-white/10 flex flex-col`}>
+          } h-full relative border-r border-[#EAEAEA] flex flex-col min-h-0`}>
             <RouteMap
               routes={routes}
               interchangeHubs={interchangeHubs}
@@ -122,11 +117,11 @@ export default function DualViewDashboard({
           </div>
         )}
 
-        {/* Right Gantt Schedule & Rest Timeline Pane */}
+        {/* Right Gantt Schedule Timeline */}
         {(layoutMode === 'SPLIT_50_50' || layoutMode === 'GANTT_MAXIMIZED') && (
           <div className={`${
             layoutMode === 'GANTT_MAXIMIZED' ? 'col-span-12' : 'col-span-12 lg:col-span-6'
-          } h-full relative flex flex-col`}>
+          } h-full relative flex flex-col min-h-0 bg-[#FFFFFF]`}>
             <GanttTimeline
               dutyAssignments={dutyAssignments}
               crewMembers={crewMembers}
