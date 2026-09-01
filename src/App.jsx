@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
+// Auth & Permissions
+import { AuthProvider, useAuth, ROLES } from './context/AuthContext.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Central Relational Database Engine
+import { db, SUPPORTED_CITIES } from './db/transitDb.js';
+
 // Original Components (Reused for '/' public view)
 import Navbar from './components/Navbar';
 import MetricsBanner from './components/MetricsBanner';
@@ -11,22 +20,25 @@ import SummaryAnalyticsView from './components/SummaryAnalyticsView';
 import FallbackSolverModal from './components/FallbackSolverModal';
 import PRDModal from './components/PRDModal';
 
-// Redesigned Admin Progressive Disclosure Architecture
+// Dedicated Admin Modules & Redesigned Pages
 import AdminLayout from './components/admin/AdminLayout';
-import AdminModuleHome from './pages/admin/AdminModuleHome';
-import DriversModule from './pages/admin/modules/DriversModule';
-import VehiclesModule from './pages/admin/modules/VehiclesModule';
-import RoutesModule from './pages/admin/modules/RoutesModule';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import ManagementModule from './pages/admin/modules/ManagementModule';
+import RoutesModule from './pages/admin/modules/RoutesModule';
+import AdminScheduling from './pages/admin/AdminScheduling';
+import AdminAssignment from './pages/admin/AdminAssignment';
+import AdminRotation from './pages/admin/AdminRotation';
+import AdminLongJourney from './pages/admin/AdminLongJourney';
+import AdminConflicts from './pages/admin/AdminConflicts';
+import AdminNetwork from './pages/admin/AdminNetwork';
+import AdminPerformance from './pages/admin/AdminPerformance';
+import AdminReports from './pages/admin/AdminReports';
+import AdminActivityLog from './pages/admin/AdminActivityLog';
+import AdminAlerts from './pages/admin/AdminAlerts';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminFleet from './pages/admin/AdminFleet';
+import AdminDrivers from './pages/admin/AdminDrivers';
 
-import { 
-  CITIES_DATA,
-  INITIAL_ROUTES, 
-  INTERCHANGE_HUBS, 
-  BUS_FLEET, 
-  CREW_MEMBERS, 
-  INITIAL_DUTIES 
-} from './data/transitData';
 import { 
   calculateRouteLength, 
   calculateNetworkCoverage, 
@@ -38,34 +50,9 @@ import {
 } from './utils/dutyEngine';
 import { Radio, ExternalLink } from 'lucide-react';
 
-// Centralized LocalStorage Storage Key Helpers
 const STORAGE_KEYS = {
-  CITY: 'cityflow_selected_city',
-  DELHI: 'cityflow_store_delhi',
-  CHENNAI: 'cityflow_store_chennai'
+  CITY: 'cityflow_selected_city'
 };
-
-function loadStoredCityData(cityName) {
-  try {
-    const key = cityName === 'chennai' ? STORAGE_KEYS.CHENNAI : STORAGE_KEYS.DELHI;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn("Failed to load local storage data", e);
-  }
-  return CITIES_DATA[cityName] || CITIES_DATA.delhi;
-}
-
-function saveCityDataToStore(cityName, data) {
-  try {
-    const key = cityName === 'chennai' ? STORAGE_KEYS.CHENNAI : STORAGE_KEYS.DELHI;
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
-    console.warn("Failed to save to local storage", e);
-  }
-}
 
 function AppContent() {
   // Multi-City Selected State with LocalStorage Persistence
@@ -73,38 +60,34 @@ function AppContent() {
     return localStorage.getItem(STORAGE_KEYS.CITY) || 'delhi';
   });
 
-  // Master Operations State loaded from Central Store
-  const initialCityStore = loadStoredCityData(selectedCity);
+  // Master Operations State loaded from Central Transit Database
+  const [routes, setRoutes] = useState(() => db.getCollection(selectedCity, 'routes'));
+  const [interchangeHubs, setInterchangeHubs] = useState(() => db.getCollection(selectedCity, 'hubs'));
+  const [busFleet, setBusFleet] = useState(() => db.getCollection(selectedCity, 'buses'));
+  const [crewMembers, setCrewMembers] = useState(() => db.getCollection(selectedCity, 'drivers'));
+  const [trips, setTrips] = useState(() => db.getCollection(selectedCity, 'trips'));
+  const [dutyAssignments, setDutyAssignments] = useState(() => db.getCollection(selectedCity, 'duties'));
 
-  const [routes, setRoutes] = useState(initialCityStore.routes);
-  const [interchangeHubs, setInterchangeHubs] = useState(initialCityStore.hubs);
-  const [busFleet, setBusFleet] = useState(initialCityStore.buses);
-  const [crewMembers, setCrewMembers] = useState(initialCityStore.drivers);
-  const [trips, setTrips] = useState(initialCityStore.trips || CITIES_DATA[selectedCity]?.trips || []);
-  const [dutyAssignments, setDutyAssignments] = useState(INITIAL_DUTIES);
-
-  // Synchronize with LocalStorage on city change
+  // Synchronize on city change
   const handleSelectCity = (newCity) => {
     setSelectedCity(newCity);
     localStorage.setItem(STORAGE_KEYS.CITY, newCity);
-    const data = loadStoredCityData(newCity);
-    setRoutes(data.routes);
-    setInterchangeHubs(data.hubs);
-    setBusFleet(data.buses);
-    setCrewMembers(data.drivers);
-    setTrips(data.trips || CITIES_DATA[newCity]?.trips || []);
+    setRoutes(db.getCollection(newCity, 'routes'));
+    setInterchangeHubs(db.getCollection(newCity, 'hubs'));
+    setBusFleet(db.getCollection(newCity, 'buses'));
+    setCrewMembers(db.getCollection(newCity, 'drivers'));
+    setTrips(db.getCollection(newCity, 'trips'));
+    setDutyAssignments(db.getCollection(newCity, 'duties'));
   };
 
   // Helper to persist current operational state
   const persistCurrentCityStore = (updatedFields) => {
-    const newStore = {
-      routes: updatedFields.routes || routes,
-      hubs: updatedFields.hubs || interchangeHubs,
-      buses: updatedFields.buses || busFleet,
-      drivers: updatedFields.drivers || crewMembers,
-      trips: updatedFields.trips || trips
-    };
-    saveCityDataToStore(selectedCity, newStore);
+    if (updatedFields.routes) db.saveCollection(selectedCity, 'routes', updatedFields.routes);
+    if (updatedFields.hubs) db.saveCollection(selectedCity, 'hubs', updatedFields.hubs);
+    if (updatedFields.buses) db.saveCollection(selectedCity, 'buses', updatedFields.buses);
+    if (updatedFields.drivers) db.saveCollection(selectedCity, 'drivers', updatedFields.drivers);
+    if (updatedFields.trips) db.saveCollection(selectedCity, 'trips', updatedFields.trips);
+    if (updatedFields.duties) db.saveCollection(selectedCity, 'duties', updatedFields.duties);
   };
 
   // MASTER MUTATION: Schedule New Trip
@@ -238,70 +221,6 @@ function AppContent() {
     setCrewMembers(updatedCrew);
     persistCurrentCityStore({ drivers: updatedCrew });
     showToast(`✓ DRIVER STATUS UPDATED: Status toggled.`);
-  };
-
-  // MASTER MUTATION: Add New Vehicle
-  const handleAddVehicle = (newVehicle) => {
-    const updatedFleet = [...busFleet, newVehicle];
-    setBusFleet(updatedFleet);
-    persistCurrentCityStore({ buses: updatedFleet });
-    showToast(`✓ VEHICLE REGISTERED: ${newVehicle.busNumber} added to fleet!`);
-  };
-
-  // MASTER MUTATION: Update Vehicle
-  const handleUpdateVehicle = (updatedVehicle) => {
-    const updatedFleet = busFleet.map(b => b.id === updatedVehicle.id ? { ...b, ...updatedVehicle } : b);
-    setBusFleet(updatedFleet);
-    persistCurrentCityStore({ buses: updatedFleet });
-    showToast(`✓ VEHICLE UPDATED: ${updatedVehicle.busNumber} parameters saved.`);
-  };
-
-  // MASTER MUTATION: Delete / Decommission Vehicle
-  const handleDeleteVehicle = (vehicleId) => {
-    const updatedFleet = busFleet.filter(b => b.id !== vehicleId);
-    setBusFleet(updatedFleet);
-    persistCurrentCityStore({ buses: updatedFleet });
-    showToast(`✓ VEHICLE DECOMMISSIONED.`);
-  };
-
-  // MASTER MUTATION: Vehicle Assignment
-  const handleUpdateVehicleAssignment = (assignmentData) => {
-    const { vehicleId, assignedRoute, driverId, assignedDriver, depot } = assignmentData;
-    const updatedFleet = busFleet.map(b => {
-      if (b.id === vehicleId) {
-        return {
-          ...b,
-          assignedRoute,
-          driverId,
-          assignedDriver,
-          depot: depot || b.depot,
-          status: 'IN_SERVICE'
-        };
-      }
-      return b;
-    });
-    setBusFleet(updatedFleet);
-    persistCurrentCityStore({ buses: updatedFleet });
-    showToast(`✓ ASSIGNMENT UPDATED: Asset ${vehicleId} paired with Route ${assignedRoute}.`);
-  };
-
-  // MASTER MUTATION: Schedule Maintenance
-  const handleScheduleMaintenance = (maintenanceData) => {
-    const { vehicleId } = maintenanceData;
-    const updatedFleet = busFleet.map(b => {
-      if (b.id === vehicleId) {
-        return {
-          ...b,
-          status: 'MAINTENANCE',
-          maintenanceStatus: 'UNDER_REPAIR',
-          nextServiceDate: maintenanceData.estCompletion || b.nextServiceDate
-        };
-      }
-      return b;
-    });
-    setBusFleet(updatedFleet);
-    persistCurrentCityStore({ buses: updatedFleet });
-    showToast(`✓ WORK ORDER ISSUED: Asset ${vehicleId} flagged for workshop inspection.`);
   };
 
   // Time & Simulation Scrubber
@@ -516,129 +435,241 @@ function AppContent() {
           }
         />
 
-        {/* ADMIN 4-MODULE PROGRESSIVE DISCLOSURE CONTROL CENTER */}
+        {/* LOGIN ROUTE */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* ADMIN CONTROL CENTER WITH RBAC PROTECTED ROUTE */}
         <Route
           path="/admin/*"
           element={
-            <AdminLayout
-              operationalTime={operationalTime}
-              setOperationalTime={setOperationalTime}
-              isSimulating={isSimulating}
-              setIsSimulating={setIsSimulating}
-              simSpeed={simSpeed}
-              setSimSpeed={setSimSpeed}
-              conflictsCount={activeConflicts.length}
-              onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
-              onOpenPRDModal={() => setIsPRDModalOpen(true)}
-              darkMode={darkMode}
-              setDarkMode={setDarkMode}
-              busFleet={busFleet}
-              crewMembers={crewMembers}
-              routes={routes}
-              dutyAssignments={dutyAssignments}
-              activeConflicts={activeConflicts}
-              selectedCity={selectedCity}
-              onSelectCity={handleSelectCity}
-            >
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <AdminModuleHome
-                      crewMembers={crewMembers}
-                      busFleet={busFleet}
-                      routes={routes}
-                      activeConflicts={activeConflicts}
-                    />
-                  }
-                />
+            <ProtectedRoute>
+              <AdminLayout
+                operationalTime={operationalTime}
+                setOperationalTime={setOperationalTime}
+                isSimulating={isSimulating}
+                setIsSimulating={setIsSimulating}
+                simSpeed={simSpeed}
+                setSimSpeed={setSimSpeed}
+                conflictsCount={activeConflicts.length}
+                onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
+                onOpenPRDModal={() => setIsPRDModalOpen(true)}
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+                busFleet={busFleet}
+                crewMembers={crewMembers}
+                routes={routes}
+                dutyAssignments={dutyAssignments}
+                activeConflicts={activeConflicts}
+                selectedCity={selectedCity}
+                onSelectCity={handleSelectCity}
+              >
+                <Routes>
+                  <Route path="/" element={<Navigate to="/admin/management" replace />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <AdminDashboard
+                        busFleet={busFleet}
+                        crewMembers={crewMembers}
+                        routes={routes}
+                        dutyAssignments={dutyAssignments}
+                        activeConflicts={activeConflicts}
+                        operationalTime={operationalTime}
+                        onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
+                      />
+                    }
+                  />
 
-                <Route
-                  path="/drivers/*"
-                  element={
-                    <DriversModule
-                      crewMembers={crewMembers}
-                      dutyAssignments={dutyAssignments}
-                      routes={routes}
-                      onAddDriver={handleAddDriver}
-                      onDeactivateDriver={handleDeactivateDriver}
-                    />
-                  }
-                />
+                  <Route
+                    path="/management/*"
+                    element={
+                      <ManagementModule
+                        dutyAssignments={dutyAssignments}
+                        setDutyAssignments={setDutyAssignments}
+                        crewMembers={crewMembers}
+                        setCrewMembers={setCrewMembers}
+                        busFleet={busFleet}
+                        setBusFleet={setBusFleet}
+                        routes={routes}
+                        trips={trips}
+                        setTrips={setTrips}
+                        operationalTime={operationalTime}
+                        selectedDutyId={selectedDutyId}
+                        setSelectedDutyId={setSelectedDutyId}
+                        hoveredRouteId={hoveredRouteId}
+                        setHoveredRouteId={setHoveredRouteId}
+                        activeConflicts={activeConflicts}
+                        onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
+                        selectedCity={selectedCity}
+                        onScheduleTrip={handleScheduleTrip}
+                        onUpdateDriverAssignment={handleUpdateDriverAssignment}
+                        onUpdateBusAssignment={handleUpdateBusAssignment}
+                        onUpdateScheduleTime={handleUpdateScheduleTime}
+                        onCancelTrip={handleCancelTrip}
+                      />
+                    }
+                  />
 
-                <Route
-                  path="/vehicles/*"
-                  element={
-                    <VehiclesModule
-                      busFleet={busFleet}
-                      dutyAssignments={dutyAssignments}
-                      routes={routes}
-                      crewMembers={crewMembers}
-                      trips={trips}
-                      onAddVehicle={handleAddVehicle}
-                      onUpdateVehicle={handleUpdateVehicle}
-                      onDeleteVehicle={handleDeleteVehicle}
-                      onUpdateVehicleAssignment={handleUpdateVehicleAssignment}
-                      onScheduleMaintenance={handleScheduleMaintenance}
-                    />
-                  }
-                />
+                  <Route
+                    path="/scheduling/*"
+                    element={
+                      <AdminScheduling
+                        dutyAssignments={dutyAssignments}
+                        crewMembers={crewMembers}
+                        busFleet={busFleet}
+                        routes={routes}
+                        operationalTime={operationalTime}
+                        selectedDutyId={selectedDutyId}
+                        setSelectedDutyId={setSelectedDutyId}
+                        hoveredRouteId={hoveredRouteId}
+                        setHoveredRouteId={setHoveredRouteId}
+                        onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
+                      />
+                    }
+                  />
 
-                <Route
-                  path="/routes/*"
-                  element={
-                    <RoutesModule
-                      routes={routes}
-                      interchangeHubs={interchangeHubs}
-                      busFleet={busFleet}
-                      crewMembers={crewMembers}
-                      dutyAssignments={dutyAssignments}
-                      trips={trips}
-                      operationalTime={operationalTime}
-                      selectedRouteId={selectedRouteId}
-                      setSelectedRouteId={setSelectedRouteId}
-                      hoveredRouteId={hoveredRouteId}
-                      setHoveredRouteId={setHoveredRouteId}
-                      onCommitNewRoute={handleAddRoute}
-                      isDrawingMode={isDrawingMode}
-                      setIsDrawingMode={setIsDrawingMode}
-                      drawnCoordinates={drawnCoordinates}
-                      setDrawnCoordinates={setDrawnCoordinates}
-                      overlapReport={overlapReport}
-                      setOverlapReport={setOverlapReport}
-                      selectedCity={selectedCity}
-                      onScheduleTrip={handleScheduleTrip}
-                      onUpdateDriverAssignment={handleUpdateDriverAssignment}
-                      onUpdateBusAssignment={handleUpdateBusAssignment}
-                      onUpdateScheduleTime={handleUpdateScheduleTime}
-                      onCancelTrip={handleCancelTrip}
-                      onDeactivateRoute={handleDeactivateRoute}
-                      onAddDriver={handleAddDriver}
-                      onDeactivateDriver={handleDeactivateDriver}
-                    />
-                  }
-                />
+                  <Route
+                    path="/assignment/*"
+                    element={
+                      <AdminAssignment
+                        routes={routes}
+                        crewMembers={crewMembers}
+                        busFleet={busFleet}
+                        dutyAssignments={dutyAssignments}
+                        onUpdateDriverAssignment={handleUpdateDriverAssignment}
+                        onUpdateBusAssignment={handleUpdateBusAssignment}
+                        selectedCity={selectedCity}
+                      />
+                    }
+                  />
 
-                <Route
-                  path="/management/*"
-                  element={
-                    <ManagementModule
-                      dutyAssignments={dutyAssignments}
-                      crewMembers={crewMembers}
-                      busFleet={busFleet}
-                      routes={routes}
-                      operationalTime={operationalTime}
-                      selectedDutyId={selectedDutyId}
-                      setSelectedDutyId={setSelectedDutyId}
-                      hoveredRouteId={hoveredRouteId}
-                      setHoveredRouteId={setHoveredRouteId}
-                      activeConflicts={activeConflicts}
-                      onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
-                    />
-                  }
-                />
-              </Routes>
-            </AdminLayout>
+                  <Route
+                    path="/rotation/*"
+                    element={
+                      <AdminRotation
+                        crewMembers={crewMembers}
+                        onUpdateDriverAssignment={handleUpdateDriverAssignment}
+                        selectedCity={selectedCity}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/longjourney/*"
+                    element={
+                      <AdminLongJourney
+                        crewMembers={crewMembers}
+                        busFleet={busFleet}
+                        selectedCity={selectedCity}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/fleet/*"
+                    element={
+                      <AdminFleet
+                        busFleet={busFleet}
+                        dutyAssignments={dutyAssignments}
+                        routes={routes}
+                        selectedCity={selectedCity}
+                        onUpdateBus={handleUpdateBusAssignment}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/vehicles/*"
+                    element={
+                      <AdminFleet
+                        busFleet={busFleet}
+                        dutyAssignments={dutyAssignments}
+                        routes={routes}
+                        selectedCity={selectedCity}
+                        onUpdateBus={handleUpdateBusAssignment}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/drivers/*"
+                    element={
+                      <AdminDrivers
+                        crewMembers={crewMembers}
+                        dutyAssignments={dutyAssignments}
+                        routes={routes}
+                        selectedCity={selectedCity}
+                        onUpdateDriver={handleUpdateDriverAssignment}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/routes/*"
+                    element={
+                      <RoutesModule
+                        routes={routes}
+                        interchangeHubs={interchangeHubs}
+                        busFleet={busFleet}
+                        crewMembers={crewMembers}
+                        dutyAssignments={dutyAssignments}
+                        trips={trips}
+                        operationalTime={operationalTime}
+                        selectedRouteId={selectedRouteId}
+                        setSelectedRouteId={setSelectedRouteId}
+                        hoveredRouteId={hoveredRouteId}
+                        setHoveredRouteId={setHoveredRouteId}
+                        onCommitNewRoute={handleAddRoute}
+                        isDrawingMode={isDrawingMode}
+                        setIsDrawingMode={setIsDrawingMode}
+                        drawnCoordinates={drawnCoordinates}
+                        setDrawnCoordinates={setDrawnCoordinates}
+                        overlapReport={overlapReport}
+                        setOverlapReport={setOverlapReport}
+                        selectedCity={selectedCity}
+                        onScheduleTrip={handleScheduleTrip}
+                        onUpdateDriverAssignment={handleUpdateDriverAssignment}
+                        onUpdateBusAssignment={handleUpdateBusAssignment}
+                        onUpdateScheduleTime={handleUpdateScheduleTime}
+                        onCancelTrip={handleCancelTrip}
+                        onDeactivateRoute={handleDeactivateRoute}
+                        onAddDriver={handleAddDriver}
+                        onDeactivateDriver={handleDeactivateDriver}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/alerts/*"
+                    element={
+                      <AdminAlerts
+                        activeConflicts={activeConflicts}
+                        dutyAssignments={dutyAssignments}
+                        crewMembers={crewMembers}
+                        onOpenFallbackModal={() => setIsFallbackModalOpen(true)}
+                      />
+                    }
+                  />
+
+                  <Route
+                    path="/conflicts/*"
+                    element={
+                      <AdminConflicts
+                        selectedCity={selectedCity}
+                        onConflictResolved={handleApplyResolution}
+                      />
+                    }
+                  />
+
+                  <Route path="/network/*" element={<AdminNetwork selectedCity={selectedCity} />} />
+                  <Route path="/network-status/*" element={<AdminNetwork selectedCity={selectedCity} />} />
+                  <Route path="/performance/*" element={<AdminPerformance selectedCity={selectedCity} />} />
+                  <Route path="/reports/*" element={<AdminReports selectedCity={selectedCity} />} />
+                  <Route path="/activity/*" element={<AdminActivityLog selectedCity={selectedCity} />} />
+                  <Route path="/settings/*" element={<AdminSettings />} />
+                </Routes>
+              </AdminLayout>
+            </ProtectedRoute>
           }
         />
       </Routes>
@@ -673,7 +704,11 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

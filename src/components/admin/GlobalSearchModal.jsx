@@ -103,7 +103,7 @@ export default function GlobalSearchModal({
                 {filteredConflicts.map((c, i) => (
                   <div
                     key={c.id || i}
-                    onClick={() => handleNavigate('/admin/alerts')}
+                    onClick={() => handleNavigate('/admin/conflicts')}
                     className="p-2.5 rounded-lg border border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 cursor-pointer flex items-center justify-between transition-colors group"
                   >
                     <div className="flex items-center space-x-2.5">
@@ -131,7 +131,7 @@ export default function GlobalSearchModal({
                 {filteredBuses.map((b) => (
                   <div
                     key={b.id}
-                    onClick={() => handleNavigate('/admin/buses')}
+                    onClick={() => handleNavigate('/admin/fleet')}
                     className="p-2.5 rounded-lg border border-border bg-card hover:bg-accent cursor-pointer flex items-center justify-between transition-colors group"
                   >
                     <div className="flex items-center space-x-2.5">

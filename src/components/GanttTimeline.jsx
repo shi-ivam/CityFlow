@@ -90,6 +90,10 @@ export default function GanttTimeline({
     hourMarks.push({ hour: h, label: displayH });
   }
 
+  const [reassignDuty, setReassignDuty] = useState(null);
+  const [selectedReplacementDriverId, setSelectedReplacementDriverId] = useState('');
+  const [feedback, setFeedback] = useState('');
+
   const handleLinkSubmit = () => {
     if (!unlinkedModalDuty) return;
     if (onUpdateBusAssignment) {
@@ -99,6 +103,22 @@ export default function GanttTimeline({
       onUpdateDriverAssignment(selectedRouteForLink, selectedBusForLink, unlinkedModalDuty.crewId);
     }
     setUnlinkedModalDuty(null);
+  };
+
+  const handleExecuteReassignment = () => {
+    if (!reassignDuty || !selectedReplacementDriverId) return;
+    const driver = crewMembers.find(c => c.id === selectedReplacementDriverId);
+    if (onUpdateDriverAssignment) {
+      onUpdateDriverAssignment(
+        reassignDuty.routeId || routes[0]?.id,
+        reassignDuty.busId || busFleet[0]?.id,
+        selectedReplacementDriverId,
+        reassignDuty.id
+      );
+    }
+    setFeedback(`✓ Reassigned ${driver?.name || selectedReplacementDriverId} to ${reassignDuty.dutyCode}!`);
+    setTimeout(() => setFeedback(''), 4000);
+    setReassignDuty(null);
   };
 
   return (
@@ -289,7 +309,15 @@ export default function GanttTimeline({
               </div>
 
               {/* Timeline Shift Bar */}
-              <div className="flex-1 relative h-7 mx-2 bg-muted/40 rounded overflow-hidden">
+              <div 
+                onClick={() => {
+                  setReassignDuty(duty);
+                  const eligible = crewMembers.find(c => c.id !== duty.crewId && c.isStandby);
+                  setSelectedReplacementDriverId(eligible?.id || crewMembers[0]?.id || '');
+                }}
+                className="flex-1 relative h-7 mx-2 bg-muted/40 rounded overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                title="Click duty block to reassign driver or inspect constraints"
+              >
                 <div 
                   className={`absolute top-0 bottom-0 rounded px-2 flex items-center justify-between text-[10px] font-mono font-bold transition-all shadow-xs ${
                     isConflict 
@@ -309,6 +337,93 @@ export default function GanttTimeline({
           );
         })}
       </div>
+
+      {feedback && (
+        <div className="p-3 bg-emerald-500/15 border-t border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono text-xs flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span>{feedback}</span>
+          </div>
+        </div>
+      )}
+
+      {/* REASSIGN DRIVER MODAL */}
+      {reassignDuty && (
+        <div className="fixed inset-0 z-[3500] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 font-sans animate-in fade-in select-none">
+          <div className="w-full max-w-md bg-card border border-border rounded-xl p-5 space-y-4 shadow-modal font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-bold text-sm text-foreground flex items-center space-x-1.5">
+                <User className="w-4 h-4 text-primary" />
+                <span>REASSIGN CREW & RESOLVE DUTY</span>
+              </h3>
+              <button onClick={() => setReassignDuty(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1 bg-muted/30 p-3 rounded border border-border">
+              <div className="text-muted-foreground">Current Duty: <strong className="text-foreground">{reassignDuty.dutyCode}</strong></div>
+              <div className="text-muted-foreground">Current Assigned: <strong className="text-foreground">{crewMembers.find(c => c.id === reassignDuty.crewId)?.name || 'Unassigned'}</strong></div>
+              <div className="text-muted-foreground">Vehicle: <strong className="text-foreground">{busFleet.find(b => b.id === reassignDuty.busId)?.busNumber || 'None'}</strong></div>
+            </div>
+
+            <div>
+              <label className="block text-muted-foreground uppercase mb-1 font-bold">Select Standby or Qualified Driver</label>
+              <select
+                value={selectedReplacementDriverId}
+                onChange={(e) => setSelectedReplacementDriverId(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-muted/50 border border-input text-foreground outline-none font-sans text-xs"
+              >
+                {crewMembers.map(c => {
+                  const rest = c.lastShiftEnd 
+                    ? ((Date.now() - new Date(c.lastShiftEnd).getTime()) / (1000 * 3600)).toFixed(1)
+                    : '16.0';
+                  const compliant = Number(rest) >= 11;
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {c.name || c.fullName} ({c.id}) — {rest}h Rest {compliant ? '✓ Valid' : '⚠ VIOLATION'}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Live pre-commit constraint preview */}
+            {(() => {
+              const cand = crewMembers.find(c => c.id === selectedReplacementDriverId);
+              if (!cand) return null;
+              const restHours = cand.lastShiftEnd 
+                ? ((Date.now() - new Date(cand.lastShiftEnd).getTime()) / (1000 * 3600)).toFixed(1)
+                : 16;
+              const isCompliant = Number(restHours) >= 11;
+
+              return (
+                <div className={`p-3 rounded border text-[11px] ${
+                  isCompliant ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+                }`}>
+                  <div className="font-bold flex items-center space-x-1">
+                    {isCompliant ? <ShieldCheck className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                    <span>{isCompliant ? 'Pre-commit Rest Check Passed' : 'Legal Rest Window Violation'}</span>
+                  </div>
+                  <div className="mt-1">
+                    Rest recorded: <strong>{restHours} hours</strong> (Mandate: ≥ 11.0h). {cand.isStandby ? 'Driver is currently in Standby Reserve pool.' : 'Driver was previously assigned.'}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="pt-2 flex justify-end space-x-2 border-t border-border">
+              <button onClick={() => setReassignDuty(null)} className="px-3.5 py-1.5 rounded bg-muted text-muted-foreground font-medium">Cancel</button>
+              <button 
+                onClick={handleExecuteReassignment} 
+                className="px-4 py-1.5 rounded bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-xs active:scale-95 transition-all"
+              >
+                Commit Reassignment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LINK UNLINKED DUTY MODAL */}
       {unlinkedModalDuty && (

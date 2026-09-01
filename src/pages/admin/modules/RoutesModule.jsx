@@ -88,6 +88,7 @@ export default function RoutesModule({
   else if (path.includes('/routes/conflicts')) activeTab = 'conflicts';
   else if (path.includes('/routes/overflow')) activeTab = 'overflow';
   else if (path.includes('/routes/plan')) activeTab = 'plan';
+  else if (path.includes('/routes/trips')) activeTab = 'trips';
   else if (path.includes('/routes/schedule')) activeTab = 'schedule';
   else if (path.includes('/routes/assign')) activeTab = 'assign';
   else if (path.includes('/routes/issues')) activeTab = 'issues';
@@ -278,7 +279,7 @@ export default function RoutesModule({
       {/* Universal Action Bar */}
       <div className="border-b border-border bg-card px-4 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2 shrink-0 font-sans z-20">
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 flex-wrap gap-y-1">
           <button
             onClick={() => navigate('/admin/routes')}
             className={`px-3 py-1 rounded text-xs font-mono font-semibold transition-all flex items-center space-x-1.5 ${
@@ -296,6 +297,18 @@ export default function RoutesModule({
             }`}
           >
             PLAN
+          </button>
+
+          <button
+            onClick={() => navigate('/admin/routes/trips')}
+            className={`px-3 py-1 rounded text-xs font-mono font-semibold transition-all flex items-center space-x-1 ${
+              activeTab === 'trips' ? 'bg-emerald-600 text-white shadow-xs' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            }`}
+          >
+            <span>SCHEDULED TRIPS</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-card text-foreground font-bold border border-border">
+              {trips.length}
+            </span>
           </button>
 
           <button
@@ -692,6 +705,119 @@ export default function RoutesModule({
                 <Wrench className="w-3.5 h-3.5" />
                 <span>FIX OVERFLOW</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW: SCHEDULED & PLANNED TRIPS */}
+      {activeTab === 'trips' && (
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 max-w-[1400px] mx-auto min-h-0 w-full font-sans">
+          <div className="bg-card border border-border rounded-xl p-5 shadow-card space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-3 gap-2">
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  Scheduled & Planned Trips ({trips.length}) — {selectedCity === 'chennai' ? 'Chennai' : 'Delhi'}
+                </h2>
+                <p className="text-xs font-mono text-muted-foreground">
+                  All trips planned via the trip planner or schedule engine appear here with live dispatch controls.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setIsPlanTripOpen(true)}
+                  className="px-3.5 py-1.5 rounded bg-emerald-600 text-white font-mono text-xs font-bold hover:bg-emerald-700 shadow-xs flex items-center space-x-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ PLAN NEW TRIP</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20 text-muted-foreground text-[10px] uppercase">
+                    <th className="p-2.5 pl-3">Trip ID</th>
+                    <th className="p-2.5">Route</th>
+                    <th className="p-2.5">Departure</th>
+                    <th className="p-2.5">Bus</th>
+                    <th className="p-2.5">Driver</th>
+                    <th className="p-2.5">Status</th>
+                    <th className="p-2.5 pr-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {trips.map(trip => (
+                    <tr key={trip.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="p-2.5 pl-3 font-bold text-foreground">
+                        {trip.id}
+                      </td>
+                      <td className="p-2.5">
+                        <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold">
+                          Route {trip.routeCode}
+                        </span>
+                      </td>
+                      <td className="p-2.5 tabular-nums font-bold">
+                        {trip.departureTime}
+                      </td>
+                      <td className="p-2.5">
+                        {trip.busNumber || 'Standby'}
+                      </td>
+                      <td className="p-2.5">
+                        {trip.driverName || 'Standby'}
+                      </td>
+                      <td className="p-2.5">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          trip.status === 'RUNNING'
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 animate-pulse'
+                            : trip.status === 'COMPLETED'
+                            ? 'bg-blue-500/15 text-blue-600 border border-blue-500/30'
+                            : trip.status === 'CANCELLED'
+                            ? 'bg-rose-500/15 text-rose-600 border border-rose-500/30'
+                            : 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
+                        }`}>
+                          {trip.status}
+                        </span>
+                      </td>
+                      <td className="p-2.5 pr-3 text-right space-x-1.5">
+                        {trip.status === 'SCHEDULED' && (
+                          <button
+                            onClick={() => {
+                              if (onCancelTrip) onCancelTrip(trip.id, trip.busId);
+                              showGreenSuccessToast(`✓ TRIP CANCELLED: Trip ${trip.id} removed from dispatch queue.`);
+                            }}
+                            className="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/30"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            const newTime = prompt('Enter new departure time (e.g. 09:30 AM):', trip.departureTime);
+                            if (newTime && onUpdateScheduleTime) {
+                              onUpdateScheduleTime(trip.id, newTime);
+                              showGreenSuccessToast(`✓ DEPARTURE UPDATED: Trip ${trip.id} rescheduled to ${newTime}.`);
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] bg-muted hover:bg-muted/80 text-foreground border border-border"
+                        >
+                          Reschedule
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {trips.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="p-8 text-center text-muted-foreground">
+                        No trips planned yet. Click <strong>+ PLAN NEW TRIP</strong> above to create one.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

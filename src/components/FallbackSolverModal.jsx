@@ -109,198 +109,204 @@ export default function FallbackSolverModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] w-full max-w-2xl shadow-xl overflow-hidden flex flex-col my-auto animate-fade-in font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-900/35 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-sans">
+      <div className="bg-white border border-slate-200/80 rounded-2xl w-full max-w-xl shadow-xl overflow-hidden flex flex-col my-auto text-slate-800 animate-in zoom-in-95 duration-150">
         
-        {/* Faux-OS Window Chrome Header */}
-        <div className="bg-[#FBFBFA] p-3.5 px-5 border-b border-[#EAEAEA] flex items-center justify-between">
+        {/* Header */}
+        <div className="p-4 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
           <div className="flex items-center space-x-2.5">
-            <div className="flex space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EAEAEA]"></span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+              <ShieldCheck className="w-4 h-4" />
             </div>
-            <span className="text-xs font-mono font-bold text-[#111111] pl-2">
-              3-Tier Fallback Solver &bull; PRD &sect;5
-            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Shift Rest Resolution</h3>
+              <p className="text-[11px] text-slate-500">Choose a resolution to ensure driver rest compliance</p>
+            </div>
           </div>
 
           <button
             onClick={onClose}
-            className="text-[#787774] hover:text-[#111111] transition"
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Incident Summary */}
-        <div className="p-4 bg-[#FDEBEC]/50 border-b border-[#F7D2D4] space-y-2">
-          <div className="flex items-center justify-between text-xs font-mono">
-            <div className="flex items-center space-x-1.5 text-[#9F2F2D] font-bold">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Incident: Mandated Rest Violation (11h Rule)</span>
+        {/* Rest Notice Banner */}
+        <div className="p-4 px-6 bg-rose-50/60 border-b border-rose-100 space-y-2.5">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center space-x-1.5 text-rose-800 font-semibold">
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
+              <span>Rest Deficit Detected (11h Rule)</span>
             </div>
-            <span className="bg-[#FDEBEC] border border-[#F7D2D4] text-[#9F2F2D] px-2 py-0.2 rounded-[4px] font-bold">
+            <span className="bg-white border border-rose-200 text-rose-700 px-2 py-0.5 rounded-md font-medium text-[11px]">
               Deficit: {currentRestCheck.deficitFormatted}
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
-            <div className="p-2 rounded-[4px] bg-[#FFFFFF] border border-[#EAEAEA]">
-              <div className="text-[10px] text-[#787774]">Duty Code</div>
-              <div className="font-bold text-[#111111]">{conflictDuty?.dutyCode}</div>
+          <div className="grid grid-cols-3 gap-2 text-xs pt-1">
+            <div className="p-2 rounded-lg bg-white border border-rose-100">
+              <div className="text-[10px] text-slate-400">Shift Code</div>
+              <div className="font-semibold text-slate-800 mt-0.5">{conflictDuty?.dutyCode || 'D-534-M'}</div>
             </div>
-            <div className="p-2 rounded-[4px] bg-[#FFFFFF] border border-[#EAEAEA]">
-              <div className="text-[10px] text-[#787774]">Driver</div>
-              <div className="font-bold text-[#9F2F2D]">{assignedDriver?.fullName}</div>
+            <div className="p-2 rounded-lg bg-white border border-rose-100">
+              <div className="text-[10px] text-slate-400">Assigned Driver</div>
+              <div className="font-semibold text-rose-700 mt-0.5 truncate">{assignedDriver?.fullName || 'Amit Sharma'}</div>
             </div>
-            <div className="p-2 rounded-[4px] bg-[#FFFFFF] border border-[#EAEAEA]">
-              <div className="text-[10px] text-[#787774]">Actual Rest</div>
-              <div className="font-bold text-[#9F2F2D]">{currentRestCheck.actualRestFormatted} / 11h</div>
+            <div className="p-2 rounded-lg bg-white border border-rose-100">
+              <div className="text-[10px] text-slate-400">Recorded Rest</div>
+              <div className="font-semibold text-rose-700 mt-0.5">{currentRestCheck.actualRestFormatted} / 11h</div>
             </div>
           </div>
         </div>
 
-        {/* Tier Tabs */}
-        <div className="grid grid-cols-3 border-b border-[#EAEAEA] bg-[#FBFBFA] text-xs font-mono">
+        {/* Strategy Tabs */}
+        <div className="grid grid-cols-3 border-b border-slate-100 bg-slate-50/80 text-xs">
           <button
             onClick={() => setActiveTierTab(1)}
-            className={`py-2.5 px-2 text-center font-semibold transition border-b-2 ${
+            className={`py-2.5 px-2 text-center font-medium transition border-b-2 ${
               activeTierTab === 1
-                ? 'border-[#111111] text-[#111111] bg-[#FFFFFF]'
-                : 'border-transparent text-[#787774] hover:text-[#111111]'
+                ? 'border-emerald-600 text-emerald-800 bg-white font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Tier 1: Standby Pool
+            1. Standby Driver
           </button>
 
           <button
             onClick={() => setActiveTierTab(2)}
-            className={`py-2.5 px-2 text-center font-semibold transition border-b-2 ${
+            className={`py-2.5 px-2 text-center font-medium transition border-b-2 ${
               activeTierTab === 2
-                ? 'border-[#111111] text-[#111111] bg-[#FFFFFF]'
-                : 'border-transparent text-[#787774] hover:text-[#111111]'
+                ? 'border-sky-600 text-sky-800 bg-white font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Tier 2: Unlinked Split
+            2. Split Shift
           </button>
 
           <button
             onClick={() => setActiveTierTab(3)}
-            className={`py-2.5 px-2 text-center font-semibold transition border-b-2 ${
+            className={`py-2.5 px-2 text-center font-medium transition border-b-2 ${
               activeTierTab === 3
-                ? 'border-[#111111] text-[#111111] bg-[#FFFFFF]'
-                : 'border-transparent text-[#787774] hover:text-[#111111]'
+                ? 'border-amber-600 text-amber-800 bg-white font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Tier 3: Dispatch Lock
+            3. Hold Shift
           </button>
         </div>
 
         {/* Tab Content */}
-        <div className="p-5 flex-1 space-y-4">
+        <div className="p-6 space-y-4">
           
           {activeTierTab === 1 && (
-            <div className="space-y-3 font-mono text-xs">
+            <div className="space-y-4 text-xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-[#111111] text-sm">Tier 1: Reserve Standby Auto-Assign</h4>
-                  <p className="text-[#787774] text-[11px]">Queries standby drivers whose last shift elapsed &ge; 11 hours.</p>
+                  <h4 className="font-semibold text-slate-900 text-sm">Assign Available Standby Driver</h4>
+                  <p className="text-slate-500 text-[11px]">Matches this shift with an available driver who has completed full 11h rest.</p>
                 </div>
-                <span className="px-2 py-0.5 rounded-[4px] bg-[#EDF3EC] text-[#346538] text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-100">
                   Recommended
                 </span>
               </div>
 
-              <div className="p-3 rounded-[6px] bg-[#FBFBFA] border border-[#EAEAEA] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-[#111111]">{primeStandby.fullName}</div>
-                  <div className="text-[#787774] text-[10px]">Badge: {primeStandby.badge} • EV Standard/Articulated</div>
+                  <div className="font-semibold text-slate-900 text-sm">{primeStandby.fullName}</div>
+                  <div className="text-slate-500 text-[11px] mt-0.5">Badge: {primeStandby.badge} • Ready for deployment</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[#346538] font-bold">{standbyRestCheck.actualRestFormatted} Rest</div>
-                  <div className="text-[10px] text-[#787774]">100% Compliant</div>
+                  <div className="text-emerald-700 font-semibold">{standbyRestCheck.actualRestFormatted} Rest</div>
+                  <div className="text-[10px] text-slate-400">Fully Compliant</div>
                 </div>
               </div>
 
               <button
                 onClick={() => handleExecuteTier(1)}
                 disabled={isResolving}
-                className="w-full py-2 rounded-[6px] bg-[#111111] hover:bg-[#333333] text-white font-mono text-xs font-semibold transition active:scale-95 disabled:opacity-40"
+                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition active:scale-95 disabled:opacity-50 shadow-xs"
               >
-                {isResolving ? 'Updating Roster...' : 'Execute Tier 1: Auto-Assign Standby Driver'}
+                {isResolving ? 'Assigning...' : 'Assign Standby Driver'}
               </button>
             </div>
           )}
 
           {activeTierTab === 2 && (
-            <div className="space-y-3 font-mono text-xs">
+            <div className="space-y-4 text-xs">
               <div>
-                <h4 className="font-bold text-[#111111] text-sm">Tier 2: Duty Deconstruction & Unlinked Split</h4>
-                <p className="text-[#787774] text-[11px]">Deconstructs continuous shift into 2 unlinked segments at Central Metro Plaza Hub with 15m transfer buffer.</p>
+                <h4 className="font-semibold text-slate-900 text-sm">Split into Two Shorter Shifts</h4>
+                <p className="text-slate-500 text-[11px]">Divides the shift at Central Metro Plaza Hub with a 15-minute handoff window.</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-center p-2 rounded-[6px] bg-[#FBFBFA] border border-[#EAEAEA]">
-                <div className="p-1.5 bg-[#FFFFFF] border border-[#EAEAEA] rounded-[4px]">
-                  <div className="text-[10px] text-[#787774]">07:00 - 11:00</div>
-                  <div className="font-bold text-[#111111]">Sarah Chen</div>
+              <div className="grid grid-cols-3 gap-2 text-center p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="p-2 bg-white border border-slate-100 rounded-lg">
+                  <div className="text-[10px] text-slate-400">07:00 – 11:00</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">Sarah Chen</div>
                 </div>
-                <div className="p-1.5 bg-[#F3EBF9] border border-[#DFCEEC] rounded-[4px] flex flex-col justify-center">
-                  <div className="font-bold text-[#6E3294]">15m Handoff</div>
-                  <div className="text-[9px] text-[#787774]">Central Hub</div>
+                <div className="p-2 bg-sky-50 border border-sky-100 rounded-lg flex flex-col justify-center">
+                  <div className="font-semibold text-sky-800 text-[11px]">15m Break</div>
+                  <div className="text-[9px] text-sky-600">Central Hub</div>
                 </div>
-                <div className="p-1.5 bg-[#FFFFFF] border border-[#EAEAEA] rounded-[4px]">
-                  <div className="text-[10px] text-[#787774]">11:15 - 15:30</div>
-                  <div className="font-bold text-[#111111]">Carlos Mendez</div>
+                <div className="p-2 bg-white border border-slate-100 rounded-lg">
+                  <div className="text-[10px] text-slate-400">11:15 – 15:30</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">Carlos Mendez</div>
                 </div>
               </div>
 
               <button
                 onClick={() => handleExecuteTier(2)}
                 disabled={isResolving}
-                className="w-full py-2 rounded-[6px] bg-[#111111] hover:bg-[#333333] text-white font-mono text-xs font-semibold transition active:scale-95 disabled:opacity-40"
+                className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs transition active:scale-95 disabled:opacity-50 shadow-xs"
               >
-                {isResolving ? 'Deconstructing Shifts...' : 'Execute Tier 2: Split into Unlinked Duty'}
+                {isResolving ? 'Splitting...' : 'Split Shift with Handoff'}
               </button>
             </div>
           )}
 
           {activeTierTab === 3 && (
-            <div className="space-y-3 font-mono text-xs">
+            <div className="space-y-4 text-xs">
               <div>
-                <h4 className="font-bold text-[#111111] text-sm">Tier 3: Escalated Dispatch Lock</h4>
-                <p className="text-[#787774] text-[11px]">Locks dispatch confirmation in UNASSIGNED_CONFLICT state to prevent non-compliant driver deployment.</p>
+                <h4 className="font-semibold text-slate-900 text-sm">Hold Shift for Review</h4>
+                <p className="text-slate-500 text-[11px]">Pauses this departure until an operations supervisor assigns a driver.</p>
               </div>
 
-              <div className="p-2.5 rounded-[4px] bg-[#FDEBEC] border border-[#F7D2D4] text-[#9F2F2D]">
-                Blocks vehicle departure. Requires Operations Manager emergency fatigue waiver or headway reduction.
+              <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-100 text-amber-900 text-xs">
+                This trip will remain queued in dispatch review until an available driver is confirmed.
               </div>
 
               <button
                 onClick={() => handleExecuteTier(3)}
                 disabled={isResolving}
-                className="w-full py-2 rounded-[6px] bg-[#9F2F2D] hover:bg-[#852523] text-white font-mono text-xs font-semibold transition active:scale-95 disabled:opacity-40"
+                className="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs transition active:scale-95 disabled:opacity-50 shadow-xs"
               >
-                {isResolving ? 'Locking...' : 'Execute Tier 3: Lock Dispatch & Broadcast Alert'}
+                {isResolving ? 'Holding...' : 'Hold for Dispatch Review'}
               </button>
             </div>
           )}
 
           {resolutionResult && (
-            <div className={`p-3 rounded-[6px] border text-xs font-mono space-y-1.5 ${
-              resolutionResult.success ? 'bg-[#EDF3EC] border-[#D5E5D4] text-[#346538]' : 'bg-[#FDEBEC] border-[#F7D2D4] text-[#9F2F2D]'
+            <div className={`p-3.5 rounded-xl border text-xs space-y-1.5 animate-in fade-in duration-150 ${
+              resolutionResult.success 
+                ? 'bg-emerald-50/70 border-emerald-100 text-emerald-900' 
+                : 'bg-amber-50/70 border-amber-100 text-amber-900'
             }`}>
-              <div className="font-bold flex items-center justify-between">
-                <span>{resolutionResult.tierName} Applied</span>
-                <span className="text-[10px] bg-white px-1.5 py-0.2 rounded border border-[#EAEAEA]">Live</span>
+              <div className="font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Resolution Applied</span>
+                </span>
+                <span className="text-[10px] bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                  Updated
+                </span>
               </div>
-              <p>{resolutionResult.message}</p>
+              <p className="text-[11px] text-slate-600">{resolutionResult.message}</p>
               <div className="flex justify-end pt-1">
                 <button
                   onClick={onClose}
-                  className="px-3 py-1 rounded-[4px] bg-[#111111] text-white font-semibold text-xs transition active:scale-95"
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition active:scale-95"
                 >
-                  Return to Dashboard
+                  Done
                 </button>
               </div>
             </div>
@@ -308,9 +314,15 @@ export default function FallbackSolverModal({
 
         </div>
 
-        <div className="bg-[#FBFBFA] p-3 px-5 border-t border-[#EAEAEA] flex items-center justify-between text-xs font-mono text-[#787774]">
-          <span>Compliance Target: <strong className="text-[#346538]">100%</strong></span>
-          <button onClick={onClose} className="hover:text-[#111111]">Close</button>
+        {/* Footer */}
+        <div className="p-3.5 px-6 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>Target: <strong className="text-emerald-700 font-semibold">100% Rest Compliance</strong></span>
+          <button 
+            onClick={onClose} 
+            className="px-3 py-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 transition"
+          >
+            Close
+          </button>
         </div>
 
       </div>
