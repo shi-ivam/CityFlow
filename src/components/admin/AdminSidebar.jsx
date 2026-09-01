@@ -355,16 +355,26 @@ export default function AdminSidebar({
       <div className="flex flex-col h-full min-h-0">
         
         {/* Top Header & Logo */}
-        <div className="h-14 px-3.5 flex items-center justify-between border-b border-border/60 shrink-0">
-          <div 
-            onClick={() => navigate('/admin')}
-            className="flex items-center space-x-2.5 cursor-pointer hover:opacity-85 transition-opacity overflow-hidden group"
-            title="CityFlow Admin Control Center"
-          >
-            <div className="w-7 h-7 rounded-md bg-palette-slate flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 transition-transform group-hover:scale-105">
+        {isCollapsed ? (
+          <div className="h-14 flex items-center justify-center border-b border-border/60 shrink-0">
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="w-8 h-8 rounded-md bg-palette-slate hover:bg-palette-slate/90 flex items-center justify-center text-white font-bold text-xs shadow-2xs transition-transform hover:scale-105"
+              title="Expand Navigation Sidebar"
+            >
               CF
-            </div>
-            {!isCollapsed && (
+            </button>
+          </div>
+        ) : (
+          <div className="h-14 px-3.5 flex items-center justify-between border-b border-border/60 shrink-0">
+            <div 
+              onClick={() => navigate('/admin')}
+              className="flex items-center space-x-2.5 cursor-pointer hover:opacity-85 transition-opacity overflow-hidden group"
+              title="CityFlow Admin Control Center"
+            >
+              <div className="w-7 h-7 rounded-md bg-palette-slate flex items-center justify-center text-white font-bold text-xs shadow-2xs shrink-0 transition-transform group-hover:scale-105">
+                CF
+              </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-semibold text-xs text-foreground tracking-tight truncate flex items-center gap-1.5">
                   CityFlow
@@ -376,17 +386,17 @@ export default function AdminSidebar({
                   Delhi Operations
                 </span>
               </div>
-            )}
-          </div>
+            </div>
 
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground transition-colors shrink-0"
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-          </button>
-        </div>
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground transition-colors shrink-0"
+              title="Collapse Sidebar"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Global Hub Navigation Links */}
         <div className="p-2 border-b border-border/40 space-y-0.5 shrink-0">

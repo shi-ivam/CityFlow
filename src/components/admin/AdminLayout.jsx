@@ -44,12 +44,33 @@ export default function AdminLayout({
   return (
     <div className={`h-screen w-screen flex bg-[#0b0f19] text-foreground font-sans antialiased overflow-hidden select-none ${darkMode ? 'dark' : ''}`}>
       
-      {/* Sidebar */}
-      <AdminSidebar
-        isCollapsed={isSidebarCollapsed}
-        setIsCollapsed={setIsSidebarCollapsed}
-        conflictsCount={conflictsCount}
-      />
+      {/* Sidebar: In cockpit mode, off-canvas drawer; in sub-modules, docked sidebar */}
+      {isCockpit ? (
+        <>
+          {/* Backdrop when drawer is open on cockpit */}
+          {!isSidebarCollapsed && (
+            <div
+              onClick={() => setIsSidebarCollapsed(true)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs animate-in fade-in transition-opacity"
+            />
+          )}
+          <div className={`fixed inset-y-0 left-0 z-50 transition-transform duration-200 shadow-2xl ${
+            isSidebarCollapsed ? '-translate-x-full pointer-events-none' : 'translate-x-0'
+          }`}>
+            <AdminSidebar
+              isCollapsed={false}
+              setIsCollapsed={setIsSidebarCollapsed}
+              conflictsCount={conflictsCount}
+            />
+          </div>
+        </>
+      ) : (
+        <AdminSidebar
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
+          conflictsCount={conflictsCount}
+        />
+      )}
 
       {/* Main Right Area */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">

@@ -322,7 +322,7 @@ export default function CockpitMapCanvas({
     <div className="relative w-full h-full min-h-[480px] bg-[#0b0f19] overflow-hidden select-none">
       
       {/* Leaflet Map DOM Container */}
-      <div ref={mapContainerRef} className="w-full h-full" />
+      <div ref={mapContainerRef} className="w-full h-full cockpit-map" />
 
       {/* Floating Map Drawing Toolbar */}
       <div className="absolute top-3 left-3 z-20 flex items-center space-x-1.5 p-1 rounded-lg bg-[#111827]/90 backdrop-blur border border-[#1f2937] shadow-xl text-xs font-sans">

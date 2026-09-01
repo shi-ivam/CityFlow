@@ -242,8 +242,12 @@ kbd {
   background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1) 6px, rgba(239, 68, 68, 0.2) 6px, rgba(239, 68, 68, 0.2) 12px);
 }
 
-/* Dark Control-Room Geospatial Map Tiles (Watermark-free) */
-.cockpit-dark-tiles {
-  filter: brightness(0.55) invert(1) contrast(2.8) hue-rotate(205deg) saturate(0.25) !important;
+/* Dark Control-Room Geospatial Map Tiles (Watermark-free, Deep Obsidian/Slate) */
+.leaflet-container {
+  background: #0b0f19 !important;
+}
+
+.cockpit-map .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(75%) contrast(120%) grayscale(90%) !important;
 }
 

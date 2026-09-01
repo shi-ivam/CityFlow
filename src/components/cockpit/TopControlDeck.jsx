@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { 
   Play, 
   Pause, 
@@ -9,12 +10,11 @@ import {
   ChevronDown, 
   AlertTriangle, 
   ShieldCheck, 
-  Sparkles,
-  Layers,
-  LogOut,
-  Sliders,
-  CheckCircle2,
-  Clock
+  Layers, 
+  LogOut, 
+  Sliders, 
+  Clock, 
+  Menu
 } from 'lucide-react';
 import { DIVISIONS } from './operationsData';
 
@@ -55,31 +55,34 @@ export default function TopControlDeck({
   const currentDivObj = DIVISIONS.find(d => d.id === selectedDivision) || DIVISIONS[0];
 
   return (
-    <header className="h-16 bg-[#0b0f19] border-b border-[#1f2937] px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 sticky top-0 font-sans select-none text-white">
+    <header className="h-16 bg-[#0b0f19]/95 backdrop-blur-md border-b border-[#1f2937] px-3 sm:px-5 flex items-center justify-between z-30 shrink-0 sticky top-0 font-sans select-none text-white">
       
-      {/* LEFT: Branding & Division Switcher */}
-      <div className="flex items-center space-x-3 sm:space-x-4">
+      {/* LEFT: Branding, Modules Toggle & Division Switcher */}
+      <div className="flex items-center space-x-2.5 sm:space-x-3.5">
+        
+        {/* Module Sidebar Drawer Toggle */}
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-slate-400 hover:text-white transition"
-            title="Toggle Navigation Sidebar"
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-slate-300 hover:text-white transition group shrink-0"
+            title="Open Module Navigation Drawer"
           >
-            <Layers className="w-4 h-4 text-indigo-400" />
+            <Menu className="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors" />
+            <span className="hidden xl:inline text-[11px] font-medium text-slate-300">Modules</span>
           </button>
         )}
 
         {/* Brand Logo */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2.5 shrink-0">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-mono font-bold text-xs shadow-md shadow-indigo-500/20">
             CF
           </div>
-          <div className="hidden lg:flex flex-col">
+          <div className="hidden sm:flex flex-col min-w-0">
             <div className="text-[13px] font-bold tracking-tight text-white flex items-center gap-1.5 leading-none">
-              CITYFLOW <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">PRO</span>
+              CITYFLOW <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono font-bold border border-indigo-500/30">PRO</span>
             </div>
-            <span className="text-[9px] font-mono tracking-wider text-slate-400 uppercase mt-0.5">
-              Transit Operations
+            <span className="text-[9px] font-mono tracking-wider text-slate-400 uppercase mt-0.5 truncate">
+              Operations Cockpit
             </span>
           </div>
         </div>
@@ -87,13 +90,13 @@ export default function TopControlDeck({
         <div className="h-6 w-px bg-[#1f2937] hidden sm:block" />
 
         {/* Division Switcher Dropdown */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             onClick={() => setIsDivisionOpen(!isDivisionOpen)}
             className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-xs text-slate-200 transition-colors"
           >
             <Layers className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="font-medium truncate max-w-[150px] sm:max-w-none">{currentDivObj.name}</span>
+            <span className="font-medium truncate max-w-[130px] sm:max-w-none">{currentDivObj.name}</span>
             <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isDivisionOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -124,43 +127,89 @@ export default function TopControlDeck({
           )}
         </div>
 
-        {/* Global Search Control */}
-        <button
-          onClick={onOpenSearch}
-          className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-xs text-slate-400 hover:text-slate-200 transition-colors group"
-        >
-          <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400" />
-          <span>Search operations...</span>
-          <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1f2937] border border-slate-700 text-slate-400">Ctrl K</kbd>
-        </button>
+        {/* Top Direct Module Navigation Pills */}
+        <nav className="hidden 2xl:flex items-center space-x-1 pl-2 border-l border-[#1f2937] text-xs font-sans">
+          <NavLink
+            to="/admin"
+            end
+            className={({ isActive }) => `px-2.5 py-1 rounded-md transition ${
+              isActive 
+                ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30' 
+                : 'text-slate-400 hover:text-white hover:bg-[#111827]'
+            }`}
+          >
+            Cockpit
+          </NavLink>
+          <NavLink
+            to="/admin/management"
+            className={({ isActive }) => `px-2.5 py-1 rounded-md transition ${
+              isActive 
+                ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30' 
+                : 'text-slate-400 hover:text-white hover:bg-[#111827]'
+            }`}
+          >
+            Management
+          </NavLink>
+          <NavLink
+            to="/admin/vehicles"
+            className={({ isActive }) => `px-2.5 py-1 rounded-md transition ${
+              isActive 
+                ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30' 
+                : 'text-slate-400 hover:text-white hover:bg-[#111827]'
+            }`}
+          >
+            Fleet
+          </NavLink>
+          <NavLink
+            to="/admin/drivers"
+            className={({ isActive }) => `px-2.5 py-1 rounded-md transition ${
+              isActive 
+                ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30' 
+                : 'text-slate-400 hover:text-white hover:bg-[#111827]'
+            }`}
+          >
+            Drivers
+          </NavLink>
+          <NavLink
+            to="/admin/routes"
+            className={({ isActive }) => `px-2.5 py-1 rounded-md transition ${
+              isActive 
+                ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/30' 
+                : 'text-slate-400 hover:text-white hover:bg-[#111827]'
+            }`}
+          >
+            Routes
+          </NavLink>
+        </nav>
+
       </div>
 
       {/* CENTER: Real-Time Simulation / Dispatch Controller */}
-      <div className="flex items-center space-x-3 bg-[#111827] border border-[#1f2937] rounded-lg px-3 py-1.5 shadow-inner">
+      <div className="flex items-center space-x-2.5 sm:space-x-3 bg-[#111827] border border-[#1f2937] rounded-xl px-3 py-1.5 shadow-inner">
         {/* Play/Pause Button */}
         <button
           onClick={onToggleSimulating}
-          className={`flex items-center space-x-1 px-2.5 py-1 rounded text-xs font-semibold transition ${
+          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition ${
             isSimulating 
-              ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30' 
-              : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25' 
+              : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25'
           }`}
           title={isSimulating ? "Pause Simulation Clock" : "Start Live Simulation Clock"}
         >
           {isSimulating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-          <span className="text-[11px] font-mono">{isSimulating ? 'PAUSE' : 'LIVE'}</span>
+          <span className="text-[11px] font-mono font-bold">{isSimulating ? 'PAUSE' : 'LIVE'}</span>
         </button>
 
         {/* Continuous Time Scrubber */}
-        <div className="hidden xl:flex items-center space-x-2 w-48">
+        <div className="hidden xl:flex items-center space-x-2 w-40 2xl:w-48">
           <span className="text-[10px] font-mono text-slate-400">06:00</span>
-          <div className="flex-1 h-1.5 bg-[#1f2937] rounded-full overflow-hidden relative">
+          <div className="flex-1 h-1.5 bg-[#0b0f19] border border-[#1f2937] rounded-full overflow-hidden relative">
             <div 
               className="h-full bg-indigo-500 transition-all duration-300"
               style={{ width: `${progressPct}%` }}
             />
             <div 
-              className="w-2.5 h-2.5 rounded-full bg-white absolute top-1/2 -translate-y-1/2 -translate-x-1/2 shadow"
+              className="w-2.5 h-2.5 rounded-full bg-white absolute top-1/2 -translate-y-1/2 -translate-x-1/2 shadow-sm"
               style={{ left: `${progressPct}%` }}
             />
           </div>
@@ -168,14 +217,14 @@ export default function TopControlDeck({
         </div>
 
         {/* Speed Toggles */}
-        <div className="flex items-center space-x-0.5 bg-[#0b0f19] p-0.5 rounded border border-[#1f2937]">
+        <div className="flex items-center space-x-0.5 bg-[#0b0f19] p-0.5 rounded-md border border-[#1f2937]">
           {[1, 2, 5].map((speed) => (
             <button
               key={speed}
               onClick={() => onChangeSimSpeed(speed)}
               className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition ${
                 simSpeed === speed
-                  ? 'bg-indigo-600 text-white shadow'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white hover:bg-[#1f2937]'
               }`}
             >
@@ -185,7 +234,7 @@ export default function TopControlDeck({
         </div>
 
         {/* Current Dispatch Time Display */}
-        <div className="flex items-center space-x-1.5 pl-1 text-slate-200 font-mono text-xs">
+        <div className="flex items-center space-x-1.5 pl-1 font-mono text-xs">
           <Clock className="w-3.5 h-3.5 text-indigo-400 hidden sm:inline" />
           <span className="font-bold tabular-nums tracking-wider text-emerald-400">
             {formatFullTime(simulationTimeSeconds)}
@@ -202,20 +251,31 @@ export default function TopControlDeck({
         </button>
       </div>
 
-      {/* RIGHT: System Status & User Controls */}
-      <div className="flex items-center space-x-2.5 sm:space-x-3">
+      {/* RIGHT: Search, Compliance & Status */}
+      <div className="flex items-center space-x-2 sm:space-x-2.5">
+        
+        {/* Global Search Control */}
+        <button
+          onClick={onOpenSearch}
+          className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-xs text-slate-400 hover:text-slate-200 transition-colors group"
+        >
+          <Search className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400" />
+          <span className="hidden lg:inline">Search operations...</span>
+          <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1f2937] border border-slate-700 text-slate-400">Ctrl K</kbd>
+        </button>
+
         {/* Dynamic Compliance Chip */}
         {activeConflictsCount > 0 ? (
           <button
             onClick={onOpenConflicts}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 transition text-xs font-mono font-bold animate-pulse shadow-sm"
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 transition text-xs font-mono font-bold animate-pulse shadow-sm shrink-0"
             title={`${activeConflictsCount} active operational conflicts - Click to resolve`}
           >
             <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
             <span>▲ {activeConflictsCount} CONFLICTS</span>
           </button>
         ) : (
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span>● COMPLIANT</span>
           </div>
@@ -224,7 +284,7 @@ export default function TopControlDeck({
         {/* Alert Drawer Trigger */}
         <button
           onClick={onOpenAlerts}
-          className="p-2 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-slate-300 hover:text-white transition relative"
+          className="p-2 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] text-slate-300 hover:text-white transition relative shrink-0"
           title="Open Operational Alerts Drawer"
         >
           <Bell className="w-4 h-4" />
@@ -236,10 +296,10 @@ export default function TopControlDeck({
         </button>
 
         {/* User Profile Menu */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center space-x-2 p-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] transition"
+            className="flex items-center space-x-1.5 p-1.5 rounded-lg bg-[#111827] hover:bg-[#1a2333] border border-[#1f2937] transition"
           >
             <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs">
               D
@@ -248,7 +308,7 @@ export default function TopControlDeck({
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-1.5 w-48 rounded-lg bg-[#111827] border border-[#1f2937] shadow-2xl py-1.5 z-50 text-xs text-slate-200">
+            <div className="absolute right-0 mt-1.5 w-48 rounded-lg bg-[#111827] border border-[#1f2937] shadow-2xl py-1.5 z-50 text-xs text-slate-200 animate-in fade-in zoom-in-95">
               <div className="px-3 py-1.5 border-b border-[#1f2937]">
                 <div className="font-semibold text-white">Chief Dispatcher</div>
                 <div className="text-[10px] font-mono text-slate-400">ID: DISP-DELHI-04</div>
