@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft, 
   Bus, 
@@ -29,8 +30,8 @@ export default function VehicleFullProfileModal({
 
   const vehicleTrips = trips.filter(t => t.busId === vehicle.id || t.busNumber === vehicle.busNumber);
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-md p-4 lg:p-10 font-sans text-foreground">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] overflow-y-auto bg-background/95 backdrop-blur-md p-4 lg:p-10 font-sans text-foreground">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Header Navigation */}

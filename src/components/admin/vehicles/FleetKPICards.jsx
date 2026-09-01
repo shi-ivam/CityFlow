@@ -1,5 +1,4 @@
 import React from 'react';
-import { Bus, CheckCircle2, Clock, Wrench, ShieldAlert, Zap, Activity } from 'lucide-react';
 import { calculateFleetMetrics } from '../../../services/vehicleService';
 
 export default function FleetKPICards({ 
@@ -9,86 +8,64 @@ export default function FleetKPICards({
 }) {
   const metrics = calculateFleetMetrics(busFleet);
 
-  const cards = [
+  const stats = [
     {
       id: 'ALL',
-      label: 'TOTAL FLEET',
+      label: 'Total Fleet',
       value: metrics.total,
-      subtext: '100% registered assets',
-      icon: Bus,
-      color: 'text-foreground',
-      borderActive: 'border-primary ring-1 ring-primary/30',
-      badge: 'All Assets',
+      detail: 'Registered assets'
     },
     {
       id: 'IN_SERVICE',
-      label: 'IN SERVICE',
+      label: 'In Service',
       value: metrics.inService,
-      subtext: `${metrics.utilizationPct}% fleet utilization`,
-      icon: CheckCircle2,
-      color: 'text-emerald-600 dark:text-emerald-400',
-      borderActive: 'border-emerald-500 ring-1 ring-emerald-500/30',
-      badge: `${metrics.moving} Moving`,
+      detail: `${metrics.moving} active on routes`,
+      highlight: 'text-emerald-600 dark:text-emerald-400'
     },
     {
       id: 'STANDBY_READY',
-      label: 'STANDBY',
+      label: 'Standby Reserve',
       value: metrics.standby,
-      subtext: 'Ready for emergency dispatch',
-      icon: Clock,
-      color: 'text-amber-600 dark:text-amber-400',
-      borderActive: 'border-amber-500 ring-1 ring-amber-500/30',
-      badge: 'Depot Reserve',
+      detail: 'Available for dispatch',
+      highlight: 'text-amber-600 dark:text-amber-400'
     },
     {
       id: 'MAINTENANCE',
-      label: 'MAINTENANCE',
+      label: 'Workshop & Inspection',
       value: metrics.maintenance,
-      subtext: metrics.maintenance === 0 ? '0 critical issues' : `${metrics.maintenance} in workshop`,
-      icon: Wrench,
-      color: 'text-rose-600 dark:text-rose-400',
-      borderActive: 'border-rose-500 ring-1 ring-rose-500/30',
-      badge: `${metrics.maintenanceDueSoon} Due Soon`,
-    },
+      detail: metrics.maintenanceDueSoon > 0 ? `${metrics.maintenanceDueSoon} due this week` : '0 critical faults',
+      highlight: metrics.maintenance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-foreground'
+    }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-sans">
-      {cards.map((card) => {
-        const Icon = card.icon;
-        const isSelected = activeFilter === card.id;
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 font-sans">
+      {stats.map((item) => {
+        const isSelected = activeFilter === item.id;
 
         return (
           <button
-            key={card.id}
-            onClick={() => onSelectFilter && onSelectFilter(isSelected ? 'ALL' : card.id)}
-            className={`text-left p-4 rounded-lg bg-card border transition-all cursor-pointer relative overflow-hidden group hover:border-foreground/30 shadow-xs ${
-              isSelected ? card.borderActive : 'border-border'
+            key={item.id}
+            onClick={() => onSelectFilter && onSelectFilter(isSelected ? 'ALL' : item.id)}
+            className={`text-left p-5 rounded-xl transition-all duration-150 cursor-pointer border ${
+              isSelected 
+                ? 'bg-card border-foreground/30 shadow-xs' 
+                : 'bg-card/60 hover:bg-card border-border/60 hover:border-border'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
-                {card.label}
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50">
-                {card.badge}
-              </span>
+            <div className="text-[11px] font-mono tracking-wider text-muted-foreground uppercase">
+              {item.label}
             </div>
 
             <div className="flex items-baseline space-x-2 mt-2">
-              <div className={`text-3xl font-bold font-mono tracking-tight ${card.color}`}>
-                {card.value}
-              </div>
+              <span className={`text-3xl font-light font-mono tracking-tight ${item.highlight || 'text-foreground'}`}>
+                {item.value}
+              </span>
             </div>
 
-            <div className="text-xs text-muted-foreground mt-1.5 flex items-center justify-between font-sans">
-              <span>{card.subtext}</span>
-              <Icon className="w-4 h-4 opacity-30 group-hover:opacity-70 transition-opacity" />
+            <div className="text-xs text-muted-foreground mt-1 font-sans">
+              {item.detail}
             </div>
-
-            {isSelected && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
           </button>
         );
       })}

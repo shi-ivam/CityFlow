@@ -18,8 +18,17 @@ import {
   Radio, 
   Calendar,
   LayoutGrid,
-  Columns
+  Columns,
+  ShieldCheck,
+  Zap,
+  Bell,
+  AlertOctagon,
+  BarChart3,
+  Sliders,
+  ExternalLink
 } from 'lucide-react';
+
+import { calculateFleetMetrics, calculateFleetReadinessScore, generateFleetExport } from '../../../services/vehicleService';
 
 import FleetKPICards from '../../../components/admin/vehicles/FleetKPICards';
 import FleetHealth from '../../../components/admin/vehicles/FleetHealth';
@@ -35,6 +44,15 @@ import VehicleAvailabilityTimeline from '../../../components/admin/vehicles/Vehi
 import VehicleMaintenanceQueue from '../../../components/admin/vehicles/VehicleMaintenanceQueue';
 import VehicleDocumentsView from '../../../components/admin/vehicles/VehicleDocumentsView';
 import VehicleMapView from '../../../components/admin/vehicles/VehicleMapView';
+
+// Command Center Sub-Views
+import VehicleCommandPalette from '../../../components/admin/vehicles/VehicleCommandPalette';
+import FleetReadinessModal from '../../../components/admin/vehicles/FleetReadinessModal';
+import VehicleDispatchModal from '../../../components/admin/vehicles/VehicleDispatchModal';
+import VehicleChargingCenter from '../../../components/admin/vehicles/VehicleChargingCenter';
+import VehicleAlertsCenter from '../../../components/admin/vehicles/VehicleAlertsCenter';
+import VehicleIncidentsCenter from '../../../components/admin/vehicles/VehicleIncidentsCenter';
+import VehicleAnalyticsCenter from '../../../components/admin/vehicles/VehicleAnalyticsCenter';
 
 export default function VehiclesModule({ 
   busFleet = [], 
@@ -53,13 +71,25 @@ export default function VehiclesModule({
   const path = location.pathname;
 
   // Active sub-feature detection
-  let activeFeature = 'overview';
-  if (path.includes('/vehicles/fleet')) activeFeature = 'fleet';
-  else if (path.includes('/vehicles/livestatus')) activeFeature = 'livestatus';
-  else if (path.includes('/vehicles/assignments')) activeFeature = 'assignments';
-  else if (path.includes('/vehicles/availability')) activeFeature = 'availability';
-  else if (path.includes('/vehicles/maintenance')) activeFeature = 'maintenance';
-  else if (path.includes('/vehicles/documents')) activeFeature = 'documents';
+  const [internalTab, setInternalTab] = useState('overview');
+
+  useEffect(() => {
+    if (path.includes('/vehicles/fleet')) setInternalTab('fleet');
+    else if (path.includes('/vehicles/livestatus')) setInternalTab('livestatus');
+    else if (path.includes('/vehicles/assignments')) setInternalTab('assignments');
+    else if (path.includes('/vehicles/availability')) setInternalTab('availability');
+    else if (path.includes('/vehicles/maintenance')) setInternalTab('maintenance');
+    else if (path.includes('/vehicles/charging')) setInternalTab('charging');
+    else if (path.includes('/vehicles/incidents')) setInternalTab('incidents');
+    else if (path.includes('/vehicles/alerts')) setInternalTab('alerts');
+    else if (path.includes('/vehicles/documents')) setInternalTab('documents');
+    else if (path.includes('/vehicles/analytics')) setInternalTab('analytics');
+    else setInternalTab('overview');
+  }, [path]);
+
+  // Metrics & Calculations
+  const metrics = calculateFleetMetrics(busFleet);
+  const readiness = calculateFleetReadinessScore(busFleet, crewMembers);
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,10 +102,9 @@ export default function VehiclesModule({
     gps: 'ALL'
   });
 
-  // Sorting State
+  // Table Config
+  const [density, setDensity] = useState('compact');
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
-
-  // Column Visibility Configuration
   const [columnsConfig, setColumnsConfig] = useState({
     status: true,
     assetId: true,
@@ -99,6 +128,10 @@ export default function VehiclesModule({
   const [selectedVehicleIds, setSelectedVehicleIds] = useState([]);
 
   // Modals & Drawer State
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isReadinessModalOpen, setIsReadinessModalOpen] = useState(false);
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
+  const [dispatchTargetVehicle, setDispatchTargetVehicle] = useState(null);
   const [selectedDrawerVehicle, setSelectedDrawerVehicle] = useState(null);
   const [fullProfileVehicle, setFullProfileVehicle] = useState(null);
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
@@ -108,10 +141,10 @@ export default function VehiclesModule({
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [maintenanceTargetVehicle, setMaintenanceTargetVehicle] = useState(null);
 
-  // Live Status View Mode (table | map | split)
+  // Live Status View Mode
   const [liveViewMode, setLiveViewMode] = useState('split');
 
-  // Refresh feedback
+  // Refresh & Feedback
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -124,7 +157,7 @@ export default function VehiclesModule({
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
-      showToast('✓ Live fleet telemetry & GPS synchronized with transit server.');
+      showToast('✓ Live fleet telemetry & GPS synchronized with Delhi transit server.');
     }, 600);
   };
 
@@ -174,10 +207,9 @@ export default function VehiclesModule({
     setCurrentPage(1);
   };
 
-  // Filtered & Sorted Vehicles (Single Source of Truth)
+  // Filtered & Sorted Vehicles
   const filteredVehicles = useMemo(() => {
     return busFleet.filter(bus => {
-      // Search match
       const term = searchTerm.toLowerCase();
       const matchesSearch = 
         !term ||
@@ -189,37 +221,29 @@ export default function VehiclesModule({
         bus.depot?.toLowerCase().includes(term) ||
         bus.status?.toLowerCase().includes(term);
 
-      // Status match
       const matchesStatus = 
         filters.status === 'ALL' || 
         bus.status === filters.status ||
         (filters.status === 'STANDBY_READY' && (bus.status === 'AVAILABLE' || bus.status === 'STANDBY_READY'));
 
-      // Fuel / Type match
       const matchesFuel = 
         filters.fuelType === 'ALL' || 
         bus.fuelType === filters.fuelType;
 
-      // Depot match
       const matchesDepot = 
         filters.depot === 'ALL' || 
         bus.depot === filters.depot;
 
-      // Battery match
       let matchesBattery = true;
-      if (filters.battery === 'CRITICAL') matchesBattery = bus.batteryPct <= 20;
-      else if (filters.battery === 'LOW') matchesBattery = bus.batteryPct > 20 && bus.batteryPct <= 50;
-      else if (filters.battery === 'NORMAL') matchesBattery = bus.batteryPct > 50;
+      if (filters.battery === 'CRITICAL') matchesBattery = (bus.batteryPct || 100) <= 20;
+      else if (filters.battery === 'LOW') matchesBattery = (bus.batteryPct || 100) > 20 && (bus.batteryPct || 100) <= 50;
+      else if (filters.battery === 'NORMAL') matchesBattery = (bus.batteryPct || 100) > 50;
 
-      // Maintenance match
       let matchesMaint = true;
       if (filters.maintenance === 'DUE_THIS_WEEK') {
         matchesMaint = bus.nextServiceDate && (new Date(bus.nextServiceDate) - new Date() < 15 * 86400000);
-      } else if (filters.maintenance === 'HEALTHY') {
-        matchesMaint = bus.status !== 'MAINTENANCE';
       }
 
-      // GPS match
       let matchesGps = true;
       if (filters.gps === 'ONLINE') matchesGps = bus.gpsStatus !== 'OFFLINE';
       else if (filters.gps === 'OFFLINE') matchesGps = bus.gpsStatus === 'OFFLINE';
@@ -260,43 +284,28 @@ export default function VehiclesModule({
     }
   };
 
-  // Export Filtered Results
+  // Export
   const handleExport = (format) => {
-    const exportData = filteredVehicles.map(v => ({
-      AssetID: v.id,
-      Registration: v.busNumber,
-      Type: v.type,
-      Depot: v.depot || 'Kashmere Gate ISBT',
-      Route: v.assignedRoute || 'Unassigned',
-      Driver: v.assignedDriver || 'Unassigned',
-      Status: v.status,
-      Battery: `${v.batteryPct}%`,
-      Speed: `${v.speedKmH} km/h`,
-      Odometer: v.odometerKm,
-      NextService: v.nextServiceDate
-    }));
+    const content = generateFleetExport(filteredVehicles, format);
 
     if (format === 'csv') {
-      const headers = Object.keys(exportData[0] || {}).join(',');
-      const rows = exportData.map(row => Object.values(row).map(val => `"${val}"`).join(',')).join('\n');
-      const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
-      const encodedUri = encodeURI(csvContent);
+      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + content);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `cityflow_fleet_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("download", `CityFlow_Vehicles_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast(`✓ Exported ${exportData.length} filtered vehicle records to CSV.`);
+      showToast(`✓ Exported ${filteredVehicles.length} records to CSV.`);
     } else if (format === 'json') {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(content);
       const link = document.createElement('a');
       link.setAttribute("href", dataStr);
-      link.setAttribute("download", `cityflow_fleet_${new Date().toISOString().slice(0, 10)}.json`);
+      link.setAttribute("download", `CityFlow_Vehicles_${new Date().toISOString().slice(0, 10)}.json`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast(`✓ Exported ${exportData.length} records to JSON.`);
+      showToast(`✓ Exported ${filteredVehicles.length} records to JSON.`);
     } else if (format === 'print') {
       window.print();
     }
@@ -320,84 +329,99 @@ export default function VehiclesModule({
 
   const handleSaveMaintenance = (maintenanceData) => {
     if (onScheduleMaintenance) onScheduleMaintenance(maintenanceData);
-    showToast(`✓ Work Order scheduled for ${maintenanceData.vehicleId} at ${maintenanceData.workshop}`);
+    showToast(`✓ Work Order issued for ${maintenanceData.vehicleId} at ${maintenanceData.workshop}`);
   };
 
   return (
-    <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto font-sans text-foreground">
+    <div className="p-6 lg:p-10 space-y-8 max-w-[1600px] mx-auto font-sans text-foreground">
       
-      {/* 1. UPGRADED OPERATIONAL HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-        <div>
-          {/* Subtle Breadcrumb */}
-          <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
-            ADMIN / VEHICLES / {activeFeature.toUpperCase()}
+      {/* 1. ELEGANT SPACIOUS HEADER */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2 text-xs font-mono text-muted-foreground uppercase tracking-widest">
+            <span>CityFlow</span>
+            <span>•</span>
+            <span>Delhi Operations</span>
+            <span>•</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">All Systems Nominal</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight mt-1">
-            Fleet &amp; Vehicle Management
+          <h1 className="text-3xl font-light tracking-tight text-foreground">
+            Vehicle Fleet Command
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Monitor vehicle availability, assignments, telemetry, and maintenance.
+          <p className="text-sm text-muted-foreground font-light">
+            Asset tracking, dispatch readiness, telemetry, and workshop maintenance.
           </p>
         </div>
 
-        {/* Live Synchronization Tag & Header CTAs */}
+        {/* Clean Header Actions */}
         <div className="flex items-center space-x-3 font-mono text-xs">
-          <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-md bg-muted/30 border border-border">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-muted-foreground">LIVE</span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-foreground">Updated 12 sec ago</span>
-          </div>
-
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="px-3 py-1.5 rounded-md bg-card border border-border text-foreground hover:bg-muted/50 transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-2 rounded-lg bg-card border border-border/70 hover:border-border text-foreground transition flex items-center space-x-2 cursor-pointer shadow-xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-            <span>Refresh</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+            <span className="hidden sm:inline">Sync</span>
           </button>
 
           <button
-            onClick={() => handleExport('csv')}
-            className="px-3 py-1.5 rounded-md bg-card border border-border text-foreground hover:bg-muted/50 transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+            onClick={() => setIsDispatchModalOpen(true)}
+            className="px-4 py-2 rounded-lg bg-foreground text-background font-bold hover:opacity-90 transition flex items-center space-x-2 cursor-pointer shadow-xs"
           >
-            <Download className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setEditTargetVehicle(null);
-              setIsAddEditModalOpen(true);
-            }}
-            className="px-3.5 py-1.5 rounded-md bg-primary text-primary-foreground font-bold hover:opacity-90 transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Vehicle</span>
+            <Route className="w-3.5 h-3.5" />
+            <span>Dispatch</span>
           </button>
         </div>
       </div>
 
-      {/* 2. DYNAMIC FLEET STATISTICS (Filter-on-click) */}
+      {/* 2. MINIMALIST STATS STRIP */}
       <FleetKPICards
         busFleet={busFleet}
         activeFilter={filters.status}
         onSelectFilter={(statusKey) => handleFilterChange('status', statusKey)}
       />
 
-      {/* 3. FLEET HEALTH OVERVIEW (Segmented Bar) */}
+      {/* 3. SLIM READINESS & HEALTH INDICATOR */}
       <FleetHealth
         busFleet={busFleet}
         onSelectStatus={(statusKey) => handleFilterChange('status', statusKey)}
       />
 
-      {/* 4. SUB-FEATURE VIEW ROUTING & CONTENT */}
+      {/* 4. STREAMLINED CLEAN SUB-NAVIGATION */}
+      <div className="border-b border-border/50">
+        <div className="flex items-center space-x-6 text-xs font-mono overflow-x-auto -mb-px">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'livestatus', label: 'Live Telemetry & Map' },
+            { id: 'assignments', label: 'Roster' },
+            { id: 'availability', label: 'Availability' },
+            { id: 'maintenance', label: `Workshop (${metrics.maintenance})` },
+            { id: 'charging', label: 'EV Charging' },
+            { id: 'incidents', label: 'Incidents' },
+            { id: 'alerts', label: `Alerts (${metrics.critical})` },
+            { id: 'documents', label: 'Compliance' },
+            { id: 'analytics', label: 'Analytics' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setInternalTab(tab.id)}
+              className={`py-3 border-b-2 font-medium transition cursor-pointer shrink-0 ${
+                internalTab === tab.id
+                  ? 'border-foreground text-foreground font-bold'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. SUB-FEATURE VIEWS */}
       
       {/* VIEW A: OVERVIEW & FLEET TABLE */}
-      {(activeFeature === 'overview' || activeFeature === 'fleet') && (
-        <div className="space-y-4">
+      {(internalTab === 'overview' || internalTab === 'fleet') && (
+        <div className="space-y-6">
           <VehicleToolbar
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -413,8 +437,12 @@ export default function VehiclesModule({
               setIsAddEditModalOpen(true);
             }}
             onExport={handleExport}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
             totalResults={filteredVehicles.length}
             isRefreshing={isRefreshing}
+            density={density}
+            onDensityChange={setDensity}
+            onSelectSavedView={(savedFilters) => setFilters(savedFilters)}
           />
 
           <VehicleTable
@@ -452,22 +480,20 @@ export default function VehiclesModule({
         </div>
       )}
 
-      {/* VIEW B: LIVE STATUS (Telemetry Grid + Map Split View) */}
-      {activeFeature === 'livestatus' && (
+      {/* VIEW B: LIVE TELEMETRY & MAP */}
+      {internalTab === 'livestatus' && (
         <div className="space-y-4">
-          
-          {/* View Mode Toggle */}
-          <div className="flex items-center justify-between bg-card p-3 rounded-lg border border-border shadow-xs font-mono text-xs">
+          <div className="flex items-center justify-between bg-card p-3.5 rounded-xl border border-border/70 shadow-xs font-mono text-xs">
             <div className="flex items-center space-x-2 text-foreground font-bold">
               <Radio className="w-4 h-4 text-emerald-500 animate-pulse" />
-              <span>Real-Time Vehicle Telemetry &amp; GPS Spatial Tracking</span>
+              <span>Real-Time Fleet Telemetry &amp; GPS Spatial Tracking</span>
             </div>
 
-            <div className="flex items-center space-x-1 bg-muted/40 p-0.5 rounded border border-border">
+            <div className="flex items-center space-x-1 bg-muted/40 p-0.5 rounded-lg border border-border">
               <button
                 onClick={() => setLiveViewMode('split')}
                 className={`px-3 py-1 rounded text-xs transition cursor-pointer ${
-                  liveViewMode === 'split' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground'
+                  liveViewMode === 'split' ? 'bg-card text-foreground font-bold shadow-xs' : 'text-muted-foreground'
                 }`}
               >
                 Split View
@@ -475,7 +501,7 @@ export default function VehiclesModule({
               <button
                 onClick={() => setLiveViewMode('map')}
                 className={`px-3 py-1 rounded text-xs transition cursor-pointer ${
-                  liveViewMode === 'map' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground'
+                  liveViewMode === 'map' ? 'bg-card text-foreground font-bold shadow-xs' : 'text-muted-foreground'
                 }`}
               >
                 Full Map
@@ -483,7 +509,7 @@ export default function VehiclesModule({
               <button
                 onClick={() => setLiveViewMode('table')}
                 className={`px-3 py-1 rounded text-xs transition cursor-pointer ${
-                  liveViewMode === 'table' ? 'bg-primary text-primary-foreground font-bold' : 'text-muted-foreground'
+                  liveViewMode === 'table' ? 'bg-card text-foreground font-bold shadow-xs' : 'text-muted-foreground'
                 }`}
               >
                 Telemetry Grid
@@ -491,7 +517,6 @@ export default function VehiclesModule({
             </div>
           </div>
 
-          {/* View Mode Content */}
           {liveViewMode === 'split' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px]">
               <div className="lg:col-span-7 h-[500px]">
@@ -503,25 +528,22 @@ export default function VehiclesModule({
                 />
               </div>
 
-              <div className="lg:col-span-5 space-y-3 overflow-y-auto max-h-[500px] pr-1">
+              <div className="lg:col-span-5 space-y-3 overflow-y-auto max-h-[500px] pr-1 font-mono text-xs">
                 {busFleet.map(bus => (
                   <div
                     key={bus.id}
                     onClick={() => setSelectedDrawerVehicle(bus)}
-                    className="p-3.5 bg-card border border-border rounded-lg hover:border-foreground/30 transition cursor-pointer space-y-2 font-mono text-xs shadow-xs"
+                    className="p-4 bg-card border border-border/70 hover:border-border rounded-xl transition cursor-pointer space-y-2 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-primary">{bus.busNumber}</span>
+                      <span className="font-bold text-foreground">{bus.busNumber}</span>
                       <span className="text-[10px] text-emerald-600 font-bold">
-                        {bus.speedKmH > 0 ? `${bus.speedKmH} km/h (In Transit)` : 'Idle at Hub'}
+                        {bus.speedKmH > 0 ? `${bus.speedKmH} km/h` : 'Idle'}
                       </span>
                     </div>
                     <div className="text-muted-foreground text-[11px] flex justify-between">
-                      <span>Route {bus.assignedRoute || 'Unassigned'}</span>
+                      <span>Route {bus.assignedRoute || 'Standby'}</span>
                       <span>Battery: <strong className="text-foreground">{bus.batteryPct}%</strong></span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      Driver: {bus.assignedDriver || 'Standby Pool'} • Depot: {bus.depot || 'Kashmere Gate'}
                     </div>
                   </div>
                 ))}
@@ -546,19 +568,19 @@ export default function VehiclesModule({
                 <div
                   key={bus.id}
                   onClick={() => setSelectedDrawerVehicle(bus)}
-                  className="p-4 bg-card border border-border rounded-lg shadow-xs space-y-3 hover:border-foreground/30 transition cursor-pointer"
+                  className="p-5 bg-card border border-border/70 rounded-xl shadow-xs space-y-3 hover:border-border transition cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-bold text-base text-foreground">{bus.busNumber}</div>
                       <div className="text-[11px] text-muted-foreground">{bus.id} • {bus.type}</div>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-600">
                       {bus.status}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 bg-muted/30 p-2.5 rounded border border-border text-center">
+                  <div className="grid grid-cols-3 gap-2 bg-muted/20 p-2.5 rounded-lg border border-border/60 text-center">
                     <div>
                       <div className="text-[9px] text-muted-foreground">SPEED</div>
                       <div className="font-bold text-foreground mt-0.5">{bus.speedKmH} km/h</div>
@@ -572,55 +594,68 @@ export default function VehiclesModule({
                       <div className="font-bold text-foreground mt-0.5">{bus.rangeKm || 180} km</div>
                     </div>
                   </div>
-
-                  <div className="text-[11px] text-muted-foreground flex justify-between">
-                    <span>Route: <strong className="text-primary">{bus.assignedRoute || 'Depot'}</strong></span>
-                    <span>Driver: <strong className="text-foreground">{bus.assignedDriver || 'None'}</strong></span>
-                  </div>
                 </div>
               ))}
             </div>
           )}
-
         </div>
       )}
 
-      {/* VIEW C: ASSIGNMENTS */}
-      {activeFeature === 'assignments' && (
-        <div className="bg-card border border-border rounded-lg p-5 space-y-4 font-mono text-xs">
-          <div className="flex items-center justify-between border-b border-border pb-3">
+      {/* VIEW C: ASSIGNMENTS / DISPATCH ROSTER */}
+      {internalTab === 'assignments' && (
+        <div className="relative bg-gradient-to-br from-card via-card/95 to-muted/20 border border-border/70 rounded-2xl p-6 lg:p-8 space-y-6 shadow-xs overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-5">
             <div>
-              <h2 className="text-base font-bold font-sans text-foreground">
-                Vehicle → Driver → Route Assignment Roster
+              <div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
+                Delhi Transit Operations
+              </div>
+              <h2 className="text-2xl font-light tracking-tight text-foreground mt-0.5">
+                Corridor Dispatch &amp; Crew Roster
               </h2>
-              <p className="text-xs text-muted-foreground font-sans">
-                Review and modify bus allocations across transit routes and driver shifts.
+              <p className="text-xs text-muted-foreground font-light">
+                Manage operational pairings between fleet buses, transit corridors, and duty drivers.
               </p>
             </div>
+
+            <button
+              onClick={() => setIsDispatchModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-foreground text-background font-bold text-xs hover:opacity-90 transition flex items-center space-x-2 cursor-pointer shadow-xs shrink-0"
+            >
+              <Route className="w-3.5 h-3.5" />
+              <span>Dispatch New Vehicle</span>
+            </button>
           </div>
 
-          <div className="divide-y divide-border/60">
+          <div className="divide-y divide-border/40">
             {busFleet.map(bus => (
-              <div key={bus.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20 px-2 rounded transition">
-                <div className="flex items-center space-x-3">
-                  <div className="w-9 h-9 rounded bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    <Bus className="w-4 h-4" />
+              <div key={bus.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/20 px-3 rounded-xl transition">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 rounded-xl bg-muted/80 text-foreground flex items-center justify-center font-bold">
+                    <Bus className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-foreground text-sm">{bus.busNumber}</div>
-                    <div className="text-[10px] text-muted-foreground">{bus.id} • {bus.type} ({bus.capacity} Seats)</div>
+                    <div className="font-bold text-foreground text-sm flex items-center space-x-2">
+                      <span>{bus.busNumber}</span>
+                      <span className="text-xs font-normal text-muted-foreground">({bus.id})</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 font-light">
+                      {bus.type} • {bus.capacity} Seats • {bus.batteryPct}% Battery
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 text-xs">
-                  <div className="px-3 py-1.5 rounded bg-muted/40 border border-border">
+                <div className="flex items-center space-x-3 text-xs font-mono">
+                  <div className="px-3.5 py-2 rounded-xl bg-card/80 border border-border/60">
                     <span className="text-muted-foreground">Route: </span>
-                    <strong className="text-primary">{bus.assignedRoute ? `Route ${bus.assignedRoute}` : 'Unassigned'}</strong>
+                    <strong className="text-foreground">{bus.assignedRoute ? `Route ${bus.assignedRoute}` : 'Depot Standby'}</strong>
                   </div>
 
-                  <div className="px-3 py-1.5 rounded bg-muted/40 border border-border">
+                  <div className="px-3.5 py-2 rounded-xl bg-card/80 border border-border/60">
                     <span className="text-muted-foreground">Driver: </span>
-                    <strong className="text-foreground">{bus.assignedDriver || 'Depot Standby'}</strong>
+                    <strong className="text-foreground">{bus.assignedDriver || 'Unassigned'}</strong>
                   </div>
 
                   <button
@@ -628,7 +663,7 @@ export default function VehiclesModule({
                       setAssignTargetVehicle(bus);
                       setIsAssignModalOpen(true);
                     }}
-                    className="px-3 py-1.5 rounded bg-primary text-primary-foreground font-bold hover:opacity-90 transition cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl bg-foreground text-background font-bold hover:opacity-90 transition cursor-pointer"
                   >
                     Reassign
                   </button>
@@ -640,7 +675,7 @@ export default function VehiclesModule({
       )}
 
       {/* VIEW D: AVAILABILITY TIMELINE */}
-      {activeFeature === 'availability' && (
+      {internalTab === 'availability' && (
         <VehicleAvailabilityTimeline
           busFleet={busFleet}
           onOpenVehicleDrawer={(bus) => setSelectedDrawerVehicle(bus)}
@@ -648,7 +683,7 @@ export default function VehiclesModule({
       )}
 
       {/* VIEW E: MAINTENANCE WORKSHOP QUEUE */}
-      {activeFeature === 'maintenance' && (
+      {internalTab === 'maintenance' && (
         <VehicleMaintenanceQueue
           busFleet={busFleet}
           onScheduleMaintenance={(bus) => {
@@ -661,12 +696,44 @@ export default function VehiclesModule({
         />
       )}
 
-      {/* VIEW F: COMPLIANCE & DOCUMENTS */}
-      {activeFeature === 'documents' && (
+      {/* VIEW F: EV CHARGING & ENERGY */}
+      {internalTab === 'charging' && (
+        <VehicleChargingCenter
+          busFleet={busFleet}
+          onUpdateVehicle={onUpdateVehicle}
+        />
+      )}
+
+      {/* VIEW G: INCIDENTS & FAULTS */}
+      {internalTab === 'incidents' && (
+        <VehicleIncidentsCenter
+          busFleet={busFleet}
+          onOpenVehicleDrawer={(bus) => setSelectedDrawerVehicle(bus)}
+        />
+      )}
+
+      {/* VIEW H: ALERTS CENTER */}
+      {internalTab === 'alerts' && (
+        <VehicleAlertsCenter
+          busFleet={busFleet}
+          onOpenVehicleDrawer={(bus) => setSelectedDrawerVehicle(bus)}
+        />
+      )}
+
+      {/* VIEW I: COMPLIANCE DOCUMENTS */}
+      {internalTab === 'documents' && (
         <VehicleDocumentsView busFleet={busFleet} />
       )}
 
-      {/* 5. FLOATING BULK ACTIONS BAR */}
+      {/* VIEW J: PERFORMANCE ANALYTICS */}
+      {internalTab === 'analytics' && (
+        <VehicleAnalyticsCenter
+          busFleet={busFleet}
+          onOpenVehicleDrawer={(bus) => setSelectedDrawerVehicle(bus)}
+        />
+      )}
+
+      {/* 6. FLOATING BULK ACTIONS BAR */}
       <VehicleBulkActionBar
         selectedCount={selectedVehicleIds.length}
         onClearSelection={() => setSelectedVehicleIds([])}
@@ -685,7 +752,42 @@ export default function VehiclesModule({
         onBulkExport={() => handleExport('csv')}
       />
 
-      {/* 6. VEHICLE DETAILS DRAWER (Slide-over) */}
+      {/* 7. GLOBAL COMMAND PALETTE MODAL (Ctrl + K) */}
+      <VehicleCommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        busFleet={busFleet}
+        routes={routes}
+        crewMembers={crewMembers}
+        onSelectVehicle={(v) => setSelectedDrawerVehicle(v)}
+        onAddVehicle={() => { setEditTargetVehicle(null); setIsAddEditModalOpen(true); }}
+        onOpenMap={() => setInternalTab('livestatus')}
+        onOpenMaintenance={() => setInternalTab('maintenance')}
+        onOpenCompliance={() => setInternalTab('documents')}
+        onOpenDispatch={() => setIsDispatchModalOpen(true)}
+        onExportCSV={() => handleExport('csv')}
+      />
+
+      {/* 8. FLEET READINESS SCORE BREAKDOWN MODAL */}
+      <FleetReadinessModal
+        isOpen={isReadinessModalOpen}
+        onClose={() => setIsReadinessModalOpen(false)}
+        busFleet={busFleet}
+        crewMembers={crewMembers}
+      />
+
+      {/* 9. DISPATCH WIZARD MODAL */}
+      <VehicleDispatchModal
+        isOpen={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        busFleet={busFleet}
+        routes={routes}
+        crewMembers={crewMembers}
+        selectedVehicle={dispatchTargetVehicle}
+        onConfirmDispatch={handleSaveAssignment}
+      />
+
+      {/* 10. VEHICLE DETAILS DRAWER (Slide-over) */}
       <VehicleDetailsDrawer
         vehicle={selectedDrawerVehicle}
         onClose={() => setSelectedDrawerVehicle(null)}
@@ -710,7 +812,7 @@ export default function VehiclesModule({
         }}
       />
 
-      {/* 7. FULL VEHICLE PROFILE MODAL */}
+      {/* 11. FULL VEHICLE PROFILE MODAL */}
       <VehicleFullProfileModal
         vehicle={fullProfileVehicle}
         onClose={() => setFullProfileVehicle(null)}
@@ -732,7 +834,7 @@ export default function VehiclesModule({
         trips={trips}
       />
 
-      {/* 8. ADD / EDIT VEHICLE MODAL */}
+      {/* 12. ADD / EDIT VEHICLE MODAL */}
       <AddEditVehicleModal
         isOpen={isAddEditModalOpen}
         onClose={() => {
@@ -744,7 +846,7 @@ export default function VehiclesModule({
         existingVehicles={busFleet}
       />
 
-      {/* 9. ASSIGN VEHICLE MODAL */}
+      {/* 13. ASSIGN VEHICLE MODAL */}
       <VehicleAssignmentModal
         isOpen={isAssignModalOpen}
         onClose={() => {
@@ -758,7 +860,7 @@ export default function VehiclesModule({
         onSaveAssignment={handleSaveAssignment}
       />
 
-      {/* 10. SCHEDULE MAINTENANCE MODAL */}
+      {/* 14. SCHEDULE MAINTENANCE MODAL */}
       <ScheduleMaintenanceModal
         isOpen={isMaintenanceModalOpen}
         onClose={() => {
@@ -769,9 +871,9 @@ export default function VehiclesModule({
         onSaveMaintenance={handleSaveMaintenance}
       />
 
-      {/* 11. TOAST NOTIFICATION */}
+      {/* 15. TOAST FEEDBACK NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[3000] bg-card border-2 border-primary text-foreground px-4 py-3 rounded-lg font-mono text-xs flex items-center space-x-2 shadow-2xl animate-in slide-in-from-bottom-2 duration-150">
+        <div className="fixed bottom-6 right-6 z-[3000] bg-card border border-border text-foreground px-4 py-3 rounded-xl font-mono text-xs flex items-center space-x-2 shadow-2xl animate-in slide-in-from-bottom-2 duration-150">
           <span className="w-2 h-2 rounded-full bg-primary" />
           <span>{toastMessage}</span>
         </div>

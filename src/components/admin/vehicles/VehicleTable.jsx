@@ -4,18 +4,16 @@ import {
   ArrowUp, 
   ArrowDown, 
   MoreVertical, 
-  CheckCircle2, 
-  Clock, 
   Wrench, 
-  AlertTriangle, 
-  Zap, 
-  Fuel, 
-  MapPin, 
-  ChevronLeft, 
+  Route, 
+  Edit2, 
+  CheckSquare, 
+  Square,
+  Bus,
+  ChevronLeft,
   ChevronRight,
-  Eye,
-  Edit2,
-  Calendar
+  Clock,
+  MapPin
 } from 'lucide-react';
 
 export default function VehicleTable({
@@ -39,18 +37,17 @@ export default function VehicleTable({
   totalItems = 0
 }) {
   const isAllSelected = vehicles.length > 0 && selectedVehicleIds.length === vehicles.length;
-  const isIndeterminate = selectedVehicleIds.length > 0 && selectedVehicleIds.length < vehicles.length;
 
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
 
-  const renderSortIndicator = (columnKey) => {
+  const renderSortIcon = (columnKey) => {
     if (sortConfig.key !== columnKey) {
       return <ArrowUpDown className="w-3 h-3 text-muted-foreground/40 ml-1 inline" />;
     }
     return sortConfig.direction === 'asc' ? (
-      <ArrowUp className="w-3 h-3 text-primary ml-1 inline" />
+      <ArrowUp className="w-3 h-3 text-foreground ml-1 inline" />
     ) : (
-      <ArrowDown className="w-3 h-3 text-primary ml-1 inline" />
+      <ArrowDown className="w-3 h-3 text-foreground ml-1 inline" />
     );
   };
 
@@ -58,315 +55,281 @@ export default function VehicleTable({
     switch (status) {
       case 'IN_SERVICE':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
-            In Service
+          <span className="inline-flex items-center space-x-1.5 text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>In Service</span>
           </span>
         );
       case 'STANDBY_READY':
       case 'AVAILABLE':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-            <Clock className="w-3 h-3 mr-1 text-amber-600" />
-            Standby
+          <span className="inline-flex items-center space-x-1.5 text-xs font-mono font-medium text-amber-600 dark:text-amber-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span>Standby</span>
           </span>
         );
       case 'MAINTENANCE':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-            <Wrench className="w-3 h-3 mr-1 text-rose-500" />
-            Maintenance
-          </span>
-        );
-      case 'INSPECTION_DUE':
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-orange-500/15 text-orange-800 dark:text-orange-300 border border-orange-500/30">
-            <AlertTriangle className="w-3 h-3 mr-1 text-orange-500" />
-            Inspection Due
+          <span className="inline-flex items-center space-x-1.5 text-xs font-mono font-medium text-rose-600 dark:text-rose-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            <span>Maintenance</span>
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-muted text-muted-foreground border border-border">
-            Offline
+          <span className="inline-flex items-center space-x-1.5 text-xs font-mono font-medium text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+            <span>Offline</span>
           </span>
         );
     }
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg shadow-xs overflow-hidden font-sans">
+    <div className="bg-card border border-border/70 rounded-xl overflow-hidden shadow-xs font-sans">
+      
+      {/* Table Container */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-xs font-sans">
+        <table className="w-full border-collapse text-left text-xs">
           
+          {/* Table Header */}
           <thead>
-            <tr className="bg-muted/60 border-b border-border text-muted-foreground font-mono uppercase text-[11px] font-semibold tracking-wider select-none">
+            <tr className="border-b border-border/60 bg-muted/20 text-muted-foreground font-mono text-[11px] uppercase tracking-wider">
               
-              {/* Checkbox */}
-              <th className="p-3 w-10 text-center">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  ref={(el) => el && (el.indeterminate = isIndeterminate)}
-                  onChange={onToggleSelectAll}
-                  className="accent-primary rounded cursor-pointer"
-                />
+              {/* Checkbox Column */}
+              <th className="py-3.5 px-4 w-10 text-center">
+                <button
+                  type="button"
+                  onClick={onToggleSelectAll}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  {isAllSelected ? (
+                    <CheckSquare className="w-4 h-4 text-foreground" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                </button>
               </th>
 
               {columnsConfig.status && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('status')}>
-                  Status {renderSortIndicator('status')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('status')}>
+                  Status {renderSortIcon('status')}
                 </th>
               )}
 
               {columnsConfig.assetId && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('id')}>
-                  Asset ID {renderSortIndicator('id')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('id')}>
+                  Asset ID {renderSortIcon('id')}
                 </th>
               )}
 
               {columnsConfig.registration && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('busNumber')}>
-                  Registration {renderSortIndicator('busNumber')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('busNumber')}>
+                  Registration {renderSortIcon('busNumber')}
                 </th>
               )}
 
               {columnsConfig.vehicleType && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('type')}>
-                  Vehicle Type {renderSortIndicator('type')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('type')}>
+                  Type {renderSortIcon('type')}
                 </th>
               )}
 
               {columnsConfig.depot && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('depot')}>
-                  Depot {renderSortIndicator('depot')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('depot')}>
+                  Depot {renderSortIcon('depot')}
                 </th>
               )}
 
               {columnsConfig.route && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('assignedRoute')}>
-                  Route {renderSortIndicator('assignedRoute')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('assignedRoute')}>
+                  Route {renderSortIcon('assignedRoute')}
                 </th>
               )}
 
               {columnsConfig.driver && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('assignedDriver')}>
-                  Driver {renderSortIndicator('assignedDriver')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('assignedDriver')}>
+                  Driver {renderSortIcon('assignedDriver')}
                 </th>
               )}
 
               {columnsConfig.speed && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('speedKmH')}>
-                  Speed {renderSortIndicator('speedKmH')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('speedKmH')}>
+                  Speed {renderSortIcon('speedKmH')}
                 </th>
               )}
 
               {columnsConfig.battery && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('batteryPct')}>
-                  Battery / Fuel {renderSortIndicator('batteryPct')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('batteryPct')}>
+                  Battery / Range {renderSortIcon('batteryPct')}
                 </th>
               )}
 
               {columnsConfig.odometer && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('odometerKm')}>
-                  Odometer {renderSortIndicator('odometerKm')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('odometerKm')}>
+                  Odometer {renderSortIcon('odometerKm')}
                 </th>
               )}
 
               {columnsConfig.nextService && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('nextServiceDate')}>
-                  Next Service {renderSortIndicator('nextServiceDate')}
+                <th className="py-3.5 px-4 cursor-pointer select-none" onClick={() => onSort('nextServiceDate')}>
+                  Next Service {renderSortIcon('nextServiceDate')}
                 </th>
               )}
 
-              {columnsConfig.lastGpsUpdate && (
-                <th className="p-3 cursor-pointer hover:text-foreground" onClick={() => onSort('lastGpsUpdate')}>
-                  Last GPS {renderSortIndicator('lastGpsUpdate')}
-                </th>
-              )}
-
-              <th className="p-3 text-right">Actions</th>
-
+              {/* Row Action Column */}
+              <th className="py-3.5 px-4 text-right">Action</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-border/60">
+          {/* Table Body */}
+          <tbody className="divide-y divide-border/40 font-mono">
             {vehicles.map((bus) => {
               const isSelected = selectedVehicleIds.includes(bus.id);
-              const isLowBattery = bus.batteryPct <= 25;
+              const isLowBattery = (bus.batteryPct || 100) <= 25;
 
               return (
                 <tr
                   key={bus.id}
-                  className={`group hover:bg-muted/30 transition-colors ${
-                    isSelected ? 'bg-primary/5' : ''
+                  onClick={() => onOpenVehicleDrawer(bus)}
+                  className={`hover:bg-muted/30 transition-colors cursor-pointer ${
+                    isSelected ? 'bg-muted/40' : ''
                   }`}
                 >
                   
-                  {/* Select Checkbox */}
-                  <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => onToggleSelectVehicle(bus.id)}
-                      className="accent-primary rounded cursor-pointer"
-                    />
+                  {/* Row Checkbox */}
+                  <td 
+                    className="py-3.5 px-4 text-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleSelectVehicle(bus.id);
+                    }}
+                  >
+                    <button type="button" className="text-muted-foreground hover:text-foreground">
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4 text-foreground" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
                   </td>
 
                   {/* Status */}
                   {columnsConfig.status && (
-                    <td className="p-3 cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 font-sans font-medium">
                       {getStatusBadge(bus.status)}
                     </td>
                   )}
 
                   {/* Asset ID */}
                   {columnsConfig.assetId && (
-                    <td className="p-3 font-mono font-bold text-foreground cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 font-bold text-primary">
                       {bus.id}
                     </td>
                   )}
 
                   {/* Registration Number */}
                   {columnsConfig.registration && (
-                    <td className="p-3 font-mono font-bold text-primary cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 font-bold text-foreground font-mono">
                       {bus.busNumber}
                     </td>
                   )}
 
-                  {/* Vehicle Type & Specs */}
+                  {/* Vehicle Type */}
                   {columnsConfig.vehicleType && (
-                    <td className="p-3 text-foreground cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      <div>{bus.type}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">
-                        {bus.capacity} Seats • {bus.manufacturer || 'EV'}
-                      </div>
+                    <td className="py-3.5 px-4 text-muted-foreground font-sans text-xs">
+                      {bus.type}
                     </td>
                   )}
 
-                  {/* Depot Location */}
+                  {/* Depot */}
                   {columnsConfig.depot && (
-                    <td className="p-3 text-muted-foreground font-mono text-[11px] cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 text-muted-foreground font-sans text-xs">
                       {bus.depot || 'Kashmere Gate ISBT'}
                     </td>
                   )}
 
-                  {/* Assigned Route */}
+                  {/* Route */}
                   {columnsConfig.route && (
-                    <td className="p-3 cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 font-bold">
                       {bus.assignedRoute ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-mono text-[11px] font-semibold">
-                          Route {bus.assignedRoute}
-                        </span>
+                        <span className="text-foreground">Route {bus.assignedRoute}</span>
                       ) : (
-                        <span className="text-muted-foreground text-xs font-mono italic">
-                          Unassigned
-                        </span>
+                        <span className="text-muted-foreground font-normal">Unassigned</span>
                       )}
                     </td>
                   )}
 
-                  {/* Assigned Driver */}
+                  {/* Driver */}
                   {columnsConfig.driver && (
-                    <td className="p-3 text-foreground font-medium cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      {bus.assignedDriver ? (
-                        <div>
-                          <span>{bus.assignedDriver}</span>
-                          <span className="text-[10px] text-muted-foreground font-mono block">
-                            {bus.driverId || 'DRV-OK'}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs font-mono italic">
-                          Unassigned
-                        </span>
-                      )}
+                    <td className="py-3.5 px-4 text-foreground font-sans text-xs">
+                      {bus.assignedDriver || <span className="text-muted-foreground">Unassigned</span>}
                     </td>
                   )}
 
                   {/* Speed */}
                   {columnsConfig.speed && (
-                    <td className="p-3 font-mono cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
+                    <td className="py-3.5 px-4 text-foreground">
                       {bus.speedKmH > 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                          {bus.speedKmH} km/h
-                        </span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">{bus.speedKmH} km/h</span>
                       ) : (
-                        <span className="text-muted-foreground">0 km/h (Stationary)</span>
+                        <span className="text-muted-foreground">0 km/h</span>
                       )}
                     </td>
                   )}
 
-                  {/* Battery / Fuel */}
+                  {/* Battery / Range */}
                   {columnsConfig.battery && (
-                    <td className="p-3 cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      <div className="flex items-center space-x-2 font-mono">
-                        {bus.fuelType === 'CNG' ? (
-                          <Fuel className="w-3.5 h-3.5 text-muted-foreground" />
-                        ) : (
-                          <Zap className={`w-3.5 h-3.5 ${isLowBattery ? 'text-rose-500' : 'text-emerald-500'}`} />
-                        )}
+                    <td className="py-3.5 px-4 font-mono">
+                      <div className="flex items-center space-x-2">
                         <span className={`font-bold ${isLowBattery ? 'text-rose-500' : 'text-foreground'}`}>
                           {bus.batteryPct}%
                         </span>
-                      </div>
-                      <div className="w-16 bg-muted h-1 rounded-full overflow-hidden mt-1">
-                        <div
-                          style={{ width: `${bus.batteryPct}%` }}
-                          className={`h-full ${isLowBattery ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                        />
+                        <span className="text-muted-foreground text-[11px]">({bus.rangeKm || 180} km)</span>
                       </div>
                     </td>
                   )}
 
                   {/* Odometer */}
                   {columnsConfig.odometer && (
-                    <td className="p-3 font-mono text-muted-foreground cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      {bus.odometerKm ? `${bus.odometerKm.toLocaleString()} km` : '—'}
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {bus.odometerKm ? `${(bus.odometerKm / 1000).toFixed(0)}k km` : '50k km'}
                     </td>
                   )}
 
-                  {/* Next Service Date */}
+                  {/* Next Service */}
                   {columnsConfig.nextService && (
-                    <td className="p-3 font-mono text-[11px] cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      <div className="text-foreground font-medium">{bus.nextServiceDate || '2026-09-24'}</div>
-                      <div className="text-[10px] text-muted-foreground">Periodic Inspection</div>
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {bus.nextServiceDate || '2026-09-18'}
                     </td>
                   )}
 
-                  {/* Last GPS Update */}
-                  {columnsConfig.lastGpsUpdate && (
-                    <td className="p-3 font-mono text-muted-foreground text-[11px] cursor-pointer" onClick={() => onOpenVehicleDrawer(bus)}>
-                      <div className="flex items-center space-x-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span>{bus.lastGpsUpdate || '12 sec ago'}</span>
-                      </div>
-                    </td>
-                  )}
-
-                  {/* Action Menu Buttons */}
-                  <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end space-x-1">
+                  {/* Action */}
+                  <td 
+                    className="py-3.5 px-4 text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-end space-x-2 font-mono">
                       <button
-                        onClick={() => onOpenVehicleDrawer(bus)}
-                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition cursor-pointer"
-                        title="View Vehicle Telemetry Drawer"
+                        onClick={() => onAssignVehicle(bus)}
+                        className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-muted transition cursor-pointer"
+                        title="Assign Route / Driver"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Route className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => onScheduleMaintenance(bus)}
+                        className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-muted transition cursor-pointer"
+                        title="Schedule Workshop Service"
+                      >
+                        <Wrench className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => onEditVehicle(bus)}
-                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition cursor-pointer"
+                        className="p-1.5 text-muted-foreground hover:text-foreground rounded hover:bg-muted transition cursor-pointer"
                         title="Edit Vehicle Specs"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => onAssignVehicle(bus)}
-                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition cursor-pointer"
-                        title="Assign Route & Driver"
-                      >
-                        <Calendar className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>
@@ -377,13 +340,8 @@ export default function VehicleTable({
 
             {vehicles.length === 0 && (
               <tr>
-                <td colSpan={14} className="p-10 text-center text-muted-foreground font-sans">
-                  <div className="max-w-xs mx-auto space-y-2">
-                    <div className="text-sm font-bold text-foreground">No fleet vehicles found</div>
-                    <div className="text-xs text-muted-foreground">
-                      No vehicles match your active search terms or filter criteria.
-                    </div>
-                  </div>
+                <td colSpan={14} className="py-12 text-center text-muted-foreground font-sans">
+                  No vehicles found matching current search or filter criteria.
                 </td>
               </tr>
             )}
@@ -392,47 +350,46 @@ export default function VehicleTable({
         </table>
       </div>
 
-      {/* Table Pagination Footer */}
-      <div className="p-3 bg-muted/20 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-        <div className="flex items-center space-x-2 text-muted-foreground">
-          <span>Rows per page:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="p-1 rounded bg-card border border-input text-foreground text-xs outline-none"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
-          <span>
-            Showing {Math.min((currentPage - 1) * pageSize + 1, totalItems)} - {Math.min(currentPage * pageSize, totalItems)} of {totalItems} assets
-          </span>
+      {/* Pagination Footer */}
+      <div className="p-4 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs text-muted-foreground">
+        <div>
+          Showing <strong className="text-foreground">{Math.min(1 + (currentPage - 1) * pageSize, totalItems)}</strong> to <strong className="text-foreground">{Math.min(currentPage * pageSize, totalItems)}</strong> of <strong className="text-foreground">{totalItems}</strong> assets
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-2 py-1 rounded bg-card border border-border text-foreground hover:bg-muted disabled:opacity-40 transition flex items-center space-x-1 cursor-pointer"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span>Prev</span>
-          </button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span>Per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              className="p-1 rounded bg-muted/40 border border-input text-foreground outline-none"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
 
-          <span className="text-muted-foreground font-bold px-2">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="px-2 py-1 rounded bg-card border border-border text-foreground hover:bg-muted disabled:opacity-40 transition flex items-center space-x-1 cursor-pointer"
-          >
-            <span>Next</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="p-1.5 rounded border border-border/60 hover:bg-muted text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <span className="px-2 font-bold text-foreground">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 rounded border border-border/60 hover:bg-muted text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 

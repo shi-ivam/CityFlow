@@ -72,7 +72,7 @@ export default function VehicleMapView({
             display: flex;
             align-items: center;
             gap: 4px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
             border: 2px solid ${isSelected ? '#000' : '#fff'};
             white-space: nowrap;
             transform: translate(-50%, -50%);
@@ -100,11 +100,14 @@ export default function VehicleMapView({
   }, [busFleet, routes, selectedVehicleId]);
 
   return (
-    <div className="w-full h-full min-h-[450px] relative rounded-lg border border-border overflow-hidden shadow-xs bg-muted/20">
-      <div ref={mapContainerRef} className="w-full h-full min-h-[450px]" />
+    <div 
+      className="w-full h-full min-h-[450px] relative rounded-xl border border-border/70 overflow-hidden shadow-xs bg-muted/20"
+      style={{ isolation: 'isolate', zIndex: 0 }}
+    >
+      <div ref={mapContainerRef} className="w-full h-full min-h-[450px]" style={{ zIndex: 1 }} />
       
       {/* Map Overlay Badge */}
-      <div className="absolute top-3 right-3 z-[1000] bg-card/90 backdrop-blur-xs border border-border p-2.5 rounded shadow-lg font-mono text-xs space-y-1">
+      <div className="absolute top-3 right-3 z-10 bg-card/90 backdrop-blur-xs border border-border/80 p-2.5 rounded-lg shadow-md font-mono text-xs space-y-1">
         <div className="text-[10px] text-muted-foreground uppercase font-bold">LIVE FLEET CORRIDOR MAP</div>
         <div className="text-foreground font-bold">{busFleet.length} Vehicles Tracked</div>
         <div className="text-[11px] text-emerald-600 dark:text-emerald-400">● GPS Sync Active</div>

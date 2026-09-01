@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Wrench, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function ScheduleMaintenanceModal({
@@ -31,9 +32,9 @@ export default function ScheduleMaintenanceModal({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 font-sans text-foreground">
-      <div className="bg-card border border-border rounded-lg max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 font-sans text-foreground">
+      <div className="bg-card border border-border/80 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
         
         {/* Header */}
         <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
@@ -161,6 +162,7 @@ export default function ScheduleMaintenanceModal({
         </form>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

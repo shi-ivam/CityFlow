@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Bus, 
@@ -66,8 +67,8 @@ export default function VehicleDetailsDrawer({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-150 font-sans">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] overflow-hidden bg-black/50 backdrop-blur-xs flex justify-end animate-in fade-in duration-150 font-sans">
       
       {/* Click outside backdrop */}
       <div className="flex-1" onClick={onClose} />
@@ -416,6 +417,7 @@ export default function VehicleDetailsDrawer({
 
       </div>
 
-    </div>
+    </div>,
+    document.body
   );
 }

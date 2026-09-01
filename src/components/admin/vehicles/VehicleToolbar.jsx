@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
-  Download, 
-  Plus, 
-  RefreshCw, 
   Columns, 
+  Plus, 
+  Download, 
+  RefreshCw, 
   X, 
-  SlidersHorizontal, 
-  Check,
-  ChevronDown,
-  FileSpreadsheet,
-  FileText,
-  Printer
+  Check, 
+  Command,
+  Bookmark
 } from 'lucide-react';
 
 export default function VehicleToolbar({
@@ -27,356 +24,312 @@ export default function VehicleToolbar({
   onRefresh,
   onAddVehicle,
   onExport,
+  onOpenCommandPalette,
   totalResults = 0,
-  isRefreshing = false
+  isRefreshing = false,
+  density = 'compact',
+  onDensityChange,
+  onSelectSavedView
 }) {
-  const searchInputRef = useRef(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isColumnPickerOpen, setIsColumnPickerOpen] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isSavedViewsOpen, setIsSavedViewsOpen] = useState(false);
+  const [selectedSavedView, setSelectedSavedView] = useState('All Fleet');
 
-  // Global Ctrl+K / Cmd+K listener
+  // Global Ctrl+K listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        searchInputRef.current?.focus();
+        if (onOpenCommandPalette) onOpenCommandPalette();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [onOpenCommandPalette]);
 
-  const activeFilterList = [];
-  if (filters.status && filters.status !== 'ALL') {
-    activeFilterList.push({ key: 'status', label: `Status: ${filters.status.replace('_', ' ')}` });
-  }
-  if (filters.fuelType && filters.fuelType !== 'ALL') {
-    activeFilterList.push({ key: 'fuelType', label: `Type: ${filters.fuelType}` });
-  }
-  if (filters.depot && filters.depot !== 'ALL') {
-    activeFilterList.push({ key: 'depot', label: `Depot: ${filters.depot}` });
-  }
-  if (filters.battery && filters.battery !== 'ALL') {
-    activeFilterList.push({ key: 'battery', label: `Battery: ${filters.battery}` });
-  }
-  if (filters.maintenance && filters.maintenance !== 'ALL') {
-    activeFilterList.push({ key: 'maintenance', label: `Maintenance: ${filters.maintenance}` });
-  }
-  if (filters.gps && filters.gps !== 'ALL') {
-    activeFilterList.push({ key: 'gps', label: `GPS: ${filters.gps}` });
-  }
+  const activeFilterCount = Object.entries(filters).filter(([k, v]) => v !== 'ALL' && v !== '' && v !== null).length;
+
+  const savedViews = [
+    { id: 'all', name: 'All Fleet', filters: { status: 'ALL', fuelType: 'ALL', depot: 'ALL', battery: 'ALL', maintenance: 'ALL', gps: 'ALL' } },
+    { id: 'active', name: 'In Service', filters: { status: 'IN_SERVICE', fuelType: 'ALL', depot: 'ALL', battery: 'ALL', maintenance: 'ALL', gps: 'ALL' } },
+    { id: 'low_bat', name: 'Low Battery (<50%)', filters: { status: 'ALL', fuelType: 'ALL', depot: 'ALL', battery: 'LOW', maintenance: 'ALL', gps: 'ALL' } },
+    { id: 'maint_due', name: 'Maintenance Due', filters: { status: 'ALL', fuelType: 'ALL', depot: 'ALL', battery: 'ALL', maintenance: 'DUE_THIS_WEEK', gps: 'ALL' } },
+    { id: 'standby', name: 'Standby Reserve', filters: { status: 'STANDBY_READY', fuelType: 'ALL', depot: 'ALL', battery: 'ALL', maintenance: 'ALL', gps: 'ALL' } }
+  ];
+
+  const handleApplySavedView = (view) => {
+    setSelectedSavedView(view.name);
+    setIsSavedViewsOpen(false);
+    if (onSelectSavedView) onSelectSavedView(view.filters);
+  };
 
   return (
-    <div className="space-y-3 font-sans">
+    <div className="space-y-4 font-sans">
       
-      {/* Primary Toolbar Row */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-card p-3 rounded-lg border border-border shadow-xs">
+      {/* Spacious Search & Action Toolbar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         
-        {/* Left: Search Box with Ctrl+K */}
-        <div className="flex items-center space-x-2 flex-1 max-w-xl">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search vehicle ID, registration number, route, driver, depot..."
-              className="w-full pl-9 pr-14 py-1.5 rounded-md bg-muted/40 border border-input text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:bg-card transition font-sans"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono text-muted-foreground border border-border">
-              <span>⌘</span><span>K</span>
-            </div>
-          </div>
-
-          {/* Filter Toggle Button */}
+        {/* Clean Search Input */}
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search vehicles, routes, drivers..."
+            className="w-full pl-10 pr-16 py-2.5 rounded-lg bg-card border border-border/70 text-foreground outline-none text-xs focus:border-foreground/40 transition placeholder:text-muted-foreground"
+          />
           <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`px-3 py-1.5 rounded-md border text-xs font-mono font-medium flex items-center space-x-1.5 transition cursor-pointer shrink-0 ${
-              isFilterOpen || activeFilterList.length > 0
-                ? 'bg-primary text-primary-foreground border-primary font-bold shadow-xs'
-                : 'bg-card border-border text-foreground hover:bg-muted/50'
-            }`}
+            onClick={onOpenCommandPalette}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-muted/60 border border-border/50 text-[10px] font-mono text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Command Palette (Ctrl+K)"
           >
-            <Filter className="w-3.5 h-3.5" />
-            <span>Filters</span>
-            {activeFilterList.length > 0 && (
-              <span className="w-4 h-4 rounded-full bg-primary-foreground text-primary text-[10px] font-bold flex items-center justify-center">
-                {activeFilterList.length}
-              </span>
-            )}
+            ⌘K
           </button>
         </div>
 
-        {/* Right: Actions, Column Selector & Add Vehicle */}
-        <div className="flex items-center justify-end space-x-2 shrink-0 font-mono text-xs">
+        {/* Clean Minimal Controls */}
+        <div className="flex items-center space-x-2.5 w-full sm:w-auto justify-end font-mono text-xs">
           
-          {/* Column Picker Dropdown */}
+          {/* Saved Views */}
           <div className="relative">
             <button
-              onClick={() => setIsColumnPickerOpen(!isColumnPickerOpen)}
-              className="px-2.5 py-1.5 rounded-md bg-card border border-border text-foreground hover:bg-muted/50 transition flex items-center space-x-1.5 cursor-pointer"
-              title="Customize Visible Columns"
+              onClick={() => { setIsSavedViewsOpen(!isSavedViewsOpen); setIsFilterOpen(false); setIsColumnsOpen(false); setIsExportOpen(false); }}
+              className="px-3 py-2 rounded-lg bg-card border border-border/70 hover:border-border text-foreground transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <Bookmark className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="hidden md:inline">{selectedSavedView}</span>
+            </button>
+
+            {isSavedViewsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 font-sans text-xs">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase px-2 py-1">Saved Views</div>
+                <div className="space-y-0.5 font-mono">
+                  {savedViews.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => handleApplySavedView(v)}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition flex items-center justify-between cursor-pointer ${
+                        selectedSavedView === v.name ? 'bg-primary text-primary-foreground font-bold' : 'hover:bg-muted text-foreground'
+                      }`}
+                    >
+                      <span>{v.name}</span>
+                      {selectedSavedView === v.name && <Check className="w-3 h-3" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filter Trigger */}
+          <div className="relative">
+            <button
+              onClick={() => { setIsFilterOpen(!isFilterOpen); setIsColumnsOpen(false); setIsExportOpen(false); setIsSavedViewsOpen(false); }}
+              className={`px-3 py-2 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer ${
+                activeFilterCount > 0 
+                  ? 'bg-primary/10 border-primary text-primary font-bold' 
+                  : 'bg-card border-border/70 hover:border-border text-foreground'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold ml-0.5">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {isFilterOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-card border border-border rounded-xl shadow-xl p-4 z-50 space-y-3 animate-in fade-in zoom-in-95 font-sans text-xs">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <span className="font-mono font-bold uppercase text-[11px] text-foreground">Filter Assets</span>
+                  <button onClick={onResetFilters} className="text-primary hover:underline text-[11px] font-mono cursor-pointer">
+                    Clear all
+                  </button>
+                </div>
+
+                <div className="space-y-2.5 font-mono">
+                  <div>
+                    <label className="block text-[10px] text-muted-foreground uppercase mb-1">Status</label>
+                    <select
+                      value={filters.status || 'ALL'}
+                      onChange={(e) => onFilterChange('status', e.target.value)}
+                      className="w-full p-2 rounded-lg bg-muted/40 border border-input text-foreground outline-none text-xs"
+                    >
+                      <option value="ALL">All Statuses</option>
+                      <option value="IN_SERVICE">In Service</option>
+                      <option value="STANDBY_READY">Standby (Reserve)</option>
+                      <option value="MAINTENANCE">Maintenance</option>
+                      <option value="OFFLINE">Offline</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-muted-foreground uppercase mb-1">Depot</label>
+                    <select
+                      value={filters.depot || 'ALL'}
+                      onChange={(e) => onFilterChange('depot', e.target.value)}
+                      className="w-full p-2 rounded-lg bg-muted/40 border border-input text-foreground outline-none text-xs"
+                    >
+                      <option value="ALL">All Depots</option>
+                      <option value="Kashmere Gate ISBT">Kashmere Gate ISBT</option>
+                      <option value="Anand Vihar Hub">Anand Vihar Hub</option>
+                      <option value="Dwarka Sector 21 Depot">Dwarka Sector 21</option>
+                      <option value="Rohini Sector 14 Depot">Rohini Sector 14</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-muted-foreground uppercase mb-1">Powertrain</label>
+                    <select
+                      value={filters.fuelType || 'ALL'}
+                      onChange={(e) => onFilterChange('fuelType', e.target.value)}
+                      className="w-full p-2 rounded-lg bg-muted/40 border border-input text-foreground outline-none text-xs"
+                    >
+                      <option value="ALL">All Types</option>
+                      <option value="ELECTRIC">Electric EV</option>
+                      <option value="CNG">CNG Coach</option>
+                      <option value="DIESEL">Diesel</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border flex justify-end">
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    className="w-full py-2 bg-primary text-primary-foreground font-bold rounded-lg text-xs cursor-pointer font-mono"
+                  >
+                    Apply ({totalResults} Results)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Columns */}
+          <div className="relative">
+            <button
+              onClick={() => { setIsColumnsOpen(!isColumnsOpen); setIsFilterOpen(false); setIsExportOpen(false); }}
+              className="px-3 py-2 rounded-lg bg-card border border-border/70 hover:border-border text-foreground transition flex items-center space-x-1.5 cursor-pointer"
             >
               <Columns className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="hidden md:inline">Columns</span>
-              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </button>
 
-            {isColumnPickerOpen && (
-              <div className="absolute right-0 mt-1 w-56 bg-card border border-border rounded-lg shadow-xl p-2 z-50 space-y-1 text-xs">
-                <div className="flex items-center justify-between pb-1.5 mb-1 border-b border-border text-[11px] font-bold text-muted-foreground uppercase">
-                  <span>Visible Columns</span>
-                  <button 
-                    onClick={onResetColumns} 
-                    className="text-primary text-[10px] hover:underline cursor-pointer"
-                  >
+            {isColumnsOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-xl p-3 z-50 space-y-2 animate-in fade-in zoom-in-95 font-sans text-xs">
+                <div className="flex items-center justify-between border-b border-border pb-1.5">
+                  <span className="font-mono font-bold uppercase text-[10px] text-foreground">Visible Columns</span>
+                  <button onClick={onResetColumns} className="text-primary hover:underline text-[10px] font-mono cursor-pointer">
                     Reset
                   </button>
                 </div>
-                {Object.entries(columnsConfig).map(([key, isVisible]) => (
-                  <label
-                    key={key}
-                    className="flex items-center justify-between px-2 py-1 rounded hover:bg-muted/50 cursor-pointer text-foreground"
-                  >
-                    <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                    <input
-                      type="checkbox"
-                      checked={isVisible}
-                      onChange={() => onToggleColumn(key)}
-                      className="accent-primary rounded cursor-pointer"
-                    />
-                  </label>
-                ))}
+
+                <div className="space-y-1 max-h-60 overflow-y-auto font-mono text-xs">
+                  {Object.entries(columnsConfig).map(([key, isVisible]) => (
+                    <label key={key} className="flex items-center space-x-2 p-1 hover:bg-muted/40 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isVisible}
+                        onChange={() => onToggleColumn(key)}
+                        className="rounded border-border text-primary focus:ring-0"
+                      />
+                      <span className="capitalize text-foreground">{key.replace(/([A-Z])/g, ' $1')}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Refresh Button */}
-          <button
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="p-1.5 rounded-md bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition cursor-pointer"
-            title="Refresh Live Data"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-          </button>
-
-          {/* Export Menu */}
+          {/* Export */}
           <div className="relative">
             <button
-              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="px-2.5 py-1.5 rounded-md bg-card border border-border text-foreground hover:bg-muted/50 transition flex items-center space-x-1.5 cursor-pointer"
+              onClick={() => { setIsExportOpen(!isExportOpen); setIsFilterOpen(false); setIsColumnsOpen(false); }}
+              className="px-3 py-2 rounded-lg bg-card border border-border/70 hover:border-border text-foreground transition flex items-center space-x-1.5 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="hidden md:inline">Export</span>
-              <ChevronDown className="w-3 h-3 text-muted-foreground" />
+              <span className="hidden sm:inline">Export</span>
             </button>
 
-            {isExportMenuOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl p-1 z-50 space-y-0.5 text-xs">
+            {isExportOpen && (
+              <div className="absolute right-0 top-full mt-2 w-40 bg-card border border-border rounded-xl shadow-xl p-1.5 z-50 space-y-0.5 animate-in fade-in zoom-in-95 font-mono text-xs">
                 <button
-                  onClick={() => {
-                    onExport('csv');
-                    setIsExportMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-left hover:bg-muted/50 text-foreground transition"
+                  onClick={() => { onExport('csv'); setIsExportOpen(false); }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Export CSV</span>
+                  Export CSV
                 </button>
                 <button
-                  onClick={() => {
-                    onExport('json');
-                    setIsExportMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-left hover:bg-muted/50 text-foreground transition"
+                  onClick={() => { onExport('json'); setIsExportOpen(false); }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition cursor-pointer"
                 >
-                  <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Export JSON</span>
+                  Export JSON
                 </button>
                 <button
-                  onClick={() => {
-                    onExport('print');
-                    setIsExportMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-2 px-2.5 py-1.5 rounded text-left hover:bg-muted/50 text-foreground transition"
+                  onClick={() => { onExport('print'); setIsExportOpen(false); }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition cursor-pointer"
                 >
-                  <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>Print Roster</span>
+                  Print Roster
                 </button>
               </div>
             )}
           </div>
 
-          {/* Add Vehicle Primary CTA */}
+          {/* Add Vehicle Button */}
           <button
             onClick={onAddVehicle}
-            className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground font-bold hover:opacity-90 transition flex items-center space-x-1.5 shadow-xs cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-foreground text-background font-bold hover:opacity-90 transition flex items-center space-x-1.5 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Add Vehicle</span>
           </button>
 
         </div>
-
       </div>
 
-      {/* Expandable Advanced Filters Tray */}
-      {isFilterOpen && (
-        <div className="bg-card border border-border rounded-lg p-4 shadow-xs space-y-4 font-mono text-xs animate-in fade-in duration-150">
-          <div className="flex items-center justify-between border-b border-border pb-2">
-            <span className="font-bold text-foreground uppercase tracking-wider flex items-center space-x-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
-              <span>Advanced Filter Matrix</span>
-            </span>
-            <button
-              onClick={onResetFilters}
-              className="text-primary hover:underline text-[11px] font-bold cursor-pointer"
-            >
-              Reset All Filters
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            
-            {/* Status Filter */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                Status
-              </label>
-              <select
-                value={filters.status || 'ALL'}
-                onChange={(e) => onFilterChange('status', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="IN_SERVICE">In Service</option>
-                <option value="STANDBY_READY">Standby (Reserve)</option>
-                <option value="MAINTENANCE">Maintenance</option>
-                <option value="INSPECTION_DUE">Inspection Due</option>
-                <option value="OFFLINE">Offline</option>
-              </select>
-            </div>
-
-            {/* Fuel / Vehicle Type */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                Vehicle Type
-              </label>
-              <select
-                value={filters.fuelType || 'ALL'}
-                onChange={(e) => onFilterChange('fuelType', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Types</option>
-                <option value="ELECTRIC">Electric EV</option>
-                <option value="CNG">CNG Coach</option>
-                <option value="DIESEL">Diesel</option>
-                <option value="HYBRID">Hybrid</option>
-              </select>
-            </div>
-
-            {/* Depot Filter */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                Depot Location
-              </label>
-              <select
-                value={filters.depot || 'ALL'}
-                onChange={(e) => onFilterChange('depot', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Depots</option>
-                <option value="Kashmere Gate ISBT">Kashmere Gate ISBT</option>
-                <option value="Anand Vihar Hub">Anand Vihar Hub</option>
-                <option value="Dwarka Sector 21 Depot">Dwarka Sector 21</option>
-                <option value="Rohini Sector 14 Depot">Rohini Sector 14</option>
-              </select>
-            </div>
-
-            {/* Battery / Fuel State */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                Battery / Fuel
-              </label>
-              <select
-                value={filters.battery || 'ALL'}
-                onChange={(e) => onFilterChange('battery', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Levels</option>
-                <option value="CRITICAL">Critical (&lt; 20%)</option>
-                <option value="LOW">Low (20% - 50%)</option>
-                <option value="NORMAL">Normal (&gt; 50%)</option>
-              </select>
-            </div>
-
-            {/* Maintenance State */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                Maintenance
-              </label>
-              <select
-                value={filters.maintenance || 'ALL'}
-                onChange={(e) => onFilterChange('maintenance', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Schedules</option>
-                <option value="DUE_THIS_WEEK">Due within 15 Days</option>
-                <option value="HEALTHY">Up to Date</option>
-              </select>
-            </div>
-
-            {/* GPS Telemetry Status */}
-            <div>
-              <label className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">
-                GPS Connection
-              </label>
-              <select
-                value={filters.gps || 'ALL'}
-                onChange={(e) => onFilterChange('gps', e.target.value)}
-                className="w-full p-1.5 rounded bg-muted/40 border border-input text-foreground text-xs outline-none focus:border-primary"
-              >
-                <option value="ALL">All Connections</option>
-                <option value="ONLINE">Online (Live)</option>
-                <option value="STALE">Stale (&gt; 5 min)</option>
-                <option value="OFFLINE">Offline</option>
-              </select>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Active Filter Chips Bar */}
-      {activeFilterList.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
-          <span className="text-[11px] text-muted-foreground">Active Filters:</span>
-          {activeFilterList.map((f) => (
-            <span
-              key={f.key}
-              className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-xs font-semibold"
-            >
-              <span>{f.label}</span>
-              <button
-                onClick={() => onFilterChange(f.key, 'ALL')}
-                className="hover:opacity-75 transition cursor-pointer ml-1"
-              >
+      {/* Active Filter Chips */}
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs pt-1">
+          <span className="text-muted-foreground text-[11px]">{totalResults} matched:</span>
+          
+          {filters.status !== 'ALL' && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-muted/60 text-foreground border border-border/60 text-[11px]">
+              <span>Status: {filters.status}</span>
+              <button onClick={() => onFilterChange('status', 'ALL')} className="ml-1.5 text-muted-foreground hover:text-foreground">
                 <X className="w-3 h-3" />
               </button>
             </span>
-          ))}
+          )}
+
+          {filters.depot !== 'ALL' && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-muted/60 text-foreground border border-border/60 text-[11px]">
+              <span>Depot: {filters.depot}</span>
+              <button onClick={() => onFilterChange('depot', 'ALL')} className="ml-1.5 text-muted-foreground hover:text-foreground">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
+          {filters.fuelType !== 'ALL' && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-muted/60 text-foreground border border-border/60 text-[11px]">
+              <span>Fuel: {filters.fuelType}</span>
+              <button onClick={() => onFilterChange('fuelType', 'ALL')} className="ml-1.5 text-muted-foreground hover:text-foreground">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+
           <button
             onClick={onResetFilters}
-            className="text-[11px] text-muted-foreground hover:text-foreground underline transition cursor-pointer ml-1"
+            className="text-primary hover:underline text-[11px] font-bold ml-1 cursor-pointer"
           >
             Clear all
           </button>
-          <span className="text-muted-foreground text-[11px] ml-auto">
-            Showing {totalResults} matches
-          </span>
         </div>
       )}
 
