@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle,
-  Users,
-  Compass,
   CheckCircle2,
-  XCircle,
   Clock,
-  ArrowRight,
   Radio,
   MapPin,
   Bus,
@@ -71,17 +67,17 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
   return (
     <div className="space-y-4 font-sans">
-      {/* SECTION 1: Overloaded Driver Flow — 1-Tap Passenger Overflow Reporting */}
-      <div className="bg-card border border-border p-4 rounded shadow-sm">
+      {/* SECTION 1: Overloaded Driver Flow */}
+      <div className="bg-card border border-border p-4 rounded-md">
         <div className="flex items-center justify-between pb-2 mb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-foreground" />
             <h3 className="font-semibold text-xs text-foreground uppercase tracking-wider font-mono">
-              1-Tap Overflow Reporting (Overloaded Bus)
+              Overflow Reporting (Overloaded Vehicle)
             </h3>
           </div>
-          <span className="px-2 py-0.5 bg-secondary text-foreground font-mono text-[10px] font-semibold rounded border border-border">
-            Issue #7 Core
+          <span className="px-2 py-0.5 bg-secondary text-foreground font-mono text-[10px] font-medium rounded-sm border border-border">
+            Live Broadcast
           </span>
         </div>
 
@@ -89,9 +85,9 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
           <div className="space-y-3">
             <div>
               <label className="text-[11px] font-mono text-muted-foreground block mb-1">
-                CURRENT OVERFLOW LOCATION:
+                LOCATION:
               </label>
-              <div className="p-2 bg-secondary/50 rounded border border-border text-xs font-mono text-foreground font-semibold flex items-center gap-1.5">
+              <div className="p-2.5 bg-secondary/30 rounded-sm border border-border text-xs font-mono text-foreground font-medium flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-foreground" />
                 <span>{currentStopName}</span>
               </div>
@@ -99,17 +95,17 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
             <div>
               <label className="text-[11px] font-mono text-muted-foreground block mb-1">
-                STRANDED / UNABLE TO BOARD PASSENGERS:
+                STRANDED PASSENGERS:
               </label>
               <div className="grid grid-cols-4 gap-2 font-mono text-xs">
                 {[5, 10, 15, 20].map((count) => (
                   <button
                     key={count}
                     onClick={() => setSelectedPaxCount(count)}
-                    className={`py-2 rounded text-center transition-all cursor-pointer border font-bold ${
+                    className={`py-2 rounded-sm text-center transition-all cursor-pointer border font-semibold active:scale-[0.98] ${
                       selectedPaxCount === count
                         ? 'bg-foreground text-background border-foreground'
-                        : 'bg-secondary/40 hover:bg-secondary text-foreground border-border'
+                        : 'bg-secondary/30 hover:bg-secondary text-foreground border-border'
                     }`}
                   >
                     +{count} Pax
@@ -120,24 +116,24 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
             <button
               onClick={handleBroadcastOverflow}
-              className="w-full py-2.5 bg-foreground text-background font-mono text-xs font-bold uppercase rounded hover:opacity-90 transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm"
+              className="w-full py-2.5 bg-foreground text-background font-mono text-xs font-medium uppercase rounded-sm cursor-pointer active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               <Radio className="w-4 h-4" />
-              <span>Broadcast Emergency Overflow (+{selectedPaxCount} Pax)</span>
+              <span>Broadcast Overflow (+{selectedPaxCount} Pax)</span>
             </button>
           </div>
         ) : (
           <div className="space-y-3">
             {/* Live Overflow Status Tracking Stream */}
-            <div className="p-3 bg-secondary/60 rounded border border-border font-mono text-xs space-y-2">
+            <div className="p-3 bg-secondary/30 rounded-sm border border-border font-mono text-xs space-y-2">
               <div className="flex justify-between items-center pb-2 border-b border-border">
-                <span className="text-muted-foreground text-[10px] uppercase">Incident Ticket #OVF-4091</span>
-                <span className="px-2 py-0.5 bg-foreground text-background font-bold text-[9px] rounded">
+                <span className="text-muted-foreground text-[10px] uppercase">Incident #OVF-4091</span>
+                <span className="px-2 py-0.5 bg-foreground text-background font-medium text-[9px] rounded-sm">
                   {overflowStatus.replace(/_/g, ' ')}
                 </span>
               </div>
 
-              <div className="space-y-1 text-xs">
+              <div className="space-y-1.5 text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-foreground" />
                   <span>Request Dispatched to Central Engine</span>
@@ -148,7 +144,7 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
                   ) : (
                     <div className="w-3.5 h-3.5 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
                   )}
-                  <span>Candidate Assisting Buses Ranked</span>
+                  <span>Candidate Assisting Vehicles Ranked</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {overflowStatus === 'DRIVER_ASSIGNED' || overflowStatus === 'ASSISTING_EN_ROUTE' ? (
@@ -156,21 +152,21 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
                   ) : (
                     <span className="w-3.5 h-3.5 rounded-full border border-muted-foreground inline-block" />
                   )}
-                  <span>Assisting Driver Confirmed (Bus TN-01-N-9028)</span>
+                  <span>Assisting Vehicle Confirmed (TN-01-N-9028)</span>
                 </div>
               </div>
 
               {overflowStatus === 'ASSISTING_EN_ROUTE' && (
-                <div className="p-2 bg-card rounded border border-border text-xs mt-2 space-y-1">
-                  <div className="flex items-center justify-between font-bold text-foreground">
+                <div className="p-2.5 bg-card rounded-sm border border-border text-xs mt-2 space-y-1">
+                  <div className="flex items-center justify-between font-semibold text-foreground">
                     <span className="flex items-center gap-1.5">
                       <Bus className="w-3.5 h-3.5" />
-                      <span>Assisting Bus TN-01-N-9028 (S. Murugan)</span>
+                      <span>Bus TN-01-N-9028 (S. Murugan)</span>
                     </span>
                     <span>ETA: {assistingEta} mins</span>
                   </div>
                   <div className="text-[11px] text-muted-foreground">
-                    Detour distance: +2.1 km • Advise waiting passengers to remain at shelter.
+                    Detour distance: +2.1 km &bull; Passengers notified.
                   </div>
                 </div>
               )}
@@ -178,16 +174,16 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
             <button
               onClick={() => setOverflowStatus('IDLE')}
-              className="w-full py-1.5 bg-secondary hover:bg-accent text-foreground font-mono text-xs font-semibold rounded border border-border cursor-pointer transition-colors"
+              className="w-full py-1.5 bg-secondary hover:bg-accent text-foreground font-mono text-xs font-medium rounded-sm border border-border cursor-pointer transition-colors active:scale-[0.98]"
             >
-              Reset / Log Another Overflow Incident
+              Reset / Log Another Incident
             </button>
           </div>
         )}
       </div>
 
-      {/* SECTION 2: Assisting Driver Detour Rerouting Console (Nearby Driver Flow) */}
-      <div className="bg-card border border-border p-4 rounded shadow-sm">
+      {/* SECTION 2: Assisting Driver Detour Rerouting Console */}
+      <div className="bg-card border border-border p-4 rounded-md">
         <div className="flex items-center justify-between pb-2 mb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <CornerDownRight className="w-4 h-4 text-foreground" />
@@ -200,19 +196,19 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
         {/* Incoming Detour Dispatch Alert */}
         {incomingAlertVisible && detourStage === 'NONE' ? (
-          <div className="p-3 bg-secondary/80 border border-foreground/30 rounded text-xs font-mono space-y-3">
+          <div className="p-3 bg-secondary/40 border border-border rounded-sm text-xs font-mono space-y-3">
             <div className="flex justify-between items-center">
-              <span className="font-bold text-foreground flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-foreground animate-pulse" />
+              <span className="font-semibold text-foreground flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-foreground" />
                 OVERFLOW ASSISTANCE REQUEST
               </span>
-              <span className="px-2 py-0.5 bg-foreground text-background font-bold text-[10px] rounded flex items-center gap-1">
+              <span className="px-2 py-0.5 bg-foreground text-background font-medium text-[10px] rounded-sm flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 <span>{countdownSeconds}s</span>
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] bg-card p-2 rounded border border-border">
+            <div className="grid grid-cols-2 gap-2 text-[11px] bg-card p-2 rounded-sm border border-border">
               <div>
                 <span className="text-muted-foreground block">Detour Stop</span>
                 <strong className="text-foreground">Saidapet West (Stop #14)</strong>
@@ -234,20 +230,20 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
             <div className="flex gap-2">
               <button
                 onClick={handleAcceptDetour}
-                className="flex-1 py-2 bg-foreground text-background font-bold rounded text-xs uppercase cursor-pointer hover:opacity-90 transition-opacity"
+                className="flex-1 py-2 bg-foreground text-background font-medium rounded-sm text-xs uppercase cursor-pointer active:scale-[0.98] transition-all"
               >
                 Accept Detour & Assist
               </button>
               <button
                 onClick={handleDeclineDetour}
-                className="px-3 py-2 bg-secondary hover:bg-accent text-foreground font-semibold rounded text-xs border border-border cursor-pointer transition-colors"
+                className="px-3 py-2 bg-secondary hover:bg-accent text-foreground font-medium rounded-sm text-xs border border-border cursor-pointer active:scale-[0.98] transition-colors"
               >
                 Decline
               </button>
             </div>
           </div>
         ) : detourStage === 'NONE' ? (
-          <div className="p-3 bg-secondary/40 rounded border border-border text-center space-y-2">
+          <div className="p-3 bg-secondary/20 rounded-sm border border-border text-center space-y-2">
             <p className="text-xs text-muted-foreground font-mono">
               No active detour rerouting dispatches assigned to your bus.
             </p>
@@ -256,7 +252,7 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
                 setIncomingAlertVisible(true);
                 setCountdownSeconds(45);
               }}
-              className="px-3 py-1.5 bg-secondary hover:bg-accent text-foreground text-xs font-mono font-medium rounded border border-border cursor-pointer"
+              className="px-3 py-1.5 bg-secondary hover:bg-accent text-foreground text-xs font-mono font-medium rounded-sm border border-border cursor-pointer active:scale-[0.98]"
             >
               Simulate Incoming Assistance Alert
             </button>
@@ -264,10 +260,10 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
         ) : (
           /* Active Detour Progression Lifecycle */
           <div className="space-y-3 font-mono text-xs">
-            <div className="p-3 bg-secondary/60 rounded border border-border space-y-2">
-              <div className="flex justify-between items-center font-bold text-foreground">
-                <span>DYNAMIC DETOUR NAVIGATION ACTIVE</span>
-                <span className="text-[10px] px-2 py-0.5 bg-foreground text-background rounded">
+            <div className="p-3 bg-secondary/30 rounded-sm border border-border space-y-2">
+              <div className="flex justify-between items-center font-semibold text-foreground">
+                <span>DYNAMIC DETOUR NAVIGATION</span>
+                <span className="text-[10px] px-2 py-0.5 bg-foreground text-background rounded-sm">
                   {detourStage.replace(/_/g, ' ')}
                 </span>
               </div>
@@ -275,11 +271,11 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
               {detourStage === 'EN_ROUTE_TO_OVERFLOW' && (
                 <div className="space-y-2 pt-1">
                   <div className="text-muted-foreground text-xs">
-                    Navigating to Saidapet West Stop (+2.4 km detour polyline active on map).
+                    Navigating to Saidapet West Stop (+2.4 km detour polyline active).
                   </div>
                   <button
                     onClick={() => setDetourStage('PICKUP_CONFIRMED')}
-                    className="w-full py-2 bg-foreground text-background font-bold uppercase rounded cursor-pointer"
+                    className="w-full py-2 bg-foreground text-background font-medium uppercase rounded-sm cursor-pointer active:scale-[0.98]"
                   >
                     Confirm Arrival & Board Overflow Pax (+12 Pax)
                   </button>
@@ -288,12 +284,13 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
               {detourStage === 'PICKUP_CONFIRMED' && (
                 <div className="space-y-2 pt-1">
-                  <div className="text-foreground text-xs font-semibold">
-                    ✓ 12 stranded passengers boarded. Bus occupancy updated to 94%.
+                  <div className="text-foreground text-xs font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>12 passengers boarded. Bus occupancy updated to 94%.</span>
                   </div>
                   <button
                     onClick={() => setDetourStage('REJOINING_ROUTE')}
-                    className="w-full py-2 bg-foreground text-background font-bold uppercase rounded cursor-pointer"
+                    className="w-full py-2 bg-foreground text-background font-medium uppercase rounded-sm cursor-pointer active:scale-[0.98]"
                   >
                     Navigate to Optimal Route Rejoin Waypoint (Guindy)
                   </button>
@@ -303,11 +300,11 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
               {detourStage === 'REJOINING_ROUTE' && (
                 <div className="space-y-2 pt-1">
                   <div className="text-muted-foreground text-xs">
-                    Approaching Guindy Junction rejoin stop. Resume original scheduled timetable.
+                    Approaching Guindy Junction rejoin stop. Resume original schedule.
                   </div>
                   <button
                     onClick={() => setDetourStage('RESUMED')}
-                    className="w-full py-2 bg-foreground text-background font-bold uppercase rounded cursor-pointer"
+                    className="w-full py-2 bg-foreground text-background font-medium uppercase rounded-sm cursor-pointer active:scale-[0.98]"
                   >
                     Confirm Route Rejoin & Resume Timetable
                   </button>
@@ -316,13 +313,13 @@ export const Module4PassengerOverflow: React.FC<Module4PassengerOverflowProps> =
 
               {detourStage === 'RESUMED' && (
                 <div className="space-y-2 pt-1">
-                  <div className="text-foreground text-xs font-bold flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
+                  <div className="text-foreground text-xs font-semibold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-foreground" />
                     <span>Detour Completed & Closed. Normal Timetable Active.</span>
                   </div>
                   <button
                     onClick={() => setDetourStage('NONE')}
-                    className="w-full py-1.5 bg-secondary hover:bg-accent text-foreground rounded border border-border cursor-pointer text-xs"
+                    className="w-full py-1.5 bg-secondary hover:bg-accent text-foreground rounded-sm border border-border cursor-pointer text-xs active:scale-[0.98]"
                   >
                     Conclude Detour Flow
                   </button>

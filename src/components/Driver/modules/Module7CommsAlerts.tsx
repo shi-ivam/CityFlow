@@ -6,9 +6,7 @@ import {
   AlertTriangle,
   Send,
   CheckCircle2,
-  Clock,
   Shield,
-  MessageSquare,
   Flame,
   Truck,
   Stethoscope,
@@ -69,9 +67,9 @@ interface QuickCode {
 const QUICK_CODES: QuickCode[] = [
   { code: '10-33', label: 'Emergency / Collision Incident', icon: Flame, severity: 'high' },
   { code: '10-50', label: 'Heavy Traffic Gridlock', icon: Truck, severity: 'medium' },
-  { code: '10-70', label: 'Route Blocked / Roadwork Obstruction', icon: AlertTriangle, severity: 'medium' },
+  { code: '10-70', label: 'Route Blocked / Obstruction', icon: AlertTriangle, severity: 'medium' },
   { code: '10-80', label: 'Mechanical / Vehicle Fault', icon: Shield, severity: 'medium' },
-  { code: '10-99', label: 'Passenger Medical Attention Needed', icon: Stethoscope, severity: 'high' },
+  { code: '10-99', label: 'Passenger Medical Assistance', icon: Stethoscope, severity: 'high' },
 ];
 
 export const Module7CommsAlerts: React.FC = () => {
@@ -86,7 +84,7 @@ export const Module7CommsAlerts: React.FC = () => {
 
   const handleBroadcastCode = (qc: QuickCode) => {
     const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    setLastBroadcast(`Broadcast [${qc.code}: ${qc.label}] transmitted to Central Dispatch at ${timeStr} IST. Status: ACKNOWLEDGED.`);
+    setLastBroadcast(`Broadcast [${qc.code}: ${qc.label}] sent to Central Dispatch at ${timeStr} IST. Status: ACKNOWLEDGED.`);
   };
 
   const handleTestChime = () => {
@@ -98,23 +96,22 @@ export const Module7CommsAlerts: React.FC = () => {
 
   return (
     <div className="space-y-4 font-sans">
-      {/* 1. Direct Dispatcher Quick-Comms Broadcast Matrix (1-Touch 10-Codes) */}
-      <div className="bg-card border border-border p-4 rounded shadow-sm font-mono text-xs">
+      {/* 1. Direct Dispatcher Quick-Comms Broadcast Matrix */}
+      <div className="bg-card border border-border p-4 rounded-md font-mono text-xs">
         <div className="flex items-center justify-between pb-2 mb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-foreground" />
             <h3 className="font-semibold text-xs text-foreground uppercase tracking-wider">
-              1-Touch Dispatcher Quick-Comms (10-Codes)
+              Dispatcher Quick-Comms (10-Codes)
             </h3>
           </div>
-          <span className="px-2 py-0.5 bg-secondary text-foreground font-semibold rounded text-[10px] border border-border">
+          <span className="px-2 py-0.5 bg-secondary text-foreground font-medium rounded-sm text-[10px] border border-border">
             Instant Broadcast
           </span>
         </div>
 
-        <p className="text-muted-foreground text-xs leading-relaxed mb-3">
-          Tap any standard transit code to instantly broadcast an urgent situation code to Central
-          Operations Desk:
+        <p className="text-muted-foreground text-xs leading-relaxed mb-3 font-sans">
+          One-touch dispatch standard situation codes to Central Operations Desk:
         </p>
 
         <div className="space-y-1.5 mb-3">
@@ -125,10 +122,10 @@ export const Module7CommsAlerts: React.FC = () => {
               <button
                 key={qc.code}
                 onClick={() => handleBroadcastCode(qc)}
-                className={`w-full p-2.5 rounded border transition-all text-left flex items-center justify-between cursor-pointer ${
+                className={`w-full p-2.5 rounded-sm border transition-all text-left flex items-center justify-between cursor-pointer active:scale-[0.99] ${
                   isHigh
-                    ? 'bg-secondary/40 hover:bg-destructive/10 border-border hover:border-destructive/40 text-foreground'
-                    : 'bg-secondary/30 hover:bg-secondary/70 border-border text-foreground'
+                    ? 'bg-secondary/30 hover:bg-secondary/60 border-border text-foreground'
+                    : 'bg-secondary/20 hover:bg-secondary/50 border-border text-foreground'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -146,7 +143,7 @@ export const Module7CommsAlerts: React.FC = () => {
 
         {/* Live Broadcast Feedback */}
         {lastBroadcast && (
-          <div className="p-2.5 bg-secondary/80 rounded border border-foreground/30 text-[11px] text-foreground flex items-center gap-2">
+          <div className="p-2.5 bg-secondary/40 rounded-sm border border-border text-[11px] text-foreground flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
             <span>{lastBroadcast}</span>
           </div>
@@ -154,7 +151,7 @@ export const Module7CommsAlerts: React.FC = () => {
       </div>
 
       {/* 2. Real-Time Operational Notification Feed */}
-      <div className="bg-card border border-border p-4 rounded shadow-sm font-sans">
+      <div className="bg-card border border-border p-4 rounded-md font-sans">
         <div className="flex items-center justify-between pb-2 mb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-foreground" />
@@ -179,15 +176,15 @@ export const Module7CommsAlerts: React.FC = () => {
             return (
               <div
                 key={n.id}
-                className={`p-3 rounded border text-xs transition-colors ${
+                className={`p-3 rounded-sm border text-xs transition-colors ${
                   n.unread
-                    ? 'bg-secondary/60 border-foreground/30 shadow-xs'
-                    : 'bg-secondary/20 border-border opacity-80'
+                    ? 'bg-secondary/40 border-border'
+                    : 'bg-secondary/15 border-border opacity-75'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1 font-mono">
                   <span
-                    className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase border ${
+                    className={`px-1.5 py-0.5 text-[9px] font-semibold rounded-sm uppercase border ${
                       isCrit
                         ? 'bg-destructive text-destructive-foreground border-destructive'
                         : isSafety
@@ -200,7 +197,7 @@ export const Module7CommsAlerts: React.FC = () => {
                   <span className="text-[10px] text-muted-foreground">{n.timeAgo}</span>
                 </div>
 
-                <div className="font-bold text-foreground mt-1">{n.title}</div>
+                <div className="font-semibold text-foreground mt-1">{n.title}</div>
                 <p className="text-muted-foreground text-xs leading-relaxed mt-0.5">{n.body}</p>
               </div>
             );
@@ -209,7 +206,7 @@ export const Module7CommsAlerts: React.FC = () => {
       </div>
 
       {/* 3. Audio & Chime Alert Settings */}
-      <div className="bg-card border border-border p-4 rounded shadow-sm font-mono text-xs">
+      <div className="bg-card border border-border p-4 rounded-md font-mono text-xs">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">
           <div className="flex items-center gap-2">
             <Volume2 className="w-4 h-4 text-foreground" />
@@ -221,21 +218,21 @@ export const Module7CommsAlerts: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <div className="space-y-0.5">
-            <span className="text-foreground font-semibold block">Critical Dispatch Audio Chimes</span>
-            <span className="text-[10px] text-muted-foreground">Plays high-priority pulse on emergency reroute & rest alarm</span>
+          <div className="space-y-0.5 font-sans">
+            <span className="text-foreground font-medium block text-xs">Critical Dispatch Audio Signals</span>
+            <span className="text-[10px] text-muted-foreground font-mono">High-priority pulse on emergency detour and rest alert</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 font-mono">
             <button
               onClick={handleTestChime}
-              className="px-2.5 py-1 bg-secondary hover:bg-accent text-foreground rounded border border-border text-[11px] cursor-pointer"
+              className="px-2.5 py-1 bg-secondary hover:bg-accent text-foreground rounded-sm border border-border text-[11px] cursor-pointer active:scale-[0.98]"
             >
-              {chimePlaying ? '♪ Chime Playing...' : 'Test Chime'}
+              {chimePlaying ? 'Playing Signal...' : 'Test Signal'}
             </button>
             <button
               onClick={() => setAudioEnabled(!audioEnabled)}
-              className={`p-1.5 rounded border transition-colors cursor-pointer ${
+              className={`p-1.5 rounded-sm border transition-colors cursor-pointer active:scale-[0.98] ${
                 audioEnabled
                   ? 'bg-foreground text-background border-foreground'
                   : 'bg-secondary text-muted-foreground border-border'
