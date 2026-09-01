@@ -55,14 +55,15 @@ export default function AdminSidebar({
     {
       name: 'OPERATIONS',
       items: [
-        { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+        { label: 'Module Hub', path: '/admin', icon: LayoutDashboard },
         { label: 'Control Room', path: '/admin/management', icon: Compass },
         { label: 'Live Network', path: '/admin/operations', icon: Radio },
       ]
     },
     {
-      name: 'PLANNING',
+      name: 'PLANNING & ROUTES',
       items: [
+        { label: 'Routing System', path: '/admin/routes', icon: Navigation },
         { label: 'Scheduling', path: '/admin/management/scheduling', icon: Calendar },
         { label: 'Smart Assignment', path: '/admin/management/smartassignment', icon: Sparkles },
         { label: 'Driver Rotation', path: '/admin/management/rotation', icon: RefreshCw },
@@ -70,10 +71,10 @@ export default function AdminSidebar({
       ]
     },
     {
-      name: 'FLEET',
+      name: 'FLEET & WORKFORCE',
       items: [
-        { label: 'Buses', path: '/admin/vehicles', icon: Bus },
-        { label: 'Drivers', path: '/admin/drivers', icon: Users },
+        { label: 'Vehicle Fleet', path: '/admin/vehicles', icon: Bus },
+        { label: 'Driver System', path: '/admin/drivers', icon: Users },
         { label: 'Maintenance', path: '/admin/vehicles/fleet/maintenance', icon: Wrench },
       ]
     },
@@ -102,11 +103,13 @@ export default function AdminSidebar({
   ];
 
   const checkIsActive = (itemPath) => {
+    if (itemPath === '/admin' && (path === '/admin' || path === '/admin/')) return true;
     if (itemPath === '/admin/management' && path === '/admin/management') return true;
-    if (itemPath === '/admin/dashboard' && (path === '/admin/dashboard' || path === '/admin' || path === '/admin/')) return true;
-    if (itemPath === '/admin/vehicles' && (path === '/admin/vehicles' || path.startsWith('/admin/vehicles/fleet') && !path.includes('/maintenance'))) return true;
+    if (itemPath === '/admin/routes' && path.startsWith('/admin/routes')) return true;
+    if (itemPath === '/admin/drivers' && path.startsWith('/admin/drivers')) return true;
+    if (itemPath === '/admin/vehicles' && (path === '/admin/vehicles' || (path.startsWith('/admin/vehicles') && !path.includes('/maintenance')))) return true;
     if (itemPath === '/admin/vehicles/fleet/maintenance' && path.includes('/maintenance')) return true;
-    if (itemPath !== '/admin/management' && path.startsWith(itemPath)) return true;
+    if (itemPath !== '/admin' && itemPath !== '/admin/management' && path.startsWith(itemPath)) return true;
     return false;
   };
 

@@ -80,7 +80,7 @@ export const DriverModuleMenu: React.FC<DriverModuleMenuProps> = ({
   onSelectModule,
 }) => {
   return (
-    <div className="bg-card border border-border rounded-md p-2 sm:p-2.5 select-none font-sans shrink-0">
+    <div className="bg-card border border-border rounded-xl p-2 sm:p-2.5 select-none font-sans shrink-0 shadow-xs">
       {/* Grid of Square Blocks */}
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {DRIVER_MODULES.map((mod) => {
@@ -91,26 +91,15 @@ export const DriverModuleMenu: React.FC<DriverModuleMenuProps> = ({
             <button
               key={mod.id}
               onClick={() => onSelectModule(mod.id)}
-              className={`aspect-square flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-1.5 rounded-sm transition-all cursor-pointer border select-none active:scale-[0.97] ${
+              className={`aspect-square flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-1.5 rounded-lg transition-all cursor-pointer border select-none active:scale-[0.97] ${
                 isActive
-                  ? 'bg-foreground text-background border-foreground font-semibold shadow-xs'
-                  : 'bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground border-border'
+                  ? 'bg-cf-primary text-white border-cf-primary font-semibold shadow-xs'
+                  : 'bg-muted/30 hover:bg-cf-sky/30 text-muted-foreground hover:text-foreground border-border'
               }`}
               title={mod.fullTitle}
             >
-              {/* Icon */}
-              <Icon
-                className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 transition-transform ${
-                  isActive ? 'text-background' : 'text-foreground'
-                }`}
-              />
-
-              {/* Short Label */}
-              <span
-                className={`font-mono text-[9px] sm:text-[10px] font-medium truncate max-w-full leading-none tracking-tight ${
-                  isActive ? 'text-background' : 'text-muted-foreground'
-                }`}
-              >
+              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isActive ? 'text-white' : 'text-cf-primary'}`} />
+              <span className="text-[10px] sm:text-xs font-mono tracking-tight leading-none text-center">
                 {mod.shortTitle}
               </span>
             </button>
