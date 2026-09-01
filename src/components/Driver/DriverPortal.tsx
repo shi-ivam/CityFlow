@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   fetchDrivers,
   fetchDriverAssignedRoute,
@@ -8,17 +8,23 @@ import {
   fetchShiftChangeRequests,
   DriverSummary,
   DriverAssignedRouteResponse,
+  DriverTelemetry,
   ShiftDurationResponse,
   FatigueResponse,
   NextShiftAllocationResponse,
   ShiftChangeRequest,
 } from '../../services/api';
+import { interpolateRoutePosition, getDistanceMeters } from '../../utils/geoUtils';
 import { DriverNavbar } from './DriverNavbar';
 import { DriverRouteMap } from './DriverRouteMap';
-import { DriverShiftDuration } from './DriverShiftDuration';
-import { DriverFatigueCard } from './DriverFatigueCard';
-import { NextShiftAllocation } from './NextShiftAllocation';
-import { ShiftChangeHistory } from './ShiftChangeHistory';
+import { DriverModuleMenu, DriverModuleId } from './DriverModuleMenu';
+import { Module1ShiftDuty } from './modules/Module1ShiftDuty';
+import { Module2FatigueRotation } from './modules/Module2FatigueRotation';
+import { Module3ActiveTrip } from './modules/Module3ActiveTrip';
+import { Module4PassengerOverflow } from './modules/Module4PassengerOverflow';
+import { Module5DriverRelief } from './modules/Module5DriverRelief';
+import { Module6ReturnTransport } from './modules/Module6ReturnTransport';
+import { Module7CommsAlerts } from './modules/Module7CommsAlerts';
 import { ShiftChangeModal } from './ShiftChangeModal';
 import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
@@ -49,6 +55,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
 
   // Driver Telemetry States
   const [assignedRouteData, setAssignedRouteData] = useState<DriverAssignedRouteResponse | null>(null);
+  const [liveTelemetry, setLiveTelemetry] = useState<DriverTelemetry | null>(null);
+  const lastTickRef = useRef<number>(Date.now());
   const [shiftData, setShiftData] = useState<ShiftDurationResponse | null>(null);
   const [fatigueData, setFatigueData] = useState<FatigueResponse | null>(null);
   const [nextShiftData, setNextShiftData] = useState<NextShiftAllocationResponse | null>(null);
@@ -56,6 +64,9 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
 
   // Shift Change Modal State
   const [isShiftModalOpen, setIsShiftModalOpen] = useState<boolean>(false);
+
+  // Active FEATURES.md Module on Right Sidebar
+  const [activeModule, setActiveModule] = useState<DriverModuleId>('module1');
 
   // 1. Fetch Drivers List on mount
   useEffect(() => {
@@ -88,6 +99,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
       ]);
 
       setAssignedRouteData(routeRes);
+      setLiveTelemetry(routeRes.telemetry);
       setShiftData(shiftRes);
       setFatigueData(fatigueRes);
       setNextShiftData(nextShiftRes);
@@ -105,6 +117,74 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
       loadDriverTelemetry(selectedDriverId);
     }
   }, [selectedDriverId, loadDriverTelemetry]);
+
+  // Real-Time Bus Telemetry Simulation Loop along assigned route
+  useEffect(() => {
+    if (!assignedRouteData || !assignedRouteData.route) return;
+    const route = assignedRouteData.route;
+    if (route.coordinates.length < 2) return;
+
+    lastTickRef.current = Date.now();
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const deltaSec = (now - lastTickRef.current) / 1000;
+      lastTickRef.current = now;
+
+      setLiveTelemetry((prev) => {
+        if (!prev) return prev;
+
+        const totalDistanceM = (route.totalDistanceKm || 15) * 1000;
+        const speedMeterPerSec = (prev.speedKmH * 1000) / 3600;
+        const distCovered = speedMeterPerSec * deltaSec * 3.5; // smooth visual speed scale
+        const progressDelta = distCovered / totalDistanceM;
+
+        let nextProgress = (prev.progressAlongRoute || 0) + progressDelta * (prev.direction || 1);
+        let nextDirection = prev.direction || 1;
+
+        if (nextProgress >= 1) {
+          nextProgress = 1;
+          nextDirection = -1;
+        } else if (nextProgress <= 0) {
+          nextProgress = 0;
+          nextDirection = 1;
+        }
+
+        const { coord, heading: forwardHeading } = interpolateRoutePosition(
+          route.coordinates,
+          nextProgress
+        );
+
+        const heading = nextDirection === -1 ? (forwardHeading + 180) % 360 : forwardHeading;
+
+        // Find closest stop
+        let closestStop = route.stops[0];
+        let minStopDist = Infinity;
+        route.stops.forEach((stop) => {
+          const dist = getDistanceMeters(coord, stop.coordinates);
+          if (dist < minStopDist) {
+            minStopDist = dist;
+            closestStop = stop;
+          }
+        });
+
+        const etaMins = Number(((minStopDist / ((prev.speedKmH * 1000) / 60))).toFixed(1));
+
+        return {
+          ...prev,
+          currentCoord: coord,
+          heading,
+          progressAlongRoute: nextProgress,
+          direction: nextDirection,
+          distanceToNextStopM: Math.round(minStopDist),
+          nextStopName: closestStop ? closestStop.name : prev.nextStopName,
+          nextStopEtaMinutes: etaMins > 0 ? etaMins : 0.5,
+        };
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [assignedRouteData?.route?.id]);
 
   const handleRequestSubmitted = (newRequest: ShiftChangeRequest) => {
     setShiftRequests((prev) => [newRequest, ...prev]);
@@ -159,7 +239,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
               {assignedRouteData && (
                 <DriverRouteMap
                   route={assignedRouteData.route}
-                  telemetry={assignedRouteData.telemetry}
+                  telemetry={liveTelemetry || assignedRouteData.telemetry}
                   theme={theme}
                   maptilerKey={maptilerKey}
                 />
@@ -167,22 +247,60 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
             </main>
 
             {/* Right Telemetry & Shift Deck (42%) */}
-            <aside className="w-full lg:w-[42%] xl:w-[40%] h-[52%] lg:h-full overflow-y-auto p-4 space-y-4 bg-background">
-              {/* 1. Shift Duration Monitor */}
-              {shiftData && <DriverShiftDuration initialShift={shiftData} />}
-
-              {/* 2. Fatigue Level Telemetry */}
-              {fatigueData && <DriverFatigueCard fatigue={fatigueData} />}
-
-              {/* 3. Next Shift Allocation */}
-              {nextShiftData && <NextShiftAllocation nextShift={nextShiftData} />}
-
-              {/* 4. Shift Change Request History */}
-              <ShiftChangeHistory
-                requests={shiftRequests}
-                onRefresh={handleRefresh}
-                onRequestNew={() => setIsShiftModalOpen(true)}
+            <aside className="w-full lg:w-[42%] xl:w-[40%] h-[52%] lg:h-full overflow-y-auto p-3 sm:p-4 space-y-4 bg-background">
+              {/* Menu with square blocks corresponding to FEATURES.md Todos */}
+              <DriverModuleMenu
+                activeModule={activeModule}
+                onSelectModule={setActiveModule}
               />
+
+              {/* Dynamic Module Content based on selected square block */}
+              {activeModule === 'module1' && (
+                <Module1ShiftDuty
+                  driverProfile={assignedRouteData?.driver || null}
+                  shiftData={shiftData}
+                  shiftRequests={shiftRequests}
+                  onRefresh={handleRefresh}
+                  onRequestShiftChange={() => setIsShiftModalOpen(true)}
+                />
+              )}
+
+              {activeModule === 'module2' && (
+                <Module2FatigueRotation
+                  fatigueData={fatigueData}
+                  nextShiftData={nextShiftData}
+                />
+              )}
+
+              {activeModule === 'module3' && (
+                <Module3ActiveTrip
+                  assignedRouteData={assignedRouteData}
+                  telemetry={liveTelemetry || assignedRouteData?.telemetry || null}
+                />
+              )}
+
+              {activeModule === 'module4' && (
+                <Module4PassengerOverflow
+                  currentStopName={liveTelemetry?.nextStopName || 'Saidapet Metro / Bus Stop'}
+                />
+              )}
+
+              {activeModule === 'module5' && (
+                <Module5DriverRelief
+                  driverName={assignedRouteData?.driver?.name}
+                  driverId={assignedRouteData?.driver?.driverId}
+                />
+              )}
+
+              {activeModule === 'module6' && (
+                <Module6ReturnTransport
+                  homeDepot={`${assignedRouteData?.driver?.depot || 'Central'} Depot (Chennai)`}
+                />
+              )}
+
+              {activeModule === 'module7' && (
+                <Module7CommsAlerts />
+              )}
             </aside>
           </div>
         )}

@@ -16,10 +16,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-570",
     "code": "570",
-    "name": "CMBT ⇄ Siruseri SIPCOT",
+    "name": "CMBT \u21c4 Siruseri SIPCOT",
     "origin": "CMBT Koyambedu",
     "destination": "Siruseri IT Park",
-    "via": "100ft Rd • Vadapalani • Guindy • Velachery • OMR Tidel",
+    "via": "100ft Rd \u2022 Vadapalani \u2022 Guindy \u2022 Velachery \u2022 OMR Tidel",
     "category": "EXPRESS",
     "frequencyMinutes": 6,
     "totalDistanceKm": 34.8,
@@ -30,8 +30,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "CMBT Koyambedu",
         "code": "CMBT",
         "coordinates": [
-          80.207,
-          13.069
+          80.206966,
+          13.068946
         ],
         "isHub": true
       },
@@ -40,8 +40,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Vadapalani Junction",
         "code": "VDPL",
         "coordinates": [
-          80.2122,
-          13.0505
+          80.212192,
+          13.050501
         ]
       },
       {
@@ -49,8 +49,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Ashok Pillar",
         "code": "APLR",
         "coordinates": [
-          80.2112,
-          13.0335
+          80.211218,
+          13.033589
         ]
       },
       {
@@ -58,8 +58,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Kathipara / Guindy",
         "code": "GNDY",
         "coordinates": [
-          80.2057,
-          13.0067
+          80.205097,
+          13.006618
         ],
         "isHub": true
       },
@@ -68,8 +68,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Velachery Vijayanagar",
         "code": "VLCH",
         "coordinates": [
-          80.223,
-          12.975
+          80.223015,
+          12.974871
         ]
       },
       {
@@ -77,8 +77,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "SRP Tools / Tidel Park",
         "code": "TDEL",
         "coordinates": [
-          80.2476,
-          12.9897
+          80.247069,
+          12.991759
         ],
         "isHub": true
       },
@@ -87,8 +87,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Perungudi Toll",
         "code": "PGDI",
         "coordinates": [
-          80.243,
-          12.965
+          80.242992,
+          12.964955
         ]
       },
       {
@@ -96,8 +96,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Thoraipakkam",
         "code": "TPKM",
         "coordinates": [
-          80.2395,
-          12.946
+          80.239479,
+          12.946008
         ]
       },
       {
@@ -105,8 +105,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Sholinganallur Junction",
         "code": "SHOL",
         "coordinates": [
-          80.228,
-          12.898
+          80.2279,
+          12.898007
         ]
       },
       {
@@ -114,8 +114,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Siruseri SIPCOT Hub",
         "code": "SRSR",
         "coordinates": [
-          80.2177,
-          12.8256
+          80.217698,
+          12.825919
         ],
         "isHub": true
       }
@@ -4934,10 +4934,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-29c",
     "code": "29C",
-    "name": "Perambur ⇄ Besant Nagar",
+    "name": "Perambur \u21c4 Besant Nagar",
     "origin": "Perambur Loco Works",
     "destination": "Besant Nagar Beach",
-    "via": "Chetpet • Gemini Flyover • Mylapore • Adyar",
+    "via": "Chetpet \u2022 Gemini Flyover \u2022 Mylapore \u2022 Adyar",
     "category": "TRUNK",
     "frequencyMinutes": 8,
     "totalDistanceKm": 18.2,
@@ -4948,8 +4948,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Perambur Bus Stand",
         "code": "PRMB",
         "coordinates": [
-          80.238,
-          13.111
+          80.238007,
+          13.111049
         ],
         "isHub": true
       },
@@ -4958,8 +4958,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Otteri",
         "code": "OTRI",
         "coordinates": [
-          80.248,
-          13.097
+          80.248029,
+          13.096891
         ]
       },
       {
@@ -4967,8 +4967,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Chetpet Signal",
         "code": "CHET",
         "coordinates": [
-          80.239,
-          13.072
+          80.238737,
+          13.072043
         ]
       },
       {
@@ -4976,8 +4976,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Gemini / Anna Flyover",
         "code": "GMNI",
         "coordinates": [
-          80.251,
-          13.052
+          80.251011,
+          13.052024
         ]
       },
       {
@@ -4985,8 +4985,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Mylapore Tank",
         "code": "MYLP",
         "coordinates": [
-          80.268,
-          13.033
+          80.267718,
+          13.033061
         ]
       },
       {
@@ -4994,8 +4994,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Mandaveli Junction",
         "code": "MNDV",
         "coordinates": [
-          80.264,
-          13.021
+          80.263923,
+          13.021486
         ]
       },
       {
@@ -5003,8 +5003,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Adyar Bus Depot",
         "code": "ADYR",
         "coordinates": [
-          80.257,
-          13.0064
+          80.256997,
+          13.006504
         ],
         "isHub": true
       },
@@ -5013,8 +5013,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Besant Nagar Elliot Beach",
         "code": "BSNT",
         "coordinates": [
-          80.2685,
-          12.9995
+          80.268496,
+          12.999514
         ],
         "isHub": true
       }
@@ -8213,10 +8213,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-21g",
     "code": "21G",
-    "name": "Broadway ⇄ Tambaram Express",
+    "name": "Broadway \u21c4 Tambaram Express",
     "origin": "Broadway Terminus",
     "destination": "Tambaram Railway Station",
-    "via": "Chennai Central • Anna Salai • Guindy • Airport",
+    "via": "Chennai Central \u2022 Anna Salai \u2022 Guindy \u2022 Airport",
     "category": "EXPRESS",
     "frequencyMinutes": 5,
     "totalDistanceKm": 28.6,
@@ -8227,8 +8227,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Broadway Terminus",
         "code": "BWD",
         "coordinates": [
-          80.2885,
-          13.0906
+          80.288637,
+          13.090577
         ],
         "isHub": true
       },
@@ -8237,8 +8237,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Chennai Central (MAS)",
         "code": "CENT",
         "coordinates": [
-          80.2757,
-          13.0827
+          80.276053,
+          13.082738
         ],
         "isHub": true
       },
@@ -8247,8 +8247,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "LIC / Anna Salai",
         "code": "LICC",
         "coordinates": [
-          80.265,
-          13.063
+          80.26499,
+          13.063006
         ]
       },
       {
@@ -8256,8 +8256,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "DMS Metro Station",
         "code": "DMSM",
         "coordinates": [
-          80.2465,
-          13.045
+          80.246487,
+          13.044917
         ]
       },
       {
@@ -8265,8 +8265,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Nandanam Signal",
         "code": "NDNM",
         "coordinates": [
-          80.237,
-          13.03
+          80.237262,
+          13.029742
         ]
       },
       {
@@ -8274,8 +8274,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Saidapet Metro",
         "code": "SDPT",
         "coordinates": [
-          80.222,
-          13.02
+          80.221734,
+          13.019976
         ]
       },
       {
@@ -8283,8 +8283,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Kathipara / Guindy",
         "code": "GNDY",
         "coordinates": [
-          80.2057,
-          13.0067
+          80.205097,
+          13.006618
         ],
         "isHub": true
       },
@@ -8293,8 +8293,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Chennai International Airport",
         "code": "MAA",
         "coordinates": [
-          80.17,
-          12.981
+          80.170826,
+          12.980551
         ]
       },
       {
@@ -8302,8 +8302,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Pallavaram",
         "code": "PLVM",
         "coordinates": [
-          80.15,
-          12.968
+          80.149933,
+          12.967845
         ]
       },
       {
@@ -8311,8 +8311,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Chromepet Grand Southern Trunk",
         "code": "CHRM",
         "coordinates": [
-          80.138,
-          12.951
+          80.137868,
+          12.95082
         ]
       },
       {
@@ -8320,8 +8320,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Tambaram Bus Terminus",
         "code": "TBM",
         "coordinates": [
-          80.12,
-          12.9249
+          80.12011,
+          12.924771
         ],
         "isHub": true
       }
@@ -12788,10 +12788,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-70v",
     "code": "70V",
-    "name": "CMBT ⇄ Tambaram (100 Ft Rd)",
+    "name": "CMBT \u21c4 Tambaram (100 Ft Rd)",
     "origin": "CMBT Koyambedu",
     "destination": "Tambaram Terminus",
-    "via": "Vadapalani • Ashok Nagar • Ekkattuthangal • Airport",
+    "via": "Vadapalani \u2022 Ashok Nagar \u2022 Ekkattuthangal \u2022 Airport",
     "category": "TRUNK",
     "frequencyMinutes": 10,
     "totalDistanceKm": 22.4,
@@ -12802,8 +12802,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "CMBT Koyambedu",
         "code": "CMBT",
         "coordinates": [
-          80.207,
-          13.069
+          80.206966,
+          13.068946
         ],
         "isHub": true
       },
@@ -12812,8 +12812,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Vadapalani Metro",
         "code": "VDPL",
         "coordinates": [
-          80.2122,
-          13.0505
+          80.212192,
+          13.050501
         ]
       },
       {
@@ -12821,8 +12821,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Ashok Nagar 100ft",
         "code": "ASHK",
         "coordinates": [
-          80.2112,
-          13.0335
+          80.211218,
+          13.033589
         ]
       },
       {
@@ -12830,7 +12830,7 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Ekkattuthangal",
         "code": "EKKT",
         "coordinates": [
-          80.2045,
+          80.204499,
           13.018
         ]
       },
@@ -12839,8 +12839,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Alandur Metro Hub",
         "code": "ALND",
         "coordinates": [
-          80.1915,
-          12.996
+          80.191504,
+          12.995623
         ]
       },
       {
@@ -12848,8 +12848,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Meenambakkam",
         "code": "MNBM",
         "coordinates": [
-          80.1765,
-          12.9865
+          80.176371,
+          12.986437
         ]
       },
       {
@@ -12857,8 +12857,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Tambaram Terminus",
         "code": "TBM",
         "coordinates": [
-          80.12,
-          12.9249
+          80.12011,
+          12.924771
         ],
         "isHub": true
       }
@@ -15033,10 +15033,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-27d",
     "code": "27D",
-    "name": "Villivakkam ⇄ Foreshore Estate",
+    "name": "Villivakkam \u21c4 Foreshore Estate",
     "origin": "Villivakkam Depot",
     "destination": "Foreshore Estate Beach",
-    "via": "Kilpauk • Egmore • Royapettah • Santhome",
+    "via": "Kilpauk \u2022 Egmore \u2022 Royapettah \u2022 Santhome",
     "category": "FEEDER",
     "frequencyMinutes": 12,
     "totalDistanceKm": 16.5,
@@ -15047,8 +15047,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Villivakkam Bus Stand",
         "code": "VLVK",
         "coordinates": [
-          80.208,
-          13.109
+          80.207995,
+          13.10899
         ],
         "isHub": true
       },
@@ -15057,8 +15057,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Kilpauk Medical College",
         "code": "KMC",
         "coordinates": [
-          80.242,
-          13.08
+          80.241921,
+          13.080002
         ]
       },
       {
@@ -15067,7 +15067,7 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "code": "EGMR",
         "coordinates": [
           80.261,
-          13.078
+          13.077599
         ],
         "isHub": true
       },
@@ -15076,8 +15076,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Royapettah Hospital",
         "code": "RYPT",
         "coordinates": [
-          80.262,
-          13.054
+          80.262002,
+          13.054019
         ]
       },
       {
@@ -15085,8 +15085,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Santhome Cathedral",
         "code": "SNTM",
         "coordinates": [
-          80.278,
-          13.033
+          80.278063,
+          13.033331
         ]
       },
       {
@@ -15094,8 +15094,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Foreshore Estate Terminus",
         "code": "FSHR",
         "coordinates": [
-          80.2824,
-          13.0236
+          80.278481,
+          13.024191
         ],
         "isHub": true
       }
@@ -17690,10 +17690,10 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
   {
     "id": "route-47a",
     "code": "47A",
-    "name": "ICF ⇄ Thiruvanmiyur",
+    "name": "ICF \u21c4 Thiruvanmiyur",
     "origin": "ICF Coach Factory",
     "destination": "Thiruvanmiyur Depot",
-    "via": "Anna Nagar • Loyola • T. Nagar • Saidapet",
+    "via": "Anna Nagar \u2022 Loyola \u2022 T. Nagar \u2022 Saidapet",
     "category": "TRUNK",
     "frequencyMinutes": 7,
     "totalDistanceKm": 19.8,
@@ -17704,8 +17704,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "ICF Bus Depot",
         "code": "ICFF",
         "coordinates": [
-          80.2016,
-          13.0886
+          80.201584,
+          13.088404
         ],
         "isHub": true
       },
@@ -17714,8 +17714,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Anna Nagar Roundtana",
         "code": "ANGR",
         "coordinates": [
-          80.215,
-          13.085
+          80.214995,
+          13.084803
         ]
       },
       {
@@ -17723,8 +17723,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Loyola College Signal",
         "code": "LYLA",
         "coordinates": [
-          80.235,
-          13.064
+          80.23511,
+          13.064058
         ]
       },
       {
@@ -17732,8 +17732,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "T. Nagar Terminus",
         "code": "TNG",
         "coordinates": [
-          80.2337,
-          13.0418
+          80.23373,
+          13.041939
         ],
         "isHub": true
       },
@@ -17742,8 +17742,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Saidapet Bazaar",
         "code": "SDPT",
         "coordinates": [
-          80.222,
-          13.02
+          80.221734,
+          13.019976
         ]
       },
       {
@@ -17751,8 +17751,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Kotturpuram",
         "code": "KTRP",
         "coordinates": [
-          80.244,
-          13.014
+          80.244684,
+          13.014144
         ]
       },
       {
@@ -17760,8 +17760,8 @@ export const CHENNAI_ROUTES: TransitRoute[] = [
         "name": "Thiruvanmiyur Depot",
         "code": "THRV",
         "coordinates": [
-          80.2592,
-          12.983
+          80.259367,
+          12.982987
         ],
         "isHub": true
       }

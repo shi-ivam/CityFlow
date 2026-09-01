@@ -2,6 +2,8 @@
 
 This document provides a complete, authoritative division of features across the **CityFlow** intelligent transit ecosystem based on all 8 GitHub issues (`#1` through `#8`) from [shi-ivam/CityFlow](https://github.com/shi-ivam/CityFlow).
 
+> 📖 **Related Documentation**: For the detailed Admin / Dispatcher Portal specification, see [`docs/FEATURES_ADMIN.md`](file:///home/shivam/Projects/CityFlow/docs/FEATURES_ADMIN.md).
+
 ---
 
 ## 📑 Table of Contents
