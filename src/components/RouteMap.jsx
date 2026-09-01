@@ -7,21 +7,29 @@ import {
   AlertTriangle, 
   MapPin, 
   Sparkles, 
-  Navigation
+  Bus,
+  Clock,
+  UserCheck,
+  Zap,
+  X,
+  Compass,
+  Activity,
+  Layers
 } from 'lucide-react';
 import { 
   calculateRouteLength, 
   createCorridorBuffer, 
   detectRouteOverlap 
 } from '../utils/gisCalculations';
-import { PROPOSED_ROUTE_TEMPLATES } from '../data/transitData';
+import { PROPOSED_ROUTE_TEMPLATES, CITIES_DATA } from '../data/transitData';
+import { computeBusPositions } from '../services/busLocationService';
 
 export default function RouteMap({
-  routes,
-  interchangeHubs,
-  busFleet,
-  dutyAssignments,
-  operationalTime,
+  routes = [],
+  interchangeHubs = [],
+  busFleet = [],
+  dutyAssignments = [],
+  operationalTime = 480,
   selectedRouteId,
   onSelectRoute,
   hoveredRouteId,
@@ -32,7 +40,9 @@ export default function RouteMap({
   drawnCoordinates,
   setDrawnCoordinates,
   overlapReport,
-  setOverlapReport
+  setOverlapReport,
+  onSelectBus,
+  selectedCity = 'delhi'
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -42,26 +52,31 @@ export default function RouteMap({
     hubsLayer: null,
     busesLayer: null,
     drawingLayer: null,
-    overlapLayer: null
+    overlapLayer: null,
+    trailLayer: null
   });
 
   const [showBuffers, setShowBuffers] = useState(true);
   const [showBuses, setShowBuses] = useState(true);
   const [showHubs, setShowHubs] = useState(true);
 
+  const [selectedBusDetail, setSelectedBusDetail] = useState(null);
+  const [followingBusId, setFollowingBusId] = useState(null);
+  const [busTrailCoords, setBusTrailCoords] = useState([]);
+
   // Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      const cityCoords = CITIES_DATA[selectedCity]?.coordinates || [28.6139, 77.2090];
       const map = L.map(mapContainerRef.current, {
-        center: [37.7650, -122.4200],
+        center: cityCoords,
         zoom: 12,
         zoomControl: false,
         attributionControl: false
       });
 
-      // High-contrast clean OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         className: 'minimal-osm-tiles'
@@ -72,6 +87,7 @@ export default function RouteMap({
       layersRef.current.buffersLayer = L.layerGroup().addTo(map);
       layersRef.current.routesLayer = L.layerGroup().addTo(map);
       layersRef.current.overlapLayer = L.layerGroup().addTo(map);
+      layersRef.current.trailLayer = L.layerGroup().addTo(map);
       layersRef.current.drawingLayer = L.layerGroup().addTo(map);
       layersRef.current.hubsLayer = L.layerGroup().addTo(map);
       layersRef.current.busesLayer = L.layerGroup().addTo(map);
@@ -87,6 +103,35 @@ export default function RouteMap({
 
     return () => clearTimeout(resizeTimer);
   }, []);
+
+  // Smooth flyTo Map Camera Animation on City Change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const cityCoords = CITIES_DATA[selectedCity]?.coordinates || [28.6139, 77.2090];
+    map.flyTo(cityCoords, 12, {
+      duration: 1.5,
+      easeLinearity: 0.25
+    });
+
+    // Reset selected bus detail on city switch
+    setSelectedBusDetail(null);
+    setFollowingBusId(null);
+    setBusTrailCoords([]);
+  }, [selectedCity]);
+
+  // MAP AUTO-FIT: Auto-fit map bounding box when selecting a route
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedRouteId) return;
+
+    const targetRoute = routes.find(r => r.id === selectedRouteId || r.code === selectedRouteId);
+    if (targetRoute && targetRoute.pathCoordinates && targetRoute.pathCoordinates.length >= 2) {
+      const bounds = L.latLngBounds(targetRoute.pathCoordinates.map(c => [c[1], c[0]]));
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
+  }, [selectedRouteId, routes]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -147,10 +192,10 @@ export default function RouteMap({
         if (bufferGeoJSON) {
           const bufferLayer = L.geoJSON(bufferGeoJSON, {
             style: {
-              color: route.color || '#1F6C9F',
+              color: route.color || '#2563eb',
               weight: 1,
               opacity: isSelected ? 0.6 : 0.25,
-              fillColor: route.color || '#1F6C9F',
+              fillColor: route.color || '#2563eb',
               fillOpacity: isSelected ? 0.15 : isHovered ? 0.12 : 0.05,
               dashArray: '3, 3'
             }
@@ -161,7 +206,7 @@ export default function RouteMap({
 
       // Polyline
       const polyline = L.polyline(latLngs, {
-        color: route.color || '#111111',
+        color: route.color || '#2563eb',
         weight: isSelected ? 5 : isHovered ? 4 : 3,
         opacity: isSelected ? 1 : isHovered ? 0.9 : 0.8,
         lineCap: 'round',
@@ -190,11 +235,11 @@ export default function RouteMap({
       if (latLngs.length > 0) {
         [latLngs[0], latLngs[latLngs.length - 1]].forEach(pt => {
           const terminalMarker = L.circleMarker(pt, {
-            radius: isSelected ? 4 : 3,
-            fillColor: route.color,
+            radius: isSelected ? 5 : 4,
+            fillColor: route.color || '#2563eb',
             fillOpacity: 1,
             color: '#FFFFFF',
-            weight: 1.5
+            weight: 2
           });
           layersRef.current.routesLayer.addLayer(terminalMarker);
         });
@@ -246,57 +291,91 @@ export default function RouteMap({
     });
   }, [interchangeHubs, showHubs]);
 
-  // Render Animated Live Buses
+  // Render Moving Bus Markers with Swiggy/Zomato-style movement, FOLLOW BUS, and TRAIL
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !layersRef.current.busesLayer) return;
 
     layersRef.current.busesLayer.clearLayers();
+    if (layersRef.current.trailLayer) layersRef.current.trailLayer.clearLayers();
+
     if (!showBuses) return;
 
-    busFleet.forEach((bus, index) => {
-      if (!bus.assignedRoute || bus.status !== 'IN_SERVICE') return;
-      const route = routes.find(r => r.code === bus.assignedRoute);
-      if (!route || !route.pathCoordinates || route.pathCoordinates.length < 2) return;
+    // Use isolated bus location simulation service
+    const liveBuses = computeBusPositions(busFleet, routes, dutyAssignments, operationalTime);
 
-      const totalPoints = route.pathCoordinates.length;
-      const progressFactor = ((operationalTime * 0.1) + (index * 2.5)) % (totalPoints - 1);
-      const baseIndex = Math.floor(progressFactor);
-      const frac = progressFactor - baseIndex;
+    liveBuses.forEach((bus) => {
+      if (!bus.currentLocation) return;
+      const [lat, lng] = bus.currentLocation;
 
-      const p1 = route.pathCoordinates[baseIndex];
-      const p2 = route.pathCoordinates[Math.min(totalPoints - 1, baseIndex + 1)];
+      // FOLLOW BUS MODE: Automatically lock map camera to followed bus position
+      if (followingBusId === bus.id && map) {
+        map.panTo([lat, lng], { animate: true, duration: 0.8 });
 
-      const currentLng = p1[0] + (p2[0] - p1[0]) * frac;
-      const currentLat = p1[1] + (p2[1] - p1[1]) * frac;
+        // Add subtle bus trail polyline
+        const newCoords = [...busTrailCoords, [lat, lng]].slice(-12);
+        if (layersRef.current.trailLayer && newCoords.length >= 2) {
+          const trailPolyline = L.polyline(newCoords, {
+            color: '#3b82f6',
+            weight: 3,
+            dashArray: '4, 4',
+            opacity: 0.6
+          });
+          layersRef.current.trailLayer.addLayer(trailPolyline);
+        }
+      }
 
-      const activeDuty = dutyAssignments.find(d => d.busId === bus.id);
+      // Determine Marker Badge State Icon & Color
+      let stateBadge = '🚌';
+      let borderStyle = 'border-primary bg-primary text-primary-foreground';
+
+      if (bus.liveStatus === 'DELAYED') {
+        stateBadge = '🚌 ⚠';
+        borderStyle = 'border-amber-500 bg-amber-500 text-white';
+      } else if (bus.liveStatus === 'CANCELLED') {
+        stateBadge = '✕';
+        borderStyle = 'border-rose-600 bg-rose-600 text-white';
+      } else if (bus.liveStatus === 'OVERFLOW') {
+        stateBadge = '🚌 + ⚠';
+        borderStyle = 'border-rose-500 bg-rose-500 text-white animate-pulse';
+      } else if (bus.liveStatus === 'DRIVER_ISSUE') {
+        stateBadge = '🚌 ⚠';
+        borderStyle = 'border-amber-600 bg-amber-600 text-white';
+      }
 
       const busIcon = L.divIcon({
         className: 'custom-bus-marker',
         html: `
-          <div class="relative flex items-center justify-center cursor-pointer">
-            <div class="w-4.5 h-4.5 rounded-[3px] ${activeDuty?.dutyType === 'UNLINKED' ? 'bg-[#956400]' : 'bg-[#111111]'} text-white flex items-center justify-center font-mono text-[8px] font-bold shadow-xs">
-              ${bus.busNumber.replace('EV-', '')}
+          <div class="relative flex items-center justify-center cursor-pointer group">
+            <div class="px-2 py-0.5 rounded-full border ${borderStyle} shadow-md flex items-center space-x-1 font-mono text-[10px] font-bold tracking-tight">
+              <span>${stateBadge}</span>
+              <span>${bus.busNumber.replace('DL ', '').replace('MH ', '').replace('KA ', '').replace('UP ', '').replace('TN ', '')}</span>
             </div>
           </div>
         `,
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
+        iconSize: [60, 24],
+        iconAnchor: [30, 12]
       });
 
-      const marker = L.marker([currentLat, currentLng], { icon: busIcon });
-      
+      const marker = L.marker([lat, lng], { icon: busIcon });
+
+      // Click handler opens compact bus inspection panel
+      marker.on('click', () => {
+        setSelectedBusDetail(bus);
+        if (onSelectBus) onSelectBus(bus);
+      });
+
       marker.bindTooltip(`
         <div class="p-1 font-mono text-xs">
-          <div class="font-bold text-[#111111]">${bus.busNumber}</div>
-          <div class="text-[#787774]">Route ${route.code} • Batt: ${bus.batteryPct}%</div>
+          <div class="font-bold text-foreground">${bus.busNumber}</div>
+          <div class="text-muted-foreground">Route ${bus.routeCode} • Next: ${bus.nextStop} (${bus.etaMins}m)</div>
+          <div class="text-primary font-semibold">Occupancy: ${bus.occupancyRatio}</div>
         </div>
       `, { sticky: true });
 
       layersRef.current.busesLayer.addLayer(marker);
     });
-  }, [busFleet, routes, dutyAssignments, operationalTime, showBuses]);
+  }, [busFleet, routes, dutyAssignments, operationalTime, showBuses, followingBusId, busTrailCoords, onSelectBus]);
 
   // Render Drawing Layer & Overlap Visuals
   useEffect(() => {
@@ -315,10 +394,10 @@ export default function RouteMap({
       if (propBuffer) {
         const propBufferLayer = L.geoJSON(propBuffer, {
           style: {
-            color: overlapReport?.overlapPercentage > 40 ? '#9F2F2D' : '#1F6C9F',
+            color: overlapReport?.overlapPercentage > 40 ? '#ef4444' : '#2563eb',
             weight: 1,
             opacity: 0.7,
-            fillColor: overlapReport?.overlapPercentage > 40 ? '#FDEBEC' : '#E1F3FE',
+            fillColor: overlapReport?.overlapPercentage > 40 ? '#fef2f2' : '#eff6ff',
             fillOpacity: 0.4,
             dashArray: '4, 4'
           }
@@ -328,7 +407,7 @@ export default function RouteMap({
     }
 
     const propPolyline = L.polyline(latLngs, {
-      color: overlapReport?.overlapPercentage > 40 ? '#9F2F2D' : '#1F6C9F',
+      color: overlapReport?.overlapPercentage > 40 ? '#ef4444' : '#2563eb',
       weight: 3.5,
       dashArray: '6, 6',
       opacity: 0.95
@@ -341,27 +420,13 @@ export default function RouteMap({
 
       const wpMarker = L.circleMarker([coord[1], coord[0]], {
         radius: isStart || isEnd ? 5 : 3.5,
-        fillColor: isStart ? '#346538' : isEnd ? '#9F2F2D' : '#111111',
+        fillColor: isStart ? '#10b981' : isEnd ? '#ef4444' : '#2563eb',
         fillOpacity: 1,
         color: '#FFFFFF',
         weight: 1.5
       });
       layersRef.current.drawingLayer.addLayer(wpMarker);
     });
-
-    if (overlapReport?.intersections) {
-      overlapReport.intersections.forEach(cross => {
-        const [xLng, xLat] = cross.coordinates;
-        const xMarker = L.circleMarker([xLat, xLng], {
-          radius: 6,
-          fillColor: '#9F2F2D',
-          fillOpacity: 0.9,
-          color: '#FFFFFF',
-          weight: 1.5
-        });
-        layersRef.current.overlapLayer.addLayer(xMarker);
-      });
-    }
 
   }, [drawnCoordinates, overlapReport]);
 
@@ -381,11 +446,11 @@ export default function RouteMap({
     const newRoute = {
       id: `route-custom-${Date.now()}`,
       code: `${Math.floor(500 + Math.random() * 400)}`,
-      name: `Express Link ${drawnCoordinates.length}W`,
-      color: '#1F6C9F',
+      name: `${selectedCity === 'chennai' ? 'Chennai Express' : 'Delhi Express'} Link ${drawnCoordinates.length}W`,
+      color: '#2563eb',
       lengthKm,
       frequencyMins: 15,
-      operatingHours: "06:00 - 22:00",
+      operatingHours: "06:00 - 22:00 IST",
       bufferMeters: 50,
       stops: drawnCoordinates.map((c, i) => ({ name: `Node ${i + 1}`, coordinates: c })),
       pathCoordinates: drawnCoordinates
@@ -397,32 +462,31 @@ export default function RouteMap({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[480px] flex-1 flex flex-col overflow-hidden bg-[#FBFBFA]">
+    <div className="relative w-full h-full min-h-[480px] flex-1 flex flex-col overflow-hidden bg-background">
       
       {/* Map Header Controls Bar */}
       <div className="absolute top-3 left-3 right-3 z-[1000] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         
         {/* Left: Layer Toggles & Mode */}
-        <div className="flex items-center space-x-1.5 bg-[#FFFFFF] border border-[#EAEAEA] p-1 rounded-[6px] shadow-xs pointer-events-auto">
-          
+        <div className="flex items-center space-x-1.5 bg-card border border-border p-1 rounded-md shadow-card pointer-events-auto">
           <button
             onClick={() => setIsDrawingMode(!isDrawingMode)}
-            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded text-xs font-semibold transition-all ${
               isDrawingMode 
-                ? 'bg-[#111111] text-white active:scale-95'
-                : 'bg-[#F7F6F3] text-[#111111] hover:bg-[#EAEAEA]'
+                ? 'bg-primary text-primary-foreground shadow-xs'
+                : 'bg-muted/50 text-foreground hover:bg-muted'
             }`}
           >
             <Pencil className="w-3 h-3" />
-            <span>{isDrawingMode ? 'Drawing (Click Map)' : 'Draw Route'}</span>
+            <span>{isDrawingMode ? 'Drawing (Click Map)' : '+ Plan Route'}</span>
           </button>
 
-          <div className="h-3 w-px bg-[#EAEAEA] mx-0.5"></div>
+          <div className="h-3 w-px bg-border mx-0.5" />
 
           <button
             onClick={() => setShowBuffers(!showBuffers)}
-            className={`px-2 py-0.5 rounded-[3px] text-[11px] font-mono transition ${
-              showBuffers ? 'bg-[#E1F3FE] text-[#1F6C9F] font-semibold' : 'text-[#787774] hover:text-[#111111]'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+              showBuffers ? 'bg-primary/15 text-primary font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             50m Buffer
@@ -430,40 +494,28 @@ export default function RouteMap({
 
           <button
             onClick={() => setShowHubs(!showHubs)}
-            className={`px-2 py-0.5 rounded-[3px] text-[11px] font-mono transition ${
-              showHubs ? 'bg-[#F3EBF9] text-[#6E3294] font-semibold' : 'text-[#787774] hover:text-[#111111]'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+              showHubs ? 'bg-purple-500/15 text-purple-600 dark:text-purple-300 font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Hubs (15m)
+            Terminal Hubs
           </button>
 
           <button
             onClick={() => setShowBuses(!showBuses)}
-            className={`px-2 py-0.5 rounded-[3px] text-[11px] font-mono transition ${
-              showBuses ? 'bg-[#EDF3EC] text-[#346538] font-semibold' : 'text-[#787774] hover:text-[#111111]'
+            className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+              showBuses ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 font-semibold' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Live Buses
           </button>
         </div>
 
-        {/* Right: Presets */}
-        <div className="flex items-center space-x-1.5 bg-[#FFFFFF] border border-[#EAEAEA] p-1 rounded-[6px] shadow-xs pointer-events-auto text-xs font-mono">
-          <span className="text-[#787774] text-[10px] uppercase font-semibold pl-1 hidden lg:inline">Scenarios:</span>
-          
-          <button
-            onClick={() => loadPresetRoute(PROPOSED_ROUTE_TEMPLATES[0])}
-            className="px-2 py-0.5 rounded-[3px] bg-[#FDEBEC] text-[#9F2F2D] text-[11px] font-semibold hover:bg-[#F9DCDD] transition"
-          >
-            Scenario A (58% Overlap)
-          </button>
-
-          <button
-            onClick={() => loadPresetRoute(PROPOSED_ROUTE_TEMPLATES[1])}
-            className="px-2 py-0.5 rounded-[3px] bg-[#E1F3FE] text-[#1F6C9F] text-[11px] font-semibold hover:bg-[#D5EBFB] transition"
-          >
-            Scenario B (8% Clean)
-          </button>
+        {/* Right: Network Health Pill */}
+        <div className="flex items-center space-x-2 bg-card border border-border px-3 py-1 rounded-md shadow-card pointer-events-auto text-xs font-mono">
+          <Activity className="w-3.5 h-3.5 text-emerald-500" />
+          <span className="text-muted-foreground">NETWORK HEALTH:</span>
+          <span className="font-bold text-emerald-600 dark:text-emerald-400">● 96% Operational</span>
         </div>
 
       </div>
@@ -471,132 +523,105 @@ export default function RouteMap({
       {/* Main Map Viewport */}
       <div ref={mapContainerRef} className="w-full h-full min-h-[480px] flex-1 z-10" />
 
-      {/* Drawing Toolbar Overlay & Overlap Conflict HUD */}
-      {isDrawingMode && (
-        <div className="absolute bottom-3 left-3 right-3 z-[1000] bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] p-3.5 shadow-md space-y-2.5">
-          
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EAEAEA] pb-2">
+      {/* COMPACT BUS INSPECTION PANEL WITH FOLLOW BUS TOGGLE */}
+      {selectedBusDetail && (
+        <div className="absolute top-16 left-3 z-[1000] w-72 bg-card border border-border rounded-lg p-3.5 shadow-modal space-y-2.5 font-sans animate-in fade-in duration-150">
+          <div className="flex items-center justify-between border-b border-border/70 pb-2">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-[4px] bg-[#111111] flex items-center justify-center text-white">
-                <Pencil className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-[#111111] flex items-center space-x-2">
-                  <span>Interactive Route Placer</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F7F6F3] text-[#787774] border border-[#EAEAEA]">
-                    {drawnCoordinates.length} Waypoints
-                  </span>
-                </h4>
-              </div>
+              <Bus className="w-4 h-4 text-primary" />
+              <span className="font-mono text-sm font-bold text-foreground">
+                {selectedBusDetail.busNumber}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedBusDetail(null);
+                setFollowingBusId(null);
+              }}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Route:</span>
+              <span className="font-bold text-primary">Route {selectedBusDetail.routeCode || '102'}</span>
             </div>
 
-            <div className="flex items-center space-x-1.5">
-              <button
-                onClick={clearDrawing}
-                disabled={drawnCoordinates.length === 0}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded-[4px] bg-[#F7F6F3] hover:bg-[#EAEAEA] text-[#787774] text-xs font-mono transition disabled:opacity-40"
-              >
-                <Trash2 className="w-3 h-3" />
-                <span>Clear</span>
-              </button>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Driver:</span>
+              <span className="font-bold text-foreground">{selectedCity === 'chennai' ? 'Arun Kumar' : 'Rajesh Kumar'}</span>
+            </div>
 
-              <button
-                onClick={commitProposedRoute}
-                disabled={drawnCoordinates.length < 2}
-                className="flex items-center space-x-1.5 px-3 py-1 rounded-[4px] bg-[#111111] hover:bg-[#333333] text-white text-xs font-mono font-semibold transition active:scale-95 disabled:opacity-40"
-              >
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Commit to Network</span>
-              </button>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Next Stop:</span>
+              <span className="font-bold text-foreground">{selectedBusDetail.nextStop || 'Adyar O.T.'} • {selectedBusDetail.etaMins || 4} min</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Occupancy:</span>
+              <span className="font-bold text-foreground">{selectedBusDetail.occupancyRatio || '38 / 50'}</span>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <span className="text-muted-foreground">Status:</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                selectedBusDetail.liveStatus === 'DELAYED'
+                  ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30'
+                  : selectedBusDetail.liveStatus === 'OVERFLOW'
+                  ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30 animate-pulse'
+                  : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+              }`}>
+                ● {selectedBusDetail.liveStatus || 'ON TIME'}
+              </span>
             </div>
           </div>
 
-          {/* Overlap HUD */}
-          {overlapReport && drawnCoordinates.length >= 2 ? (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 pt-0.5">
-              
-              <div className={`md:col-span-4 p-2.5 rounded-[6px] border flex flex-col justify-between ${
-                overlapReport.overlapPercentage > 40
-                  ? 'bg-[#FDEBEC] border-[#F7D2D4] text-[#9F2F2D]'
-                  : overlapReport.overlapPercentage >= 15
-                  ? 'bg-[#FBF3DB] border-[#F3E4BA] text-[#956400]'
-                  : 'bg-[#EDF3EC] border-[#D5E5D4] text-[#346538]'
-              }`}>
-                <div>
-                  <div className="flex items-center justify-between text-[10px] font-mono uppercase font-bold">
-                    <span>Overlap Metric</span>
-                    <span>{overlapReport.congestionLevel.replace('_', ' ')}</span>
-                  </div>
-
-                  <div className="flex items-baseline space-x-1.5 mt-0.5 font-mono">
-                    <span className="text-xl font-bold">{overlapReport.overlapPercentage}%</span>
-                    <span className="text-[10px]">({overlapReport.totalOverlapKm} km / {overlapReport.proposedLengthKm} km)</span>
-                  </div>
-                </div>
-
-                <div className="text-[11px] font-mono mt-1 leading-snug">
-                  {overlapReport.summary}
-                </div>
-              </div>
-
-              <div className="md:col-span-8 bg-[#FBFBFA] rounded-[6px] border border-[#EAEAEA] p-2.5 space-y-1.5 max-h-28 overflow-y-auto font-mono text-xs">
-                <div className="flex items-center justify-between text-[10px] text-[#787774] border-b border-[#EAEAEA] pb-0.5">
-                  <span>Detected Shared Segments (50m Buffer)</span>
-                  <span>Crossings: <strong className="text-[#111111]">{overlapReport.intersections.length}</strong></span>
-                </div>
-
-                {overlapReport.sharedCorridors.length > 0 ? (
-                  <div className="space-y-1">
-                    {overlapReport.sharedCorridors.map((corridor, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-1.5 rounded-[4px] bg-[#FFFFFF] border border-[#EAEAEA] text-[11px]">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="px-1 py-0.2 rounded bg-[#E1F3FE] text-[#1F6C9F] font-bold">Route {corridor.existingRouteCode}</span>
-                          <span className="text-[#111111] truncate max-w-[160px]">{corridor.existingRouteName}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-[#787774]">
-                          <span>{corridor.overlapLengthKm} km</span>
-                          <span className={`px-1 py-0.2 rounded text-[9px] font-bold ${
-                            corridor.risk === 'HIGH' ? 'bg-[#FDEBEC] text-[#9F2F2D]' : 'bg-[#FBF3DB] text-[#956400]'
-                          }`}>
-                            {corridor.risk}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-xs text-[#346538] py-1 flex items-center space-x-1.5">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Independent corridor. Zero high-risk collision.</span>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          ) : (
-            <div className="text-[11px] font-mono text-[#787774] text-center py-1">
-              Click at least 2 points on the map to begin real-time spatial conflict & buffer analysis.
-            </div>
-          )}
-
+          {/* Follow Bus Mode Button */}
+          <div className="pt-1 flex items-center justify-between border-t border-border/50">
+            <button
+              onClick={() => {
+                if (followingBusId === selectedBusDetail.id) {
+                  setFollowingBusId(null);
+                } else {
+                  setFollowingBusId(selectedBusDetail.id);
+                  setBusTrailCoords(selectedBusDetail.currentLocation ? [selectedBusDetail.currentLocation] : []);
+                }
+              }}
+              className={`w-full py-1.5 rounded font-mono text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
+                followingBusId === selectedBusDetail.id
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'bg-muted text-foreground hover:bg-accent'
+              }`}
+            >
+              <Compass className={`w-3.5 h-3.5 ${followingBusId === selectedBusDetail.id ? 'animate-spin' : ''}`} />
+              <span>{followingBusId === selectedBusDetail.id ? '● FOLLOWING BUS' : 'FOLLOW BUS'}</span>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Map Legend */}
+      {/* COMPACT MAP LEGEND */}
       {!isDrawingMode && (
-        <div className="absolute bottom-3 right-3 z-[1000] bg-[#FFFFFF] border border-[#EAEAEA] rounded-[6px] p-2 shadow-xs text-[10px] font-mono space-y-1 hidden sm:block">
-          <div className="font-bold text-[#111111] border-b border-[#EAEAEA] pb-0.5">Network GIS</div>
+        <div className="absolute bottom-3 right-3 z-[1000] bg-card/95 backdrop-blur-xs border border-border rounded-md p-2 shadow-card text-[10px] font-mono space-y-1 hidden sm:block">
+          <div className="font-bold text-foreground border-b border-border pb-0.5 uppercase tracking-wider">Map Legend</div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-1 bg-[#1F6C9F] rounded-[1px]"></span>
-            <span className="text-[#787774]">Route 101 Airport</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
+            <span className="text-muted-foreground">🚌 Live Bus</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-1 bg-[#346538] rounded-[1px]"></span>
-            <span className="text-[#787774]">Route 204 Spine</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            <span className="text-muted-foreground">⚠ Delayed</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-[2px] bg-[#6E3294]"></span>
-            <span className="text-[#787774]">Interchange Hub (15m)</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block" />
+            <span className="text-muted-foreground">✕ Cancelled</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full border border-primary bg-background inline-block" />
+            <span className="text-muted-foreground">● Bus Stop</span>
           </div>
         </div>
       )}

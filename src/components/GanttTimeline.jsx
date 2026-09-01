@@ -9,7 +9,9 @@ import {
   Search, 
   ShieldCheck,
   Sparkles,
-  Zap
+  Zap,
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { validateRestPeriod } from '../utils/dutyEngine';
 
@@ -18,21 +20,25 @@ const TIMELINE_END_HOUR = 24;
 const TOTAL_MINUTES = (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * 60;
 
 export default function GanttTimeline({
-  dutyAssignments,
-  crewMembers,
-  busFleet,
-  routes,
-  operationalTime,
+  dutyAssignments = [],
+  crewMembers = [],
+  busFleet = [],
+  routes = [],
+  operationalTime = 480,
   selectedDutyId,
   onSelectDuty,
   hoveredRouteId,
   onHoverRoute,
   onOpenFallbackModal,
-  onOpenNewDutyModal
+  onUpdateDriverAssignment,
+  onUpdateBusAssignment
 }) {
   const [filterType, setFilterType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDutyForDetails, setSelectedDutyForDetails] = useState(null);
+  const [unlinkedModalDuty, setUnlinkedModalDuty] = useState(null);
+
+  const [selectedBusForLink, setSelectedBusForLink] = useState(busFleet[0]?.id || '');
+  const [selectedRouteForLink, setSelectedRouteForLink] = useState(routes[0]?.id || '');
 
   const getMinuteOffset = (timeStr) => {
     if (!timeStr) return 0;
@@ -67,9 +73,9 @@ export default function GanttTimeline({
       const q = searchQuery.toLowerCase();
       const crew = crewMembers.find(c => c.id === duty.crewId);
       const bus = busFleet.find(b => b.id === duty.busId);
-      const matchDuty = duty.dutyCode.toLowerCase().includes(q);
-      const matchCrew = crew?.fullName.toLowerCase().includes(q);
-      const matchBus = bus?.busNumber.toLowerCase().includes(q);
+      const matchDuty = duty.dutyCode?.toLowerCase().includes(q);
+      const matchCrew = crew?.fullName?.toLowerCase().includes(q) || crew?.name?.toLowerCase().includes(q);
+      const matchBus = bus?.busNumber?.toLowerCase().includes(q);
       if (!matchDuty && !matchCrew && !matchBus) return false;
     }
 
@@ -84,20 +90,31 @@ export default function GanttTimeline({
     hourMarks.push({ hour: h, label: displayH });
   }
 
+  const handleLinkSubmit = () => {
+    if (!unlinkedModalDuty) return;
+    if (onUpdateBusAssignment) {
+      onUpdateBusAssignment(selectedRouteForLink, busFleet[0]?.id, selectedBusForLink);
+    }
+    if (onUpdateDriverAssignment && unlinkedModalDuty.crewId) {
+      onUpdateDriverAssignment(selectedRouteForLink, selectedBusForLink, unlinkedModalDuty.crewId);
+    }
+    setUnlinkedModalDuty(null);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-[#FFFFFF] select-none overflow-hidden font-sans">
+    <div className="flex flex-col h-full bg-card select-none overflow-hidden font-sans border-t border-border">
       
       {/* Gantt Toolbar */}
-      <div className="p-2.5 px-4 bg-[#FFFFFF] border-b border-[#EAEAEA] flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div className="p-2.5 px-4 bg-muted/20 border-b border-border flex flex-wrap items-center justify-between gap-2 shrink-0">
         
         {/* Filter Badges */}
         <div className="flex items-center space-x-1 flex-wrap gap-y-1 text-xs font-mono">
           <button
             onClick={() => setFilterType('ALL')}
-            className={`px-2.5 py-1 rounded-[4px] font-medium transition ${
+            className={`px-2.5 py-1 rounded font-medium transition ${
               filterType === 'ALL'
-                ? 'bg-[#111111] text-white font-semibold'
-                : 'bg-[#F7F6F3] text-[#787774] hover:text-[#111111] border border-[#EAEAEA]'
+                ? 'bg-primary text-primary-foreground font-semibold'
+                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
             }`}
           >
             All ({dutyAssignments.length})
@@ -105,57 +122,57 @@ export default function GanttTimeline({
 
           <button
             onClick={() => setFilterType('LINKED')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-[4px] font-medium transition ${
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
               filterType === 'LINKED'
-                ? 'bg-[#E1F3FE] text-[#1F6C9F] font-semibold border border-[#BCDFF6]'
-                : 'bg-[#F7F6F3] text-[#787774] hover:text-[#1F6C9F] border border-[#EAEAEA]'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/30'
+                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
             }`}
           >
-            <Link2 className="w-3 h-3" />
-            <span>Linked</span>
+            <Link2 className="w-3 h-3 text-emerald-500" />
+            <span>🔗 Linked</span>
           </button>
 
           <button
             onClick={() => setFilterType('UNLINKED')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-[4px] font-medium transition ${
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
               filterType === 'UNLINKED'
-                ? 'bg-[#FBF3DB] text-[#956400] font-semibold border border-[#F3E4BA]'
-                : 'bg-[#F7F6F3] text-[#787774] hover:text-[#956400] border border-[#EAEAEA]'
+                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/30'
+                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
             }`}
           >
-            <Unlink className="w-3 h-3" />
-            <span>Unlinked (15m)</span>
+            <Unlink className="w-3 h-3 text-amber-500" />
+            <span>○ Unlinked</span>
           </button>
 
           <button
             onClick={() => setFilterType('CONFLICT')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded-[4px] font-medium transition ${
+            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
               filterType === 'CONFLICT'
-                ? 'bg-[#FDEBEC] text-[#9F2F2D] font-semibold border border-[#F7D2D4]'
-                : 'bg-[#F7F6F3] text-[#787774] hover:text-[#9F2F2D] border border-[#EAEAEA]'
+                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold border border-rose-500/30'
+                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
             }`}
           >
-            <ShieldAlert className="w-3 h-3" />
+            <ShieldAlert className="w-3 h-3 text-rose-500" />
             <span>Conflicts</span>
           </button>
         </div>
 
-        {/* Search & Action */}
+        {/* Search */}
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="w-3 h-3 text-[#787774] absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3 h-3 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search driver, bus..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#F7F6F3] border border-[#EAEAEA] rounded-[4px] pl-7 pr-2.5 py-1 text-xs text-[#111111] placeholder-[#787774] focus:outline-none focus:border-[#111111] font-mono w-40 sm:w-48"
+              className="bg-muted/50 border border-input rounded pl-7 pr-2 py-1 text-xs text-foreground placeholder:text-muted-foreground font-mono w-40 sm:w-48 outline-none"
             />
           </div>
 
           <button
             onClick={onOpenFallbackModal}
-            className="flex items-center space-x-1.5 px-3 py-1 rounded-[4px] bg-[#111111] hover:bg-[#333333] text-white text-xs font-mono font-medium transition active:scale-95"
+            className="flex items-center space-x-1.5 px-3 py-1 rounded bg-primary text-primary-foreground text-xs font-mono font-medium transition active:scale-95"
           >
             <Sparkles className="w-3 h-3" />
             <span>Fallback Solver</span>
@@ -165,13 +182,13 @@ export default function GanttTimeline({
       </div>
 
       {/* Gantt Header: Hour Scale */}
-      <div className="bg-[#FBFBFA] border-b border-[#EAEAEA] px-4 py-1.5 flex items-center shrink-0">
-        <div className="w-52 sm:w-60 shrink-0 text-[10px] font-mono font-semibold text-[#787774] uppercase tracking-wider flex items-center justify-between pr-3">
-          <span>Driver & Fleet</span>
-          <span>Shift</span>
+      <div className="bg-muted/30 border-b border-border px-4 py-1.5 flex items-center shrink-0">
+        <div className="w-52 sm:w-60 shrink-0 text-[10px] font-mono font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-between pr-3">
+          <span>Driver & Fleet Duty</span>
+          <span>Duty Status & Rest</span>
         </div>
 
-        <div className="flex-1 relative h-5 flex items-center font-mono text-[9px] text-[#787774]">
+        <div className="flex-1 relative h-5 flex items-center font-mono text-[9px] text-muted-foreground">
           {hourMarks.map((mark, idx) => {
             const leftPct = (idx / (hourMarks.length - 1)) * 100;
             return (
@@ -181,7 +198,7 @@ export default function GanttTimeline({
                 style={{ left: `${leftPct}%` }}
               >
                 <span>{mark.label}</span>
-                <span className="w-px h-1 bg-[#EAEAEA] mt-0.5"></span>
+                <span className="w-px h-1 bg-border mt-0.5" />
               </div>
             );
           })}
@@ -189,7 +206,7 @@ export default function GanttTimeline({
       </div>
 
       {/* Main Gantt Body */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-1.5 relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-2 relative">
         
         {/* Scrubber Line */}
         {currentScrubberPercent >= 0 && currentScrubberPercent <= 100 && (
@@ -197,10 +214,10 @@ export default function GanttTimeline({
             className="absolute top-0 bottom-0 z-20 pointer-events-none flex flex-col items-center"
             style={{ left: `calc(${currentScrubberPercent}% + 13rem)` }}
           >
-            <div className="bg-[#111111] text-white text-[8px] font-mono font-bold px-1 rounded-[2px]">
+            <div className="bg-primary text-primary-foreground text-[8px] font-mono font-bold px-1 rounded">
               NOW
             </div>
-            <div className="w-px h-full bg-[#111111]"></div>
+            <div className="w-px h-full bg-primary" />
           </div>
         )}
 
@@ -216,10 +233,8 @@ export default function GanttTimeline({
           const leftPct = getPercentagePosition(startOffset);
           const widthPct = Math.min(100 - leftPct, getPercentagePosition(durationMinutes));
 
-          const isLinked = duty.dutyType === 'LINKED';
+          const isLinked = duty.dutyType === 'LINKED' || (duty.crewId && duty.busId && duty.routeId);
           const isConflict = duty.status.includes('CONFLICT') || duty.status.includes('VIOLATION');
-          const isSelected = selectedDutyId === duty.id;
-          const isRouteHovered = hoveredRouteId === duty.routeId;
 
           const restCheck = crew?.lastShiftEnd 
             ? validateRestPeriod(crew.lastShiftEnd, duty.startTime, 11)
@@ -228,162 +243,121 @@ export default function GanttTimeline({
           return (
             <div 
               key={duty.id}
-              className={`flex items-center rounded-[6px] p-1.5 transition-all border ${
-                isSelected 
-                  ? 'bg-[#F7F6F3] border-[#111111]' 
-                  : isConflict
-                  ? 'bg-[#FDEBEC]/40 border-[#F7D2D4]'
-                  : isRouteHovered
-                  ? 'bg-[#E1F3FE]/30 border-[#BCDFF6]'
-                  : 'bg-[#FFFFFF] border-[#EAEAEA] hover:border-[#CCCCCC]'
+              className={`flex items-center rounded-lg p-2 transition-all border ${
+                isConflict
+                  ? 'bg-rose-500/10 border-rose-500/30'
+                  : isLinked 
+                  ? 'bg-card border-border hover:border-primary/50' 
+                  : 'bg-amber-500/10 border-amber-500/30'
               }`}
               onMouseEnter={() => onHoverRoute && onHoverRoute(duty.routeId)}
               onMouseLeave={() => onHoverRoute && onHoverRoute(null)}
             >
               
               {/* Driver Column */}
-              <div className="w-52 sm:w-60 shrink-0 pr-3 border-r border-[#EAEAEA] flex flex-col justify-between">
+              <div className="w-52 sm:w-60 shrink-0 pr-3 border-r border-border flex flex-col justify-between space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-5 h-5 rounded-[4px] flex items-center justify-center text-[10px] font-mono font-bold ${
-                      isConflict 
-                        ? 'bg-[#FDEBEC] text-[#9F2F2D]' 
-                        : isLinked 
-                        ? 'bg-[#E1F3FE] text-[#1F6C9F]' 
-                        : 'bg-[#FBF3DB] text-[#956400]'
-                    }`}>
-                      <User className="w-3 h-3" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-[#111111] truncate max-w-[120px]">
-                        {crew?.fullName || "Unassigned"}
-                      </div>
-                      <div className="text-[10px] text-[#787774] font-mono">
-                        {crew?.badge} • {crew?.weeklyHoursUsed}h/wk
-                      </div>
-                    </div>
+                    <User className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-bold text-foreground truncate max-w-[120px]">
+                      {crew?.name || crew?.fullName || "Unassigned Driver"}
+                    </span>
                   </div>
 
-                  <span className={`text-[9px] font-mono px-1 py-0.2 rounded-[3px] font-semibold ${
-                    isLinked ? 'bg-[#E1F3FE] text-[#1F6C9F]' : 'bg-[#FBF3DB] text-[#956400]'
-                  }`}>
-                    {isLinked ? '1:1' : 'HUB'}
+                  {/* Linked vs Unlinked Badge */}
+                  <span
+                    onClick={() => {
+                      if (!isLinked) setUnlinkedModalDuty(duty);
+                    }}
+                    className={`px-1.5 py-0.2 rounded font-mono text-[10px] font-bold cursor-pointer border ${
+                      isLinked
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:underline'
+                    }`}
+                  >
+                    {isLinked ? '🔗 LINKED' : '○ UNLINKED (CLICK TO LINK)'}
                   </span>
                 </div>
 
-                <div className="mt-1 flex items-center justify-between text-[10px] font-mono">
-                  <span className={restCheck.isCompliant ? "text-[#787774]" : "text-[#9F2F2D] font-bold"}>
-                    Rest: {restCheck.actualRestFormatted}
+                {/* Mandated Driver Rest Indicator */}
+                <div className="text-[10px] font-mono flex items-center justify-between">
+                  <span className="text-muted-foreground">Rest Period:</span>
+                  <span className={`font-bold ${restCheck.isCompliant ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                    {restCheck.isCompliant ? `✓ Rest: ${restCheck.actualRestFormatted} (Rest OK)` : `⚠ REST CONFLICT (${restCheck.actualRestFormatted} < 11h)`}
                   </span>
-                  {bus && <span className="text-[#111111] font-semibold">{bus.busNumber}</span>}
                 </div>
               </div>
 
-              {/* Timeline Block */}
-              <div className="flex-1 relative h-10 ml-2 flex items-center">
-                
-                <div
-                  onClick={() => {
-                    onSelectDuty && onSelectDuty(duty.id);
-                    setSelectedDutyForDetails(duty);
-                  }}
-                  style={{ left: `${leftPct}%`, width: `${Math.max(12, widthPct)}%` }}
-                  className={`absolute h-8 rounded-[4px] px-2 flex items-center justify-between cursor-pointer transition-all ${
-                    isConflict
-                      ? 'bg-[#FDEBEC] border border-[#9F2F2D] text-[#9F2F2D]'
+              {/* Timeline Shift Bar */}
+              <div className="flex-1 relative h-7 mx-2 bg-muted/40 rounded overflow-hidden">
+                <div 
+                  className={`absolute top-0 bottom-0 rounded px-2 flex items-center justify-between text-[10px] font-mono font-bold transition-all shadow-xs ${
+                    isConflict 
+                      ? 'bg-rose-500 text-white' 
                       : isLinked
-                      ? 'bg-[#E1F3FE] border border-[#1F6C9F] text-[#1F6C9F] hover:bg-[#D5EBFB]'
-                      : 'bg-[#FBF3DB] border border-dashed border-[#956400] text-[#956400] hover:bg-[#F5EACB]'
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-amber-500 text-white'
                   }`}
+                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                 >
-                  <div className="flex items-center space-x-1.5 truncate">
-                    <span className="font-mono text-xs font-bold">{duty.dutyCode}</span>
-                    {route && <span className="text-[9px] font-mono opacity-80">R-{route.code}</span>}
-                  </div>
-
-                  <div className="text-[9px] font-mono pl-1">
-                    {isConflict ? (
-                      <span className="font-bold underline">SOLVE</span>
-                    ) : (
-                      <span>{Math.round(durationMinutes / 60)}h</span>
-                    )}
-                  </div>
+                  <span className="truncate">{bus?.busNumber || "No Bus"} • Route {route?.code || "102"}</span>
+                  <span className="opacity-90">{duty.dutyCode || "DT-01"}</span>
                 </div>
-
               </div>
 
             </div>
           );
         })}
-
       </div>
 
-      {/* Legend Bar */}
-      <div className="bg-[#FBFBFA] border-t border-[#EAEAEA] p-2 px-4 flex flex-wrap items-center justify-between gap-2 shrink-0 font-mono text-[10px] text-[#787774]">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-[#E1F3FE] border border-[#1F6C9F]"></span>
-            <span>Linked (1:1 Lock)</span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-[#FBF3DB] border border-dashed border-[#956400]"></span>
-            <span>Unlinked (15m Hub)</span>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-[2px] bg-[#FDEBEC] border border-[#9F2F2D]"></span>
-            <span className="text-[#9F2F2D] font-bold">Rest Conflict (&lt;11h)</span>
-          </div>
-        </div>
-
-        <div>
-          <span>Standby Pool: <strong className="text-[#346538]">3 Drivers Rested</strong></span>
-        </div>
-      </div>
-
-      {/* Details Modal */}
-      {selectedDutyForDetails && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#FFFFFF] border border-[#EAEAEA] rounded-[8px] w-full max-w-md p-5 shadow-lg space-y-3 font-sans">
-            <div className="flex items-center justify-between border-b border-[#EAEAEA] pb-2">
-              <h3 className="font-serif font-bold text-base text-[#111111]">{selectedDutyForDetails.dutyCode}</h3>
-              <button onClick={() => setSelectedDutyForDetails(null)} className="text-[#787774] hover:text-[#111111]">&times;</button>
-            </div>
-
-            <div className="space-y-2 text-xs font-mono">
-              <div className="text-[#787774] uppercase text-[10px]">Segments</div>
-              {selectedDutyForDetails.segments?.map((s, i) => (
-                <div key={i} className="p-2 rounded-[4px] bg-[#FBFBFA] border border-[#EAEAEA] flex items-center justify-between">
-                  <span>{s.start} — {s.end}</span>
-                  <span className="font-bold">{s.busNumber}</span>
-                </div>
-              ))}
-            </div>
-
-            {selectedDutyForDetails.conflictDetails && (
-              <div className="p-2.5 rounded-[4px] bg-[#FDEBEC] border border-[#F7D2D4] text-xs font-mono text-[#9F2F2D] space-y-1.5">
-                <div className="font-bold">Rest Period Deficit</div>
-                <p>{selectedDutyForDetails.conflictDetails.message}</p>
-                <button
-                  onClick={() => {
-                    setSelectedDutyForDetails(null);
-                    onOpenFallbackModal();
-                  }}
-                  className="w-full py-1 rounded-[4px] bg-[#9F2F2D] text-white font-semibold text-xs transition active:scale-95"
-                >
-                  Launch 3-Tier Solver &rarr;
-                </button>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-1">
-              <button
-                onClick={() => setSelectedDutyForDetails(null)}
-                className="px-3 py-1 rounded-[4px] bg-[#F7F6F3] border border-[#EAEAEA] text-[#787774] hover:text-[#111111] text-xs font-mono"
-              >
-                Close
+      {/* LINK UNLINKED DUTY MODAL */}
+      {unlinkedModalDuty && (
+        <div className="fixed inset-0 z-[3500] bg-black/65 backdrop-blur-xs flex items-center justify-center p-4 font-sans animate-in fade-in select-none">
+          <div className="w-full max-w-md bg-card border border-border rounded-xl p-5 space-y-4 shadow-modal font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-bold text-sm text-foreground flex items-center space-x-1.5">
+                <Unlink className="w-4 h-4 text-amber-500" />
+                <span>LINK UNLINKED DUTY</span>
+              </h3>
+              <button onClick={() => setUnlinkedModalDuty(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" />
               </button>
+            </div>
+
+            <div className="space-y-1 bg-muted/30 p-3 rounded border border-border">
+              <div>Driver: <strong>{crewMembers.find(c => c.id === unlinkedModalDuty.crewId)?.name || 'Amit Sharma'}</strong></div>
+              <div>Duty Code: <strong>{unlinkedModalDuty.dutyCode || 'DT-UNLINK-01'}</strong></div>
+            </div>
+
+            <div>
+              <label className="block text-muted-foreground uppercase mb-1">Select Bus to Link</label>
+              <select
+                value={selectedBusForLink}
+                onChange={(e) => setSelectedBusForLink(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-muted/50 border border-input text-foreground outline-none"
+              >
+                {busFleet.map(b => (
+                  <option key={b.id} value={b.id}>{b.busNumber} ({b.capacity} Seats)</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-muted-foreground uppercase mb-1">Select Target Route</label>
+              <select
+                value={selectedRouteForLink}
+                onChange={(e) => setSelectedRouteForLink(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-muted/50 border border-input text-foreground outline-none"
+              >
+                {routes.map(r => (
+                  <option key={r.id} value={r.id}>Route {r.code} — {r.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="pt-2 flex justify-end space-x-2 border-t border-border">
+              <button onClick={() => setUnlinkedModalDuty(null)} className="px-3.5 py-1.5 rounded bg-muted text-muted-foreground font-medium">Cancel</button>
+              <button onClick={handleLinkSubmit} className="px-4 py-1.5 rounded bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-xs">LINK DUTY</button>
             </div>
           </div>
         </div>

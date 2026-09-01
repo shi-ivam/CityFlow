@@ -2,69 +2,133 @@
 
 @layer base {
   :root {
-    --bg-canvas: #FBFBFA;
-    --bg-surface: #FFFFFF;
-    --bg-surface-subtle: #F7F6F3;
-    --border-light: #EAEAEA;
-    --border-subtle: rgba(0, 0, 0, 0.06);
-    --text-primary: #111111;
-    --text-secondary: #787774;
-    --text-muted: #9B9A97;
+    /* Base Surface Tokens - Precision Operations Light */
+    --background: 240 5% 96%;
+    --foreground: 240 10% 10%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+    
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 240 6% 15%;
+    
+    --muted: 240 5% 92%;
+    --muted-foreground: 240 4% 46%;
+    
+    --accent: 240 5% 93%;
+    --accent-foreground: 240 6% 12%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 6% 87%;
+    --input: 240 6% 87%;
+    --ring: 221 83% 53%;
+    
+    --radius: 0.5rem;
 
-    /* Spot Pastels */
-    --pastel-blue-bg: #E1F3FE;
-    --pastel-blue-text: #1F6C9F;
-    --pastel-blue-border: #BCDFF6;
+    /* TransitFlow Domain Extension Tokens */
+    --duty-linked-bg: 214 95% 93%;
+    --duty-linked-border: 221 83% 53%;
+    --duty-linked-text: 224 76% 32%;
 
-    --pastel-yellow-bg: #FBF3DB;
-    --pastel-yellow-text: #956400;
-    --pastel-yellow-border: #F3E4BA;
+    --duty-unlinked-bg: 45 93% 94%;
+    --duty-unlinked-border: 38 92% 50%;
+    --duty-unlinked-text: 32 95% 26%;
 
-    --pastel-red-bg: #FDEBEC;
-    --pastel-red-text: #9F2F2D;
-    --pastel-red-border: #F7D2D4;
+    --rest-valid-bg: 142 72% 95%;
+    --rest-valid-text: 142 76% 24%;
 
-    --pastel-green-bg: #EDF3EC;
-    --pastel-green-text: #346538;
-    --pastel-green-border: #D5E5D4;
+    --rest-violation-bg: 0 86% 95%;
+    --rest-violation-text: 0 74% 42%;
+  }
 
-    --pastel-purple-bg: #F3EBF9;
-    --pastel-purple-text: #6E3294;
-    --pastel-purple-border: #DFCEEC;
+  .dark {
+    /* Base Surface Tokens - Tactical Radar Night */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 10% 9%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-foreground: 240 10% 4%;
+    
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 6% 13%;
+    --muted-foreground: 240 5% 65%;
+    
+    --accent: 240 6% 16%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 86% 97%;
+    
+    --border: 240 6% 16%;
+    --input: 240 6% 18%;
+    --ring: 217 91% 60%;
+
+    /* Dark Mode Domain Extension Tokens */
+    --duty-linked-bg: 217 91% 15%;
+    --duty-linked-border: 217 91% 60%;
+    --duty-linked-text: 214 95% 93%;
+
+    --duty-unlinked-bg: 38 92% 14%;
+    --duty-unlinked-border: 43 96% 56%;
+    --duty-unlinked-text: 48 96% 89%;
+
+    --rest-valid-bg: 144 61% 12%;
+    --rest-valid-text: 142 70% 80%;
+
+    --rest-violation-bg: 0 72% 18%;
+    --rest-violation-text: 0 93% 82%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
   }
 
   body {
-    background-color: var(--bg-canvas);
-    color: var(--text-primary);
-    font-family: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-  }
-
-  h1, h2, h3, .font-serif {
-    font-family: 'Newsreader', 'Playfair Display', serif;
-    letter-spacing: -0.03em;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Roboto', -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   code, kbd, pre, .font-mono {
-    font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+    font-family: 'Roboto Mono', monospace;
+    font-feature-settings: "tnum" 1, "zero" 1;
+    font-variant-numeric: tabular-nums slashed-zero;
   }
 }
 
 /* Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #FBFBFA;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #EAEAEA;
+  background: hsl(var(--muted-foreground) / 0.25);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #D0D0D0;
+  background: hsl(var(--muted-foreground) / 0.45);
 }
 
 /* Micro Keyboard Key */
@@ -72,67 +136,67 @@ kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.1rem 0.35rem;
+  padding: 0.15rem 0.4rem;
   font-size: 0.65rem;
   font-weight: 600;
-  font-family: 'Geist Mono', monospace;
-  background-color: #F7F6F3;
-  color: #787774;
-  border: 1px solid #EAEAEA;
+  font-family: 'Roboto Mono', monospace;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border));
   border-radius: 4px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* Leaflet Clean Positron / Minimalist Map Customizations */
 .leaflet-container {
-  background-color: #FBFBFA !important;
-  font-family: inherit;
+  background-color: hsl(var(--background)) !important;
+  font-family: 'Roboto', sans-serif !important;
 }
 .leaflet-bar {
-  border: 1px solid #EAEAEA !important;
-  box-shadow: none !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08) !important;
   border-radius: 6px !important;
   overflow: hidden;
 }
 .leaflet-bar a {
-  background-color: #FFFFFF !important;
-  color: #111111 !important;
-  border-bottom: 1px solid #EAEAEA !important;
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
 }
 .leaflet-bar a:hover {
-  background-color: #F7F6F3 !important;
-  color: #111111 !important;
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
 }
 .leaflet-popup-content-wrapper {
-  background: #FFFFFF !important;
-  color: #111111 !important;
-  border: 1px solid #EAEAEA;
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border));
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
 }
 .leaflet-popup-tip {
-  background: #FFFFFF !important;
+  background: hsl(var(--popover)) !important;
 }
 
 /* Positron Clean Grayscale Map Tiles */
 .minimal-osm-tiles {
   filter: grayscale(0.9) contrast(1.05) brightness(1.02);
 }
-
-/* Pulse animation */
-@keyframes subtle-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.08); }
-}
-.animate-subtle-pulse {
-  animation: subtle-pulse 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+.dark .minimal-osm-tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(1.1);
 }
 
-/* Fade in animation */
-@keyframes editorialFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Beacon & Telemetry Animations */
+@keyframes beacon-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
-.animate-fade-in {
-  animation: editorialFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.live-gps-dot {
+  animation: beacon-pulse 2s infinite;
+}
+
+/* Hatched stripe pattern for rest violations */
+.rest-violation-hatch {
+  background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.1) 6px, rgba(239, 68, 68, 0.2) 6px, rgba(239, 68, 68, 0.2) 12px);
 }
