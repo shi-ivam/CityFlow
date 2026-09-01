@@ -117,5 +117,97 @@ class BackendDriverPortalTestCase(unittest.TestCase):
         self.assertEqual(len(new_list), init_count + 1)
         self.assertEqual(new_list[0]["requestId"], created["requestId"])
 
+    def test_08_admin_vehicles_and_fleet(self):
+        # 1. List vehicles
+        res = self.client.get("/api/vehicles?city=chennai")
+        self.assertEqual(res.status_code, 200)
+        vehicles = res.json()
+        self.assertGreaterEqual(len(vehicles), 4)
+
+        # 2. Add vehicle
+        new_v = {
+            "busNumber": "TN 01 EV 9999",
+            "model": "Ashok Leyland Switch EV Special",
+            "type": "Electric Low-Floor EV",
+            "capacity": 55,
+            "status": "AVAILABLE",
+            "city": "chennai"
+        }
+        res_add = self.client.post("/api/vehicles", json=new_v)
+        self.assertEqual(res_add.status_code, 201)
+        v_data = res_add.json()
+        self.assertEqual(v_data["busNumber"], "TN 01 EV 9999")
+
+        # 3. Schedule Maintenance
+        m_payload = {
+            "vehicleId": v_data["id"],
+            "maintenanceType": "Brake & Motor Overhaul",
+            "scheduledDate": "2026-09-20",
+            "notes": "Regular 100k inspection"
+        }
+        res_mnt = self.client.post(f"/api/vehicles/{v_data['id']}/maintenance", json=m_payload)
+        self.assertEqual(res_mnt.status_code, 201)
+
+    def test_09_admin_drivers_and_assignment(self):
+        # 1. List admin drivers
+        res = self.client.get("/api/admin/drivers?city=chennai")
+        self.assertEqual(res.status_code, 200)
+        drivers = res.json()
+        self.assertGreaterEqual(len(drivers), 5)
+
+        # 2. Add admin driver
+        new_d = {
+            "name": "K. Murugesan",
+            "licenseNumber": "TN-0120210001",
+            "phone": "+91 98400 99999",
+            "depot": "CMBT Koyambedu",
+            "status": "AVAILABLE",
+            "experienceYears": 7,
+            "city": "chennai"
+        }
+        res_d = self.client.post("/api/admin/drivers", json=new_d)
+        self.assertEqual(res_d.status_code, 201)
+        drv_data = res_d.json()
+        self.assertEqual(drv_data["name"], "K. Murugesan")
+
+        # 3. Assign driver
+        assign_payload = {
+            "driverId": drv_data["id"],
+            "busId": "bus-chn-101",
+            "routeId": "route-570"
+        }
+        res_assign = self.client.post(f"/api/admin/drivers/{drv_data['id']}/assign", json=assign_payload)
+        self.assertEqual(res_assign.status_code, 200)
+
+    def test_10_admin_routes_hubs_and_solver(self):
+        # 1. Get Hubs
+        res_hubs = self.client.get("/api/hubs?city=chennai")
+        self.assertEqual(res_hubs.status_code, 200)
+        self.assertGreaterEqual(len(res_hubs.json()), 4)
+
+        # 2. Get Routes
+        res_routes = self.client.get("/api/routes?city=chennai")
+        self.assertEqual(res_routes.status_code, 200)
+        self.assertGreaterEqual(len(res_routes.json()), 4)
+
+        # 3. Duties and Solver
+        res_duties = self.client.get("/api/duties?city=chennai")
+        self.assertEqual(res_duties.status_code, 200)
+
+        # Run 3-tier fallback solver on duty-570-1
+        solve_payload = {
+            "dutyId": "duty-570-1",
+            "strategy": "AUTO"
+        }
+        res_solve = self.client.post("/api/duties/solve-conflicts", json=solve_payload)
+        self.assertEqual(res_solve.status_code, 200)
+        self.assertTrue(res_solve.json()["success"])
+
+        # 4. Admin Metrics
+        res_metrics = self.client.get("/api/admin/metrics?city=chennai")
+        self.assertEqual(res_metrics.status_code, 200)
+        self.assertGreater(res_metrics.json()["totalBuses"], 0)
+
 if __name__ == "__main__":
     unittest.main()
+

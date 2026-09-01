@@ -11,15 +11,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^7.4.0",
+    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.475.0",
     "maplibre-gl": "^5.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.3",
     "tailwind-merge": "^3.0.1",
     "three": "^0.173.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^22.13.4",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

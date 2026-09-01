@@ -422,3 +422,179 @@ def create_shift_change_request(
     if not match:
         raise RuntimeError("Failed to retrieve created shift change request")
     return match
+
+def get_admin_drivers(city: Optional[str] = None) -> List[Any]:
+    """Retrieve all drivers with admin fields for crew management and workload analysis."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM drivers WHERE 1=1"
+        params = []
+        if city:
+            query += " AND (city = ? OR city IS NULL)"
+            params.append(city.lower())
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        result = []
+        for r in rows:
+            hrs = float(r["daily_driving_hours"] if "daily_driving_hours" in r.keys() else 4.5)
+            comp_status = "REST_VIOLATION" if hrs >= 8.0 else ("STANDBY_READY" if r["is_standby"] else "RESTING_COMPLIANT")
+            result.append({
+                "id": r["driver_id"],
+                "name": r["name"],
+                "fullName": r["name"],
+                "badgeNumber": r["badge_number"] or r["driver_id"],
+                "licenseNumber": r["license_number"],
+                "phone": r["phone"],
+                "depot": r["depot"],
+                "status": r["status"],
+                "experienceYears": r["experience_years"],
+                "isStandby": bool(r["is_standby"]),
+                "accumulatedHours": hrs,
+                "weeklyDrivingHours": float(r["weekly_driving_hours"] if "weekly_driving_hours" in r.keys() else 24.0),
+                "assignedBus": r["assigned_bus_id"],
+                "assignedRoute": r["assigned_route_id"],
+                "city": r["city"] or "chennai",
+                "violationsCount": int(r["violations_count"] if "violations_count" in r.keys() else 0),
+                "complianceStatus": comp_status
+            })
+        return result
+
+def create_driver(data) -> Dict[str, Any]:
+    import uuid
+    drv_id = f"DRV-{uuid.uuid4().hex[:4].upper()}"
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO drivers (
+            driver_id, name, badge_number, license_number, phone, depot, status,
+            experience_years, is_standby, daily_driving_hours, weekly_driving_hours, city
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0.0, 0.0, ?)
+        """, (
+            drv_id,
+            data.name,
+            data.badgeNumber or drv_id,
+            data.licenseNumber,
+            data.phone,
+            data.depot,
+            data.status,
+            data.experienceYears,
+            1 if data.isStandby else 0,
+            data.city.lower()
+        ))
+    drivers = get_admin_drivers(data.city)
+    return next(d for d in drivers if d["id"] == drv_id)
+
+def update_driver(driver_id: str, data) -> Optional[Dict[str, Any]]:
+    with get_db() as conn:
+        cursor = conn.cursor()
+        fields = []
+        params = []
+        if data.name is not None:
+            fields.append("name = ?")
+            params.append(data.name)
+        if data.badgeNumber is not None:
+            fields.append("badge_number = ?")
+            params.append(data.badgeNumber)
+        if data.licenseNumber is not None:
+            fields.append("license_number = ?")
+            params.append(data.licenseNumber)
+        if data.phone is not None:
+            fields.append("phone = ?")
+            params.append(data.phone)
+        if data.depot is not None:
+            fields.append("depot = ?")
+            params.append(data.depot)
+        if data.status is not None:
+            fields.append("status = ?")
+            params.append(data.status)
+        if data.experienceYears is not None:
+            fields.append("experience_years = ?")
+            params.append(data.experienceYears)
+        if data.isStandby is not None:
+            fields.append("is_standby = ?")
+            params.append(1 if data.isStandby else 0)
+        if data.assignedBus is not None:
+            fields.append("assigned_bus_id = ?")
+            params.append(data.assignedBus)
+        if data.assignedRoute is not None:
+            fields.append("assigned_route_id = ?")
+            params.append(data.assignedRoute)
+
+        if fields:
+            query = f"UPDATE drivers SET {', '.join(fields)} WHERE driver_id = ?"
+            params.append(driver_id)
+            cursor.execute(query, params)
+
+    drivers = get_admin_drivers()
+    return next((d for d in drivers if d["id"] == driver_id), None)
+
+def deactivate_driver(driver_id: str) -> bool:
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE drivers SET status = 'UNAVAILABLE' WHERE driver_id = ?", (driver_id,))
+        return cursor.rowcount > 0
+
+def update_driver_assignment(driver_id: str, bus_id: Optional[str], route_id: Optional[str], trip_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE drivers
+        SET assigned_bus_id = ?, assigned_route_id = ?, status = 'ASSIGNED'
+        WHERE driver_id = ?
+        """, (bus_id, route_id, driver_id))
+
+        if bus_id:
+            cursor.execute("""
+            UPDATE vehicles
+            SET assigned_driver_id = ?, assigned_route_id = COALESCE(?, assigned_route_id)
+            WHERE bus_id = ? OR vehicle_number = ?
+            """, (driver_id, route_id, bus_id, bus_id))
+
+    drivers = get_admin_drivers()
+    return next((d for d in drivers if d["id"] == driver_id), None)
+
+def update_shift_change_request_status(request_id: str, new_status: str, notes: Optional[str] = None) -> Optional[ShiftChangeRequestModel]:
+    now_iso = datetime.now().isoformat()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE shift_change_requests
+        SET status = ?, reviewer_notes = COALESCE(?, reviewer_notes), updated_at = ?
+        WHERE request_id = ?
+        """, (new_status, notes, now_iso, request_id))
+
+        cursor.execute("""
+        SELECT 
+            r.request_id, r.driver_id, d.name as driver_name,
+            r.current_shift_id, r.requested_shift_date, r.requested_shift_type,
+            r.reason_category, r.reason_details, r.target_driver_id,
+            t.name as target_driver_name,
+            r.status, r.reviewer_notes, r.created_at, r.updated_at
+        FROM shift_change_requests r
+        JOIN drivers d ON r.driver_id = d.driver_id
+        LEFT JOIN drivers t ON r.target_driver_id = t.driver_id
+        WHERE r.request_id = ?
+        """, (request_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+
+        return ShiftChangeRequestModel(
+            requestId=row["request_id"],
+            driverId=row["driver_id"],
+            driverName=row["driver_name"],
+            currentShiftId=row["current_shift_id"],
+            requestedShiftDate=row["requested_shift_date"],
+            requestedShiftType=row["requested_shift_type"],
+            reasonCategory=row["reason_category"],
+            reasonDetails=row["reason_details"],
+            targetDriverId=row["target_driver_id"],
+            targetDriverName=row["target_driver_name"],
+            status=row["status"],
+            reviewerNotes=row["reviewer_notes"],
+            createdAt=row["created_at"],
+            updatedAt=row["updated_at"]
+        )
+
