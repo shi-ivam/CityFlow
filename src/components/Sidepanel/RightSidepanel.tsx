@@ -50,14 +50,12 @@ export const RightSidepanel: React.FC<RightSidepanelProps> = ({
   return (
     <aside className="w-full h-full flex flex-col justify-between p-6 md:p-8 bg-card border-l border-border select-none overflow-y-auto font-sans">
       {/* Top Context Header */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-foreground inline-block animate-pulse" />
-          <span>Transit Control Hub</span>
-        </div>
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Command Portals</h2>
-        <p className="text-xs text-muted-foreground">
-          Select a driver to view active duty cockpit or supervisory admin controls.
+      <div className="space-y-1">
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">
+          CityFlow
+        </h1>
+        <p className="text-xs text-muted-foreground font-mono">
+          Intelligent Urban Transit Control
         </p>
       </div>
 

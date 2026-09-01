@@ -29,11 +29,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeBusCount }) => {
   return (
     <header className="h-12 w-full bg-card border-b border-border flex items-center justify-between px-4 select-none z-30 shrink-0">
       {/* Brand */}
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 bg-foreground text-background flex items-center justify-center font-mono font-bold text-xs rounded-sm">
-          CF
-        </div>
-        <span className="font-bold text-sm tracking-tight text-foreground">
+      <div className="flex items-center">
+        <span className="font-bold text-base tracking-tight text-foreground">
           CityFlow
         </span>
       </div>
