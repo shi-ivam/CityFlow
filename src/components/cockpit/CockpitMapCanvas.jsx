@@ -390,35 +390,35 @@ export default function CockpitMapCanvas({
       </div>
 
       {/* Floating Map Legend */}
-      <div className="absolute bottom-3 left-3 z-20 px-3 py-2 rounded-lg bg-[#111827]/90 backdrop-blur border border-[#1f2937] text-[11px] font-sans text-slate-300 space-y-1 shadow-2xl hidden sm:block">
-        <div className="text-[9px] font-mono uppercase text-slate-400 font-bold tracking-wider mb-1">
+      <div className="absolute bottom-3 left-3 z-20 px-3.5 py-2.5 rounded-xl bg-[#AAB9CF] border border-[#BAC8DB] text-[11px] font-sans text-[#212227] space-y-1.5 shadow-lg hidden sm:block">
+        <div className="text-[9px] font-mono uppercase text-[#212227] font-bold tracking-wider mb-1">
           Operations Layer
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+        <div className="flex items-center space-x-2 font-medium">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-700 inline-block shadow-xs" />
           <span>Nominal Active Bus</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block" />
+        <div className="flex items-center space-x-2 font-medium">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-700 animate-ping inline-block shadow-xs" />
           <span>Conflict / At-Risk Bus</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="w-4 h-1 border-t-2 border-dashed border-rose-500 inline-block" />
+        <div className="flex items-center space-x-2 font-medium">
+          <span className="w-4 h-1 border-t-2 border-dashed border-rose-700 inline-block" />
           <span>Corridor Overlap Zone</span>
         </div>
       </div>
 
       {/* Live Overlap HUD (Section 14) */}
       {showOverlapHUD && (
-        <div className="absolute top-14 left-3 z-30 w-72 rounded-xl bg-[#111827]/95 backdrop-blur-md border border-amber-500/40 shadow-2xl p-3.5 text-xs font-sans text-white animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center justify-between border-b border-[#1f2937] pb-2 mb-2.5">
+        <div className="absolute top-14 left-3 z-30 w-72 rounded-xl bg-[#AAB9CF] border border-[#BAC8DB] shadow-2xl p-3.5 text-xs font-sans text-[#212227] animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between border-b border-[#212227]/20 pb-2 mb-2.5">
             <div className="flex items-center space-x-1.5">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Sparkles className="w-4 h-4 text-[#212227]" />
               <span className="font-bold text-[12px] tracking-tight">ROUTE VARIANT ANALYSIS</span>
             </div>
             <button
               onClick={() => setShowOverlapHUD(false)}
-              className="text-slate-400 hover:text-white p-0.5 rounded"
+              className="text-[#212227] hover:bg-[#212227]/10 p-0.5 rounded"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -426,31 +426,31 @@ export default function CockpitMapCanvas({
 
           <div className="space-y-1.5 font-mono text-[11px]">
             <div className="flex justify-between">
-              <span className="text-slate-400">Distance:</span>
-              <span className="font-bold text-white">4.82 km</span>
+              <span className="text-[#212227]/75">Distance:</span>
+              <span className="font-bold text-[#212227]">4.82 km</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Existing Corridor:</span>
-              <span className="font-bold text-amber-400">23.4% overlap</span>
+              <span className="text-[#212227]/75">Existing Corridor:</span>
+              <span className="font-bold text-amber-900">23.4% overlap</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Affected Stops:</span>
-              <span className="font-bold text-white">3</span>
+              <span className="text-[#212227]/75">Affected Stops:</span>
+              <span className="font-bold text-[#212227]">3</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Peak Load:</span>
-              <span className="font-bold text-emerald-400">82%</span>
+              <span className="text-[#212227]/75">Peak Load:</span>
+              <span className="font-bold text-emerald-900">82%</span>
             </div>
-            <div className="flex justify-between items-center pt-1 border-t border-[#1f2937]">
-              <span className="text-slate-400">Stop Bay Capacity:</span>
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px]">
+            <div className="flex justify-between items-center pt-1 border-t border-[#212227]/20">
+              <span className="text-[#212227]/75">Stop Bay Capacity:</span>
+              <span className="px-1.5 py-0.5 rounded bg-amber-900 text-amber-100 font-bold text-[10px]">
                 ⚠ WARNING
               </span>
             </div>
           </div>
 
-          <div className="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200">
-            <span className="font-bold">Recommendation:</span> Shift departure by +8 min to avoid stop-bay queueing.
+          <div className="mt-3 p-2 rounded-lg bg-[#212227] text-amber-200 text-[11px] border border-[#212227]">
+            <span className="font-bold text-amber-300">Recommendation:</span> Shift departure by +8 min to avoid stop-bay queueing.
           </div>
         </div>
       )}

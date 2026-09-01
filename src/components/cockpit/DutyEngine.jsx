@@ -173,11 +173,11 @@ export default function DutyEngine({
             </div>
 
             {/* Timeline Header Ruler */}
-            <div className="relative h-6 bg-[#212227] rounded border border-[#2B2D35] flex items-center text-[10px] font-mono text-[#8E9BAE] px-20">
-              <div className="absolute left-2 text-[10px] text-[#AAB9CF] font-bold">
+            <div className="relative h-6 bg-[#AAB9CF] rounded border border-[#BAC8DB] flex items-center text-[10px] font-mono text-[#212227] px-20 shadow-xs">
+              <div className="absolute left-2 text-[10px] text-[#212227] font-bold">
                 {viewMode === 'bus' ? 'FLEET' : 'CREW'}
               </div>
-              <div className="flex-1 flex justify-between relative pl-4">
+              <div className="flex-1 flex justify-between relative pl-4 font-bold">
                 {hoursArray.map((hr) => (
                   <span key={hr}>{hr}</span>
                 ))}
@@ -202,16 +202,16 @@ export default function DutyEngine({
                       }`}
                     >
                       {/* Row Label */}
-                      <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col">
+                      <div className="w-20 shrink-0 px-2 font-mono text-xs flex flex-col justify-center">
                         <span className="font-bold text-[#F1F5F9] flex items-center gap-1">
                           {bus.id}
                           {isConflictBus && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
                         </span>
-                        <span className="text-[9px] text-[#8E9BAE]">{bus.model.split(' ')[0]}</span>
+                        <span className="text-[9px] text-[#AAB9CF]">{bus.model.split(' ')[0]}</span>
                       </div>
 
                       {/* Timeline Track */}
-                      <div className="flex-1 h-full relative border-l border-[#2B2D35] pl-1 overflow-hidden">
+                      <div className="flex-1 h-full relative border-l border-[#32353E] pl-1 overflow-hidden">
                         {/* Now Scrubber Line */}
                         <div
                           className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-20 pointer-events-none"
@@ -236,21 +236,21 @@ export default function DutyEngine({
                                 left: `${leftPct}%`,
                                 width: `${widthPct}%`
                               }}
-                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-md overflow-hidden ${
+                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-sm overflow-hidden ${
                                 duty.type === 'LINKED'
                                   ? (hasConflict 
                                       ? 'bg-rose-600 text-white border border-rose-400 animate-pulse' 
-                                      : 'bg-[#2B3C56] text-[#F1F5F9] border border-[#AAB9CF]/70 shadow-xs')
-                                  : 'bg-[#43351C] text-amber-200 border border-amber-500/60 shadow-xs bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(245,158,11,0.15)_4px,rgba(245,158,11,0.15)_8px)]'
-                              } ${isSelected ? 'ring-2 ring-[#AAB9CF] z-30 scale-y-105' : 'hover:brightness-125'}`}
+                                      : 'bg-[#AAB9CF] text-[#212227] font-bold border border-[#BAC8DB]')
+                                  : 'bg-amber-400 text-amber-950 font-bold border border-amber-300'
+                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-110'}`}
                               title={`${duty.id} | Driver: ${duty.driverId} | ${duty.startTime} - ${duty.endTime}`}
                             >
                               <div className="truncate flex items-center space-x-1">
-                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0" /> : <Unlock className="w-2.5 h-2.5 shrink-0 text-amber-300" />}
-                                <span className="font-bold truncate">{duty.dutyCode}</span>
-                                <span className="text-[9px] opacity-80 truncate hidden sm:inline">{duty.driverId}</span>
+                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0 text-[#212227]" /> : <Unlock className="w-2.5 h-2.5 shrink-0 text-amber-900" />}
+                                <span className="font-bold truncate text-[#212227]">{duty.dutyCode}</span>
+                                <span className="text-[9px] text-[#212227]/80 truncate hidden sm:inline">{duty.driverId}</span>
                               </div>
-                              <span className="text-[9px] font-bold shrink-0 hidden md:inline">{duty.startTime}</span>
+                              <span className="text-[9px] font-bold shrink-0 text-[#212227] hidden md:inline">{duty.startTime}</span>
                             </div>
                           );
                         })}
@@ -307,18 +307,18 @@ export default function DutyEngine({
                                 left: `${leftPct}%`,
                                 width: `${widthPct}%`
                               }}
-                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-md overflow-hidden ${
+                              className={`absolute top-1 bottom-1 rounded-md px-1.5 flex items-center justify-between text-[10px] font-mono cursor-pointer transition-all shadow-sm overflow-hidden ${
                                 hasConflict 
                                   ? 'bg-rose-600 text-white border border-rose-400 animate-pulse' 
-                                  : 'bg-indigo-600 text-white border border-indigo-400/50'
-                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-125'}`}
+                                  : 'bg-[#AAB9CF] text-[#212227] font-bold border border-[#BAC8DB]'
+                              } ${isSelected ? 'ring-2 ring-white z-30 scale-y-105' : 'hover:brightness-110'}`}
                             >
                               <div className="truncate flex items-center space-x-1">
-                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0" /> : <Unlock className="w-2.5 h-2.5 shrink-0" />}
-                                <span className="font-bold truncate">{duty.busId}</span>
-                                <span className="text-[9px] opacity-80 truncate hidden sm:inline">{duty.routeId}</span>
+                                {duty.isLocked ? <Lock className="w-2.5 h-2.5 shrink-0 text-[#212227]" /> : <Unlock className="w-2.5 h-2.5 shrink-0 text-amber-900" />}
+                                <span className="font-bold truncate text-[#212227]">{duty.busId}</span>
+                                <span className="text-[9px] text-[#212227]/80 truncate hidden sm:inline">{duty.routeId}</span>
                               </div>
-                              <span className="text-[9px] font-bold shrink-0">{duty.startTime}</span>
+                              <span className="text-[9px] font-bold shrink-0 text-[#212227]">{duty.startTime}</span>
                             </div>
                           );
                         })}
