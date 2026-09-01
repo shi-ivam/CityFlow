@@ -61,50 +61,48 @@ export default function AdminHeader({
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header className="h-14 bg-card border-b border-border px-4 flex items-center justify-between z-30 shrink-0 sticky top-0 font-sans">
+    <header className="h-14 bg-card/80 backdrop-blur-md border-b border-border/60 px-4 flex items-center justify-between z-30 shrink-0 sticky top-0 font-sans transition-colors">
       
-      {/* Left Breadcrumb & Location Badge */}
-      <div className="flex items-center space-x-3">
-        {/* Chennai (MTC) Location Badge */}
-        <div className="flex items-center bg-muted/60 border border-border rounded-md px-2.5 py-1 space-x-1.5 font-mono text-xs text-foreground">
-          <MapPin className="w-3.5 h-3.5 text-primary" />
-          <span className="font-bold text-foreground">
-            {selectedCity === 'chennai' ? 'Chennai (MTC)' : 'Delhi Operations'}
+      {/* Left: Hub Badge & Route Breadcrumb */}
+      <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-muted/40 border border-border/60 text-xs font-medium text-foreground">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="font-semibold text-[11px] tracking-tight">
+            {selectedCity === 'chennai' ? 'Chennai MTC' : 'Delhi Operations'}
           </span>
         </div>
 
-        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden sm:inline" />
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 hidden sm:inline" />
 
-        <h1 className="text-sm font-bold text-foreground tracking-tight hidden sm:inline">
+        <h1 className="text-xs font-medium text-muted-foreground hidden sm:inline tracking-tight">
           {pageTitle}
         </h1>
       </div>
 
-      {/* Center: Global Search HUD Trigger */}
-      <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
+      {/* Center: Global Search Bar */}
+      <div className="hidden md:flex items-center flex-1 max-w-sm mx-6">
         <button
           onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted border border-input text-xs text-muted-foreground transition-all duration-150 group"
+          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-full bg-muted/30 hover:bg-muted/60 border border-border/60 text-xs text-muted-foreground transition-all group"
         >
           <div className="flex items-center space-x-2">
-            <Search className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground" />
-            <span>Search buses, drivers, routes, schedules...</span>
+            <Search className="w-3.5 h-3.5 text-muted-foreground/70 group-hover:text-foreground transition-colors" />
+            <span className="text-[11px] tracking-tight">Search routes, drivers, buses...</span>
           </div>
           <div className="flex items-center space-x-1">
-            <kbd className="text-[10px]">Ctrl</kbd>
-            <kbd className="text-[10px]">K</kbd>
+            <kbd className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-card border border-border/70 text-muted-foreground shadow-2xs">Ctrl K</kbd>
           </div>
         </button>
       </div>
 
-      {/* Right Controls: Ops Clock, Rest Status Dot, Theme */}
+      {/* Right Controls: Ops Clock, Solver Dot, Theme */}
       <div className="flex items-center space-x-2">
         
-        {/* Operational Time Clock */}
-        <div className="flex items-center bg-muted/60 border border-border rounded-md px-2.5 py-1 space-x-2 font-mono text-xs text-foreground">
-          <span className="font-bold tabular-nums">{formatTime(operationalTime)}</span>
+        {/* Minimal Time Capsule */}
+        <div className="flex items-center bg-muted/30 border border-border/60 rounded-full px-3 py-1 space-x-2 font-mono text-xs text-foreground">
+          <span className="font-semibold tabular-nums text-[11px]">{formatTime(operationalTime)}</span>
 
-          <div className="h-3 w-px bg-border" />
+          <div className="h-3 w-px bg-border/60" />
 
           {setIsSimulating && (
             <button
@@ -119,8 +117,8 @@ export default function AdminHeader({
           {setSimSpeed && (
             <button
               onClick={() => setSimSpeed(simSpeed === 1 ? 5 : simSpeed === 5 ? 15 : 1)}
-              title="Toggle Speed"
-              className="px-1 py-0.2 rounded text-[10px] font-bold bg-card border border-border text-foreground hover:bg-accent"
+              title="Toggle Simulation Speed"
+              className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-card border border-border/70 text-foreground hover:bg-accent transition"
             >
               {simSpeed}x
             </button>
@@ -130,35 +128,33 @@ export default function AdminHeader({
             <button
               onClick={() => setOperationalTime(480)}
               title="Reset to 08:00 AM"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground/60 hover:text-foreground transition-colors"
             >
               <RotateCcw className="w-2.5 h-2.5" />
             </button>
           )}
         </div>
 
-        {/* Rest Compliance Status Dot */}
+        {/* Rest Compliance Status */}
         {conflictsCount > 0 ? (
           <button
             onClick={onOpenFallbackModal}
-            title={`${conflictsCount} duty rest conflict(s) detected - Click to open 3-Tier Solver`}
-            className="flex items-center space-x-1.5 px-2 py-1 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 text-xs font-mono font-bold transition hover:bg-rose-500/20 active:scale-95 group"
+            title={`${conflictsCount} rest conflict(s) detected - Click to open 3-Tier Solver`}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 text-xs font-mono font-bold transition hover:bg-rose-500/20 active:scale-95 group"
           >
-            <span className="relative flex h-2.5 w-2.5">
+            <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
-            <span className="text-[11px] font-bold">{conflictsCount}</span>
+            <span className="text-[10px] font-bold">{conflictsCount}</span>
           </button>
         ) : (
           <div
-            title="100% Rest Compliant - All duty rosters within 11h mandatory rest threshold"
-            className="flex items-center justify-center p-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 cursor-default"
+            title="100% Rest Compliant - Zero violations"
+            className="flex items-center space-x-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 cursor-default text-[10px] font-mono font-medium"
           >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <span className="hidden sm:inline">COMPLIANT</span>
           </div>
         )}
 
@@ -166,7 +162,7 @@ export default function AdminHeader({
         <button
           onClick={() => setDarkMode(!darkMode)}
           title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          className="p-1.5 rounded-md bg-muted/60 border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="p-1.5 rounded-full bg-muted/40 hover:bg-muted border border-border/60 text-muted-foreground hover:text-foreground transition-all"
         >
           {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-700" />}
         </button>

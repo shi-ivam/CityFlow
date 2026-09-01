@@ -63,20 +63,20 @@ export default function SidebarAccordion({
         aria-label={`${label} dropdown`}
         onClick={handleRowClick}
         onKeyDown={handleKeyDown}
-        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all duration-150 select-none group ${
+        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-all duration-150 select-none group ${
           isParentActive
-            ? 'bg-primary/15 text-primary font-semibold border-l-2 border-primary shadow-xs'
-            : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
+            ? 'bg-palette-slate/10 text-palette-slate font-semibold'
+            : 'text-muted-foreground/90 hover:text-foreground hover:bg-muted/40'
         } ${isCollapsed ? 'justify-center px-0' : ''}`}
       >
         <div className="flex items-center space-x-2.5 min-w-0">
           {Icon && (
-            <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-              isParentActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+            <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+              isParentActive ? 'text-palette-slate' : 'text-muted-foreground/80 group-hover:text-foreground'
             }`} />
           )}
           {!isCollapsed && (
-            <span className="truncate tracking-tight font-medium">
+            <span className="truncate tracking-tight font-medium text-[11.5px]">
               {label}
             </span>
           )}
@@ -85,23 +85,23 @@ export default function SidebarAccordion({
         {!isCollapsed && (
           <div className="flex items-center space-x-1.5 shrink-0 ml-1">
             {badge !== null && badge !== undefined && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${badgeColor}`}>
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold ${badgeColor}`}>
                 {badge}
               </span>
             )}
             <span
-              className={`p-0.5 rounded text-muted-foreground group-hover:text-foreground inline-flex items-center justify-center transition-transform duration-200 ${
+              className={`p-0.5 rounded text-muted-foreground/60 group-hover:text-foreground inline-flex items-center justify-center transition-transform duration-200 ${
                 isOpen ? 'rotate-180' : 'rotate-0'
               }`}
             >
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3 h-3" />
             </span>
           </div>
         )}
 
         {/* Tooltip for collapsed mode */}
         {isCollapsed && (
-          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-popover text-popover-foreground text-xs font-medium rounded-lg shadow-xl opacity-0 pointer-events-none group-hover/accordion:opacity-100 transition-opacity z-50 whitespace-nowrap border border-border">
+          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-popover text-popover-foreground text-xs font-medium rounded-md shadow-lg opacity-0 pointer-events-none group-hover/accordion:opacity-100 transition-opacity z-50 whitespace-nowrap border border-border">
             {label}
             {badge && <span className="ml-1.5 font-bold text-rose-500">({badge})</span>}
           </div>
@@ -115,7 +115,7 @@ export default function SidebarAccordion({
             isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
           }`}
         >
-          <div className="pl-3.5 pr-1 py-1 space-y-0.5 border-l border-border/70 ml-4 mt-0.5">
+          <div className="pl-2.5 pr-1 py-0.5 space-y-0.5 border-l border-border/50 ml-3.5 mt-0.5">
             {items.map((item, idx) => {
               const hasSubitems = item.subitems && item.subitems.length > 0;
               // Auto-expand nested dropdown if a child is active, unless explicitly toggled
@@ -137,21 +137,21 @@ export default function SidebarAccordion({
                           toggleSub(item.key, e);
                         }
                       }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-[11px] font-mono cursor-pointer transition-colors ${
+                      className={`w-full flex items-center justify-between px-2 py-1 rounded text-[11px] font-sans font-medium cursor-pointer transition-colors ${
                         item.isSubParentActive
-                          ? 'bg-primary/10 text-primary font-bold'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          ? 'bg-palette-slate/10 text-palette-slate font-semibold'
+                          : 'text-muted-foreground/80 hover:text-foreground hover:bg-muted/40'
                       }`}
                     >
                       <span className="truncate">{item.label}</span>
                       <div className="flex items-center space-x-1 shrink-0 ml-1">
                         {item.badge && (
-                          <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${item.badgeColor || 'bg-rose-500 text-white'}`}>
+                          <span className={`px-1.5 py-0.2 rounded-full text-[8.5px] font-bold ${item.badgeColor || 'bg-rose-500 text-white'}`}>
                             {item.badge}
                           </span>
                         )}
-                        <span className={`p-0.5 transition-transform duration-200 ${isSubOpen ? 'rotate-180' : 'rotate-0'}`}>
-                          <ChevronDown className="w-3 h-3" />
+                        <span className={`p-0.5 text-muted-foreground/60 transition-transform duration-200 ${isSubOpen ? 'rotate-180' : 'rotate-0'}`}>
+                          <ChevronDown className="w-2.5 h-2.5" />
                         </span>
                       </div>
                     </div>
@@ -162,15 +162,15 @@ export default function SidebarAccordion({
                         isSubOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                       }`}
                     >
-                      <div className="pl-3 pr-1 py-0.5 space-y-0.5 border-l border-border/50 ml-3">
+                      <div className="pl-2 pr-1 py-0.5 space-y-0.5 border-l border-border/40 ml-2.5">
                         {item.subitems.map((sub, sIdx) => (
                           <NavLink
                             key={sub.key || sub.path || sIdx}
                             to={sub.path}
-                            className={() => `block px-2 py-1 rounded text-[10.5px] font-mono transition-colors cursor-pointer ${
+                            className={() => `block px-2 py-1 rounded text-[10.5px] font-sans transition-all cursor-pointer ${
                               sub.isActive
-                                ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
+                                ? 'bg-palette-slate text-white font-medium shadow-2xs'
+                                : 'text-muted-foreground/75 hover:text-foreground hover:bg-muted/40'
                             }`}
                           >
                             <span className="truncate">• {sub.label}</span>
@@ -187,16 +187,16 @@ export default function SidebarAccordion({
                 <NavLink
                   key={item.key || item.path || idx}
                   to={item.path}
-                  className={() => `block px-2.5 py-1.5 rounded-md text-[11px] font-mono transition-colors cursor-pointer ${
+                  className={() => `block px-2 py-1 rounded text-[10.5px] font-sans transition-all cursor-pointer ${
                     item.isActive
-                      ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
+                      ? 'bg-palette-slate text-white font-medium shadow-2xs'
+                      : 'text-muted-foreground/75 hover:text-foreground hover:bg-muted/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="truncate">• {item.label}</span>
                     {item.badge && (
-                      <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${item.badgeColor || 'bg-rose-500 text-white'}`}>
+                      <span className={`px-1.5 py-0.2 rounded-full text-[8.5px] font-bold ${item.badgeColor || 'bg-rose-500 text-white'}`}>
                         {item.badge}
                       </span>
                     )}

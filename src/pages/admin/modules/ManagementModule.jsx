@@ -31,25 +31,25 @@ export default function ManagementModule({
   return (
     <div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto font-sans">
       
-      {/* Breadcrumb Header */}
-      <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Minimalist Header */}
+      <div className="border-b border-border/50 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-mono text-muted-foreground uppercase font-semibold">
+          <div className="text-[11px] font-mono text-muted-foreground/80 uppercase tracking-wider font-semibold">
             ADMIN / MANAGEMENT / {activeFeature.toUpperCase()}
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight mt-1">
+          <h1 className="text-xl font-semibold text-foreground tracking-tight mt-0.5">
             Control Room & Dispatch Management
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground/90 mt-0.5">
             Temporal duty rosters, 3-tier automated constraint solvers, long-journey changeovers, and network status.
           </p>
         </div>
 
         <button
           onClick={onOpenFallbackModal}
-          className="flex items-center space-x-2 px-3.5 py-2 rounded-md bg-emerald-600 text-white font-mono text-xs font-semibold hover:bg-emerald-700 shadow-sm transition-all active:scale-95 shrink-0"
+          className="flex items-center space-x-2 px-4 py-1.5 rounded-full bg-palette-slate text-white text-xs font-medium hover:bg-palette-slate/90 shadow-xs transition active:scale-95 shrink-0"
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5 text-palette-ice" />
           <span>Run 3-Tier Rest Solver</span>
         </button>
       </div>

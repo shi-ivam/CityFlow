@@ -120,16 +120,16 @@ export default function GanttTimeline({
     <div className="flex flex-col h-full bg-card select-none overflow-hidden font-sans border-t border-border">
       
       {/* Gantt Toolbar */}
-      <div className="p-2.5 px-4 bg-muted/20 border-b border-border flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div className="p-2.5 px-4 bg-muted/10 border-b border-border/60 flex flex-wrap items-center justify-between gap-2 shrink-0">
         
-        {/* Filter Badges */}
-        <div className="flex items-center space-x-1 flex-wrap gap-y-1 text-xs font-mono">
+        {/* Minimal Segmented Filter Badges */}
+        <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-muted/40 border border-border/50 text-xs font-sans">
           <button
             onClick={() => setFilterType('ALL')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
+            className={`px-3 py-1 rounded-md text-xs font-medium transition ${
               filterType === 'ALL'
-                ? 'bg-primary text-primary-foreground font-semibold'
-                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
+                ? 'bg-card text-foreground font-semibold shadow-2xs'
+                : 'text-muted-foreground/80 hover:text-foreground'
             }`}
           >
             All ({dutyAssignments.length})
@@ -137,34 +137,34 @@ export default function GanttTimeline({
 
           <button
             onClick={() => setFilterType('LINKED')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition ${
               filterType === 'LINKED'
-                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/30'
-                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
+                ? 'bg-palette-mint/70 text-emerald-950 font-semibold shadow-2xs'
+                : 'text-muted-foreground/80 hover:text-foreground'
             }`}
           >
-            <Link2 className="w-3 h-3 text-emerald-500" />
-            <span>🔗 Linked</span>
+            <Link2 className="w-3 h-3 text-emerald-600" />
+            <span>Linked</span>
           </button>
 
           <button
             onClick={() => setFilterType('UNLINKED')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition ${
               filterType === 'UNLINKED'
-                ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/30'
-                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
+                ? 'bg-palette-sage text-slate-900 font-semibold shadow-2xs'
+                : 'text-muted-foreground/80 hover:text-foreground'
             }`}
           >
-            <Unlink className="w-3 h-3 text-amber-500" />
-            <span>○ Unlinked</span>
+            <Unlink className="w-3 h-3 text-amber-600" />
+            <span>Unlinked</span>
           </button>
 
           <button
             onClick={() => setFilterType('CONFLICT')}
-            className={`flex items-center space-x-1 px-2.5 py-1 rounded font-medium transition ${
+            className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition ${
               filterType === 'CONFLICT'
-                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold border border-rose-500/30'
-                : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
+                ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs'
+                : 'text-muted-foreground/80 hover:text-foreground'
             }`}
           >
             <ShieldAlert className="w-3 h-3 text-rose-500" />
@@ -172,24 +172,24 @@ export default function GanttTimeline({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Minimal Search & Solver Action */}
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="w-3 h-3 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-muted-foreground/60 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search driver, bus..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-muted/50 border border-input rounded pl-7 pr-2 py-1 text-xs text-foreground placeholder:text-muted-foreground font-mono w-40 sm:w-48 outline-none"
+              className="bg-muted/30 border border-border/60 rounded-full pl-8 pr-3 py-1 text-xs text-foreground placeholder:text-muted-foreground/60 font-sans w-36 sm:w-44 outline-none focus:border-palette-slate/50 transition"
             />
           </div>
 
           <button
             onClick={onOpenFallbackModal}
-            className="flex items-center space-x-1.5 px-3 py-1 rounded bg-primary text-primary-foreground text-xs font-mono font-medium transition active:scale-95"
+            className="flex items-center space-x-1.5 px-3.5 py-1 rounded-full bg-palette-slate text-white text-xs font-medium hover:bg-palette-slate/90 transition shadow-2xs active:scale-95"
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3 h-3 text-palette-ice" />
             <span>Fallback Solver</span>
           </button>
         </div>
