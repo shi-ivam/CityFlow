@@ -286,7 +286,7 @@ const LandingPageComponent: React.FC<{
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* Top Navbar */}
-      <TopNavbar activeBusCount={buses.length} />
+      <TopNavbar activeBusCount={buses.length} theme={theme} onToggleTheme={onToggleTheme} />
 
       {/* Main Single Page Layout */}
       <div className="flex-1 w-full h-[calc(100vh-3rem)] overflow-hidden">

@@ -948,8 +948,8 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
             onClick={toggle3DView}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-medium rounded transition-colors ${
               is3D
-                ? 'bg-foreground text-background font-bold'
-                : 'hover:bg-accent text-foreground'
+                ? 'bg-primary text-primary-foreground font-bold shadow-xs'
+                : 'hover:bg-primary/10 text-foreground'
             }`}
             title="Toggle 3D Isometric Tactical View"
           >
@@ -961,8 +961,8 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
             onClick={onToggleBuffers}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono rounded transition-colors ${
               showBuffers
-                ? 'bg-foreground text-background font-bold'
-                : 'hover:bg-accent text-foreground'
+                ? 'bg-primary text-primary-foreground font-bold shadow-xs'
+                : 'hover:bg-primary/10 text-foreground'
             }`}
             title="Toggle PostGIS 50m Safety Buffer Halo"
           >
@@ -1025,12 +1025,12 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
       {/* Interactive Active Bus Tactical Overlay Popup (When a bus is selected) */}
       {activeSelectedBus && !cinematicBusId && (
-        <div className="absolute top-16 left-3 z-30 w-80 bg-card/95 backdrop-blur-md border-2 border-foreground rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between px-3 py-2 bg-foreground text-background font-mono text-xs font-bold">
-            <span>{activeSelectedBus.id}</span>
+        <div className="absolute top-16 left-3 z-30 w-80 bg-card/95 backdrop-blur-md border-2 border-primary rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 font-sans">
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-primary text-primary-foreground font-mono text-xs font-bold">
+            <span className="tracking-wide">{activeSelectedBus.id}</span>
             <button
               onClick={resetToInitialView}
-              className="hover:opacity-75 text-sm leading-none cursor-pointer"
+              className="hover:opacity-80 text-sm leading-none cursor-pointer"
               title="Close and zoom out (Esc)"
             >
               ✕

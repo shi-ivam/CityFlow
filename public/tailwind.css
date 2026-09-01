@@ -935,9 +935,9 @@ code, kbd, pre, .font-mono {
   margin-bottom: 0.5rem;
 }
 
-.my-6 {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .my-auto {
@@ -967,6 +967,10 @@ code, kbd, pre, .font-mono {
 
 .mb-4 {
   margin-bottom: 1rem;
+}
+
+.ml-0\.5 {
+  margin-left: 0.125rem;
 }
 
 .ml-1 {
@@ -1211,6 +1215,10 @@ code, kbd, pre, .font-mono {
 
 .max-h-0 {
   max-height: 0px;
+}
+
+.max-h-52 {
+  max-height: 13rem;
 }
 
 .max-h-60 {
@@ -1784,6 +1792,12 @@ code, kbd, pre, .font-mono {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+}
+
+.space-y-3\.5 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.875rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.875rem * var(--tw-space-y-reverse));
 }
 
 .space-y-4 > :not([hidden]) ~ :not([hidden]) {
@@ -2746,6 +2760,10 @@ code, kbd, pre, .font-mono {
   background-color: hsl(var(--secondary) / 0.6);
 }
 
+.bg-secondary\/80 {
+  background-color: hsl(var(--secondary) / 0.8);
+}
+
 .bg-sky-400 {
   --tw-bg-opacity: 1;
   background-color: rgb(56 189 248 / var(--tw-bg-opacity, 1));
@@ -2763,6 +2781,10 @@ code, kbd, pre, .font-mono {
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+
+.bg-white\/20 {
+  background-color: rgb(255 255 255 / 0.2);
 }
 
 .p-0 {
@@ -2901,9 +2923,9 @@ code, kbd, pre, .font-mono {
   padding-bottom: 0.75rem;
 }
 
-.py-5 {
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
+.py-3\.5 {
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
 }
 
 .py-6 {
@@ -3011,10 +3033,6 @@ code, kbd, pre, .font-mono {
   padding-top: 0.75rem;
 }
 
-.pt-4 {
-  padding-top: 1rem;
-}
-
 .text-left {
   text-align: left;
 }
@@ -3047,11 +3065,6 @@ code, kbd, pre, .font-mono {
 .text-3xl {
   font-size: 1.875rem;
   line-height: 2.25rem;
-}
-
-.text-4xl {
-  font-size: 2.25rem;
-  line-height: 2.5rem;
 }
 
 .text-\[10\.5px\] {
@@ -3427,6 +3440,10 @@ code, kbd, pre, .font-mono {
 
 .text-primary-foreground {
   color: hsl(var(--primary-foreground));
+}
+
+.text-primary-foreground\/80 {
+  color: hsl(var(--primary-foreground) / 0.8);
 }
 
 .text-purple-600 {
@@ -3908,12 +3925,6 @@ kbd {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
-.hover\:scale-\[1\.01\]:hover {
-  --tw-scale-x: 1.01;
-  --tw-scale-y: 1.01;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
 .hover\:scale-\[1\.02\]:hover {
   --tw-scale-x: 1.02;
   --tw-scale-y: 1.02;
@@ -3935,6 +3946,10 @@ kbd {
 
 .hover\:border-primary:hover {
   border-color: hsl(var(--primary));
+}
+
+.hover\:border-primary\/40:hover {
+  border-color: hsl(var(--primary) / 0.4);
 }
 
 .hover\:border-primary\/50:hover {
@@ -4086,6 +4101,10 @@ kbd {
   background-color: rgb(69 105 144 / 0.9);
 }
 
+.hover\:bg-primary\/10:hover {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
 .hover\:bg-primary\/20:hover {
   background-color: hsl(var(--primary) / 0.2);
 }
@@ -4200,6 +4219,12 @@ kbd {
   opacity: 0.9;
 }
 
+.hover\:shadow:hover {
+  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
 .hover\:shadow-popover:hover {
   --tw-shadow-color: hsl(var(--popover));
   --tw-shadow: var(--tw-shadow-colored);
@@ -4230,6 +4255,10 @@ kbd {
 
 .focus\:ring-foreground:focus {
   --tw-ring-color: hsl(var(--foreground));
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: hsl(var(--primary));
 }
 
 .active\:scale-90:active {
@@ -4275,6 +4304,11 @@ kbd {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.group:hover .group-hover\:translate-x-1 {
+  --tw-translate-x: 0.25rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .group:hover .group-hover\:scale-105 {
   --tw-scale-x: 1.05;
   --tw-scale-y: 1.05;
@@ -4300,10 +4334,6 @@ kbd {
 
 .group:hover .group-hover\:text-background {
   color: hsl(var(--background));
-}
-
-.group:hover .group-hover\:text-background\/80 {
-  color: hsl(var(--background) / 0.8);
 }
 
 .group:hover .group-hover\:text-foreground {
@@ -4652,13 +4682,17 @@ kbd {
     gap: 1rem;
   }
 
+  .md\:p-6 {
+    padding: 1.5rem;
+  }
+
   .md\:p-8 {
     padding: 2rem;
   }
 
-  .md\:text-5xl {
-    font-size: 3rem;
-    line-height: 1;
+  .md\:text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
 }
 
