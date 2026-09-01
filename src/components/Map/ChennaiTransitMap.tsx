@@ -403,7 +403,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': theme === 'dark' ? '#7C3AED' : '#5B3CC4',
+          'line-color': theme === 'dark' ? '#ffffff' : '#7C69A5',
           'line-width': 22,
           'line-opacity': theme === 'dark' ? 0.12 : 0.08,
           'line-dasharray': [2, 2],
@@ -414,19 +414,19 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       });
     }
 
-    // Route Casing Layer (Section 3: White halo in light mode separates route from light map tiles)
+    // Route Casing Layer: In dark mode keep as before only (#ffffff 0.4 opacity); in light mode use crisp white halo
     if (!map.getLayer('route-casing')) {
       map.addLayer({
         id: 'route-casing',
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': theme === 'dark' ? '#000000' : '#FFFFFF',
+          'line-color': '#ffffff',
           'line-width': [
             'case',
             ['==', ['get', 'id'], selectedRouteId || ''],
-            9,
-            7.5
+            theme === 'dark' ? 7 : 8.5,
+            theme === 'dark' ? 6 : 7.2
           ],
           'line-opacity': theme === 'dark' ? 0.4 : 0.95,
         },
@@ -437,30 +437,32 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       });
     }
 
-    // Route Main Line (Section 2, 3: 5px saturated transit colors, round caps/joins)
+    // Route Main Line: In dark mode keep as before only (#ffffff); in light mode use Lavender (#7C69A5 / #5B3CC4)
     if (!map.getLayer('route-main')) {
       map.addLayer({
         id: 'route-main',
         type: 'line',
         source: 'transit-routes',
         paint: {
-          'line-color': [
-            'case',
-            ['==', ['get', 'id'], selectedRouteId || ''],
-            '#7C3AED',
-            ['get', 'color']
-          ],
+          'line-color': theme === 'dark'
+            ? '#ffffff' // Dark mode: as before only!
+            : [
+                'case',
+                ['==', ['get', 'id'], selectedRouteId || ''],
+                '#5B3CC4', // Selected deep lavender
+                '#7C69A5'  // Light mode: Lavender
+              ],
           'line-width': [
             'case',
             ['==', ['get', 'id'], selectedRouteId || ''],
-            6,
-            4.8
+            theme === 'dark' ? 5 : 5.8,
+            theme === 'dark' ? 3.5 : 4.8
           ],
           'line-opacity': [
             'case',
             ['==', ['get', 'id'], selectedRouteId || ''],
             1.0,
-            selectedRouteId ? 0.25 : 0.95
+            selectedRouteId ? 0.28 : 0.95
           ]
         },
         layout: {
@@ -1051,26 +1053,19 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
         </div>
       </div>
 
-      {/* Bottom Left Minimal Route Legend (Section 9) */}
+      {/* Bottom Left Minimal Route Legend */}
       <div className="absolute bottom-3 left-3 z-20 flex items-center space-x-3 px-3 py-1.5 bg-card/90 backdrop-blur-xs border border-border rounded-lg shadow-xs font-mono text-[10px] text-muted-foreground select-none">
-        <span className="flex items-center space-x-1">
-          <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
-          <span className="text-foreground font-semibold">570</span>
+        <span className="flex items-center space-x-1.5">
+          <span 
+            className="w-2.5 h-2.5 rounded-full" 
+            style={{ backgroundColor: theme === 'dark' ? '#ffffff' : '#7C69A5' }} 
+          />
+          <span className="text-foreground font-semibold">
+            {theme === 'dark' ? 'Routes (White)' : 'Corridor (Lavender)'}
+          </span>
         </span>
-        <span className="flex items-center space-x-1">
-          <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
-          <span className="text-foreground font-semibold">21G</span>
-        </span>
-        <span className="flex items-center space-x-1">
-          <span className="w-2 h-2 rounded-full bg-[#5B3CC4]" />
-          <span className="text-foreground font-semibold">19B</span>
-        </span>
-        <span className="flex items-center space-x-1">
-          <span className="w-2 h-2 rounded-full bg-[#0891B2]" />
-          <span className="text-foreground font-semibold">23C</span>
-        </span>
-        <span className="flex items-center space-x-1">
-          <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
+        <span className="flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#5B3CC4]" />
           <span className="text-foreground font-semibold">Selected</span>
         </span>
       </div>

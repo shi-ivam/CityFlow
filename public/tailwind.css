@@ -2251,19 +2251,9 @@ code, kbd, pre, .font-mono {
   border-top-color: transparent;
 }
 
-.bg-\[\#0891B2\] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(8 145 178 / var(--tw-bg-opacity, 1));
-}
-
 .bg-\[\#111111\] {
   --tw-bg-opacity: 1;
   background-color: rgb(17 17 17 / var(--tw-bg-opacity, 1));
-}
-
-.bg-\[\#16A34A\] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(22 163 74 / var(--tw-bg-opacity, 1));
 }
 
 .bg-\[\#1F6C9F\] {
@@ -2280,11 +2270,6 @@ code, kbd, pre, .font-mono {
   background-color: rgb(33 34 39 / 0.3);
 }
 
-.bg-\[\#2563EB\] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
-}
-
 .bg-\[\#282A31\] {
   --tw-bg-opacity: 1;
   background-color: rgb(40 42 49 / var(--tw-bg-opacity, 1));
@@ -2298,11 +2283,6 @@ code, kbd, pre, .font-mono {
 .bg-\[\#5B3CC4\] {
   --tw-bg-opacity: 1;
   background-color: rgb(91 60 196 / var(--tw-bg-opacity, 1));
-}
-
-.bg-\[\#7C3AED\] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(124 58 237 / var(--tw-bg-opacity, 1));
 }
 
 .bg-\[\#8693AB\] {

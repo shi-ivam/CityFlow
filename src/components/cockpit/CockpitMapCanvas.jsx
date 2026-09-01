@@ -88,26 +88,37 @@ export default function CockpitMapCanvas({
     layersRef.current.conflictLayer.clearLayers();
 
     if (showAllRoutes) {
+      const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
       routes.forEach(route => {
         const isSelected = selectedRouteId === route.id || (selectedDuty && selectedDuty.routeId === route.id);
         const isHovered = hoveredRouteId === route.id;
         const hasConflict = conflicts.some(c => c.status === 'ACTIVE' && (c.affectedRouteId === route.id || c.overlappingRouteId === route.id));
-        const routeColor = hasConflict ? '#DC2626' : (isSelected ? '#7C3AED' : route.color || '#5B3CC4');
 
-        // Section 3: White casing halo ensures 100% visibility on light neutral base map
-        const casing = L.polyline(route.coordinates, {
-          color: '#FFFFFF',
-          weight: isSelected ? 9.5 : 7.5,
-          opacity: isSelected ? 0.95 : (selectedRouteId ? 0.25 : 0.9),
-          lineCap: 'round',
-          lineJoin: 'round'
-        });
-        layersRef.current.routesLayer.addLayer(casing);
+        // Dark mode: keep as before only! Light mode: use Lavender!
+        const routeColor = hasConflict 
+          ? '#DC2626' 
+          : isSelected 
+          ? '#5B3CC4' 
+          : isDarkMode 
+          ? (route.color || '#6366f1') 
+          : '#7C69A5';
 
-        // Section 2, 3: 4.8–6px saturated transit line
+        // Light mode: add white halo casing to lift lavender path from map
+        if (!isDarkMode) {
+          const casing = L.polyline(route.coordinates, {
+            color: '#FFFFFF',
+            weight: isSelected ? 9.5 : 7.5,
+            opacity: isSelected ? 0.95 : (selectedRouteId ? 0.25 : 0.9),
+            lineCap: 'round',
+            lineJoin: 'round'
+          });
+          layersRef.current.routesLayer.addLayer(casing);
+        }
+
         const polyline = L.polyline(route.coordinates, {
           color: routeColor,
-          weight: isSelected ? 6 : (isHovered ? 5.5 : 4.8),
+          weight: isSelected ? 6 : (isHovered ? 5.5 : (isDarkMode ? 4.0 : 4.8)),
           opacity: isSelected || isHovered ? 1 : (selectedRouteId ? 0.28 : 0.95),
           lineCap: 'round',
           lineJoin: 'round',
@@ -230,11 +241,13 @@ export default function CockpitMapCanvas({
       const isSelected = selectedBusId === bus.id || (selectedDuty && selectedDuty.busId === bus.id);
       const isDelayed = bus.status === 'DELAYED' || bus.delayMinutes > 0;
       const isCritical = conflicts.some(c => c.status === 'ACTIVE' && c.affectedBusId === bus.id);
+      const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
       
-      // Section 4: Match bus marker color to its assigned route color
       const assignedRoute = routes.find(r => r.id === bus.routeId);
-      const routeColor = assignedRoute?.color || '#5B3CC4';
-      const markerColor = isCritical ? '#DC2626' : (isDelayed ? '#F59E0B' : (isSelected ? '#7C3AED' : routeColor));
+      const routeColor = isDarkMode ? (assignedRoute?.color || '#10b981') : '#7C69A5';
+      const markerColor = isCritical 
+        ? '#DC2626' 
+        : (isDelayed ? '#F59E0B' : (isSelected ? '#5B3CC4' : routeColor));
       const labelText = bus.id.replace('BUS-', '');
 
       const icon = L.divIcon({
