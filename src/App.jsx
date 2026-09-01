@@ -224,7 +224,20 @@ function AppContent() {
     const updatedCrew = [...crewMembers, newDriver];
     setCrewMembers(updatedCrew);
     persistCurrentCityStore({ drivers: updatedCrew });
-    showToast(`✓ DRIVER ADDED: ${newDriver.name} added to roster!`);
+    showToast(`✓ DRIVER ADDED: ${newDriver.name || newDriver.fullName} added to roster!`);
+  };
+
+  // MASTER MUTATION: Edit Existing Driver Info
+  const handleUpdateDriverDetails = (updatedDriverObj) => {
+    const updatedCrew = crewMembers.map(c => {
+      if (c.id === updatedDriverObj.id) {
+        return { ...c, ...updatedDriverObj };
+      }
+      return c;
+    });
+    setCrewMembers(updatedCrew);
+    persistCurrentCityStore({ drivers: updatedCrew });
+    showToast(`✓ DRIVER UPDATED: ${updatedDriverObj.name || updatedDriverObj.fullName} saved!`);
   };
 
   // MASTER MUTATION: Deactivate Driver
@@ -494,10 +507,16 @@ function AppContent() {
                   element={
                     <DriversModule
                       crewMembers={crewMembers}
+                      busFleet={busFleet}
                       dutyAssignments={dutyAssignments}
                       routes={routes}
+                      trips={trips}
+                      selectedCity={selectedCity}
                       onAddDriver={handleAddDriver}
+                      onUpdateDriverDetails={handleUpdateDriverDetails}
                       onDeactivateDriver={handleDeactivateDriver}
+                      onUpdateDriverAssignment={handleUpdateDriverAssignment}
+                      onUpdateBusAssignment={handleUpdateBusAssignment}
                     />
                   }
                 />
