@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Link2, 
   Unlink, 
@@ -31,9 +31,24 @@ export default function GanttTimeline({
   onHoverRoute,
   onOpenFallbackModal,
   onUpdateDriverAssignment,
-  onUpdateBusAssignment
+  onUpdateBusAssignment,
+  externalFilter = 'all',
+  onFilterChange
 }) {
-  const [filterType, setFilterType] = useState('ALL');
+  const getInitialFilter = (ext) => {
+    const f = (ext || '').toLowerCase();
+    if (f === 'linked') return 'LINKED';
+    if (f === 'unlinked') return 'UNLINKED';
+    if (f === 'conflicts' || f === 'conflict') return 'CONFLICT';
+    return 'ALL';
+  };
+
+  const [filterType, setFilterType] = useState(() => getInitialFilter(externalFilter));
+
+  useEffect(() => {
+    setFilterType(getInitialFilter(externalFilter));
+  }, [externalFilter]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [unlinkedModalDuty, setUnlinkedModalDuty] = useState(null);
 

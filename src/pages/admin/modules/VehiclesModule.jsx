@@ -61,6 +61,19 @@ export default function VehiclesModule({
   else if (path.includes('/vehicles/maintenance')) activeFeature = 'maintenance';
   else if (path.includes('/vehicles/documents')) activeFeature = 'documents';
 
+  // Fleet sub-feature detection (All, Active, Inactive, Maintenance)
+  const fleetSubFilter = useMemo(() => {
+    if (path.includes('/fleet/active') || location.search.includes('view=active')) return 'active';
+    if (path.includes('/fleet/inactive') || location.search.includes('view=inactive')) return 'inactive';
+    if (path.includes('/fleet/maintenance') || location.search.includes('view=maintenance')) return 'maintenance';
+    return 'all';
+  }, [path, location.search]);
+
+  // Reset page when navigating subroutes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [path, fleetSubFilter]);
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -177,6 +190,20 @@ export default function VehiclesModule({
   // Filtered & Sorted Vehicles (Single Source of Truth)
   const filteredVehicles = useMemo(() => {
     return busFleet.filter(bus => {
+      // Submenu fleet filter (Active, Inactive, Maintenance, All)
+      if (activeFeature === 'fleet') {
+        if (fleetSubFilter === 'active') {
+          const isActive = bus.status === 'IN_SERVICE' || bus.status === 'ACTIVE' || bus.status === 'RUNNING';
+          if (!isActive) return false;
+        } else if (fleetSubFilter === 'inactive') {
+          const isInactive = bus.status === 'STANDBY_READY' || bus.status === 'AVAILABLE' || bus.status === 'INACTIVE' || bus.status === 'OFFLINE';
+          if (!isInactive) return false;
+        } else if (fleetSubFilter === 'maintenance') {
+          const isMaint = bus.status === 'MAINTENANCE' || bus.status === 'INSPECTION_DUE' || bus.maintenanceStatus === 'UNDER_SERVICE';
+          if (!isMaint) return false;
+        }
+      }
+
       // Search match
       const term = searchTerm.toLowerCase();
       const matchesSearch = 
@@ -188,6 +215,8 @@ export default function VehiclesModule({
         bus.assignedDriver?.toLowerCase().includes(term) ||
         bus.depot?.toLowerCase().includes(term) ||
         bus.status?.toLowerCase().includes(term);
+
+      if (!matchesSearch) return false;
 
       // Status match
       const matchesStatus = 
@@ -237,7 +266,7 @@ export default function VehiclesModule({
       if (valA > valB) return direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [busFleet, searchTerm, filters, sortConfig]);
+  }, [busFleet, activeFeature, fleetSubFilter, searchTerm, filters, sortConfig]);
 
   // Paginated Slices
   const paginatedVehicles = useMemo(() => {
@@ -331,13 +360,41 @@ export default function VehiclesModule({
         <div>
           {/* Subtle Breadcrumb */}
           <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider font-semibold">
-            ADMIN / VEHICLES / {activeFeature.toUpperCase()}
+            ADMIN / VEHICLES / {activeFeature === 'fleet' ? `FLEET // ${fleetSubFilter.toUpperCase()}` : activeFeature.toUpperCase()}
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight mt-1">
-            Fleet &amp; Vehicle Management
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Monitor vehicle availability, assignments, telemetry, and maintenance.
+          <div className="flex items-center space-x-3 mt-1 flex-wrap gap-y-1">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              {activeFeature === 'fleet'
+                ? fleetSubFilter === 'active'
+                  ? 'Active Fleet Vehicles'
+                  : fleetSubFilter === 'inactive'
+                  ? 'Inactive & Standby Fleet'
+                  : fleetSubFilter === 'maintenance'
+                  ? 'Fleet Maintenance & Inspection'
+                  : 'Complete Vehicle Fleet'
+                : 'Fleet & Vehicle Management'}
+            </h1>
+            {activeFeature === 'fleet' && (
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold uppercase ${
+                fleetSubFilter === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' :
+                fleetSubFilter === 'inactive' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30' :
+                fleetSubFilter === 'maintenance' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30' :
+                'bg-primary/15 text-primary border border-primary/30'
+              }`}>
+                {filteredVehicles.length} {fleetSubFilter === 'all' ? 'Vehicles Total' : `${fleetSubFilter} Vehicles`}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {activeFeature === 'fleet'
+              ? fleetSubFilter === 'active'
+                ? 'Monitoring active in-service transit vehicles currently assigned to routes and passenger operations.'
+                : fleetSubFilter === 'inactive'
+                ? 'Reviewing standby reserve vehicles and offline units stabled at depots.'
+                : fleetSubFilter === 'maintenance'
+                ? 'Tracking vehicles docked in workshop bays, undergoing scheduled servicing, or inspection.'
+                : 'Complete registry of all urban transit vehicles, battery telemetry, and route assignments.'
+              : 'Monitor vehicle availability, assignments, telemetry, and maintenance.'}
           </p>
         </div>
 

@@ -909,6 +909,22 @@ export const App: React.FC = () => {
           element={<AdminControlCenter theme={theme} onToggleTheme={handleToggleTheme} />}
         />
 
+        {/* Direct /vehicles/fleet URLs routing to Admin Vehicles module */}
+        <Route path="/vehicles/fleet/active" element={<Navigate to="/admin/vehicles/fleet/active" replace />} />
+        <Route path="/vehicles/fleet/inactive" element={<Navigate to="/admin/vehicles/fleet/inactive" replace />} />
+        <Route path="/vehicles/fleet/maintenance" element={<Navigate to="/admin/vehicles/fleet/maintenance" replace />} />
+        <Route path="/vehicles/fleet" element={<Navigate to="/admin/vehicles/fleet" replace />} />
+        <Route path="/vehicles/*" element={<Navigate to="/admin/vehicles/fleet" replace />} />
+
+        {/* Direct /management URLs routing to Admin Management module */}
+        <Route path="/management/scheduling" element={<Navigate to="/admin/management/scheduling" replace />} />
+        <Route path="/management/smartassignment" element={<Navigate to="/admin/management/smartassignment" replace />} />
+        <Route path="/management/rotation" element={<Navigate to="/admin/management/rotation" replace />} />
+        <Route path="/management/longjourney" element={<Navigate to="/admin/management/longjourney" replace />} />
+        <Route path="/management/alerts" element={<Navigate to="/admin/management/alerts" replace />} />
+        <Route path="/management/network" element={<Navigate to="/admin/management/network" replace />} />
+        <Route path="/management/*" element={<Navigate to="/admin/management" replace />} />
+
         {/* Fallback to Landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -493,6 +493,88 @@ export const CITIES_DATA = {
         activityHistory: [
           { time: "06:00 AM", event: "Stationed at Bay 1 Reserve Pool (Ready for 3-Tier Fallback Dispatch)", user: "Dispatch Supervisor" }
         ]
+      },
+      {
+        id: "DL-1PC-0109",
+        busNumber: "DL 1PC 0109",
+        type: "Standard AC Electric (12m)",
+        fuelType: "ELECTRIC",
+        capacity: 45,
+        status: "MAINTENANCE",
+        assignedRoute: null,
+        assignedDriver: null,
+        driverId: null,
+        depot: "Central Maintenance Workshop",
+        speedKmH: 0,
+        batteryPct: 35,
+        rangeKm: 90,
+        odometerKm: 89400,
+        manufacturer: "JBM Auto",
+        model: "Ecolife e12",
+        year: 2024,
+        vin: "JBM2024E1200984",
+        lastGpsUpdate: "10 mins ago",
+        gpsStatus: "ONLINE",
+        nextServiceDate: "2026-09-04",
+        lastInspectionDate: "2026-08-15",
+        maintenanceStatus: "UNDER_SERVICE",
+        temperature: "34°C (Workshop Bay)",
+        brakePressureBar: 7.2,
+        motorStatus: "Inspection Active",
+        currentCoordinates: [77.2150, 28.6500],
+        compliance: {
+          insuranceExpiry: "2027-06-15",
+          fitnessExpiry: "2027-07-20",
+          pollutionExpiry: "2027-01-10",
+          permitExpiry: "2028-11-15"
+        },
+        maintenanceHistory: [
+          { date: "2026-09-01", type: "Pneumatic Brake Valve Replacement", technician: "Senior Mechanic V. Rathi", cost: "₹8,400", status: "IN_PROGRESS" }
+        ],
+        activityHistory: [
+          { time: "08:30 AM", event: "Docked in Heavy Bay 3 for scheduled brake inspection", user: "Maintenance Lead" }
+        ]
+      },
+      {
+        id: "DL-1PC-0110",
+        busNumber: "DL 1PC 0110",
+        type: "Midi Electric Feeder (9m)",
+        fuelType: "ELECTRIC",
+        capacity: 32,
+        status: "INACTIVE",
+        assignedRoute: null,
+        assignedDriver: null,
+        driverId: null,
+        depot: "Rohini Sector 22 Depot",
+        speedKmH: 0,
+        batteryPct: 22,
+        rangeKm: 50,
+        odometerKm: 65100,
+        manufacturer: "Olectra Greentech",
+        model: "K9 Electric",
+        year: 2023,
+        vin: "OLE2023K900511",
+        lastGpsUpdate: "2 hours ago",
+        gpsStatus: "OFFLINE",
+        nextServiceDate: "2026-09-20",
+        lastInspectionDate: "2026-08-01",
+        maintenanceStatus: "HEALTHY",
+        temperature: "26°C (Parked)",
+        brakePressureBar: 8.0,
+        motorStatus: "Offline",
+        currentCoordinates: [77.1000, 28.7200],
+        compliance: {
+          insuranceExpiry: "2027-04-10",
+          fitnessExpiry: "2027-05-15",
+          pollutionExpiry: "2026-12-10",
+          permitExpiry: "2028-09-20"
+        },
+        maintenanceHistory: [
+          { date: "2026-08-01", type: "Quarterly Depot Stabling Inspection", technician: "K. Gupta", cost: "₹3,100", status: "COMPLETED" }
+        ],
+        activityHistory: [
+          { time: "Yesterday", event: "Depot Stabling - Shift completed and parked offline", user: "Yard Manager" }
+        ]
       }
     ],
     drivers: [
@@ -771,8 +853,10 @@ export const CITIES_DATA = {
       { id: "bus-chn-201", busNumber: "TN 38 MN 5298", type: "Articulated Electric EV", capacity: 110, status: "IN_SERVICE", batteryPct: 82, assignedRoute: "21G" },
       { id: "bus-chn-202", busNumber: "TN 10 BK 3917", type: "Electric Low-Floor EV", capacity: 50, status: "IN_SERVICE", batteryPct: 89, assignedRoute: "21G" },
       { id: "bus-chn-301", busNumber: "TN 09 KT 8421", type: "OMR IT AC Express", capacity: 55, status: "IN_SERVICE", batteryPct: 90, assignedRoute: "570" },
-      { id: "bus-chn-401", busNumber: "TN 01 EF 6612", type: "City Circular EV", capacity: 50, status: "IN_SERVICE", batteryPct: 78, assignedRoute: "11G" },
-      { id: "bus-chn-901", busNumber: "TN 01 SBY 001", type: "Reserve Standby EV", capacity: 60, status: "STANDBY_READY", batteryPct: 100, assignedRoute: null }
+      { id: "bus-chn-401", busNumber: "TN 01 EF 6612", type: "City Circular EV", capacity: 50, status: "IN_SERVICE", batteryPct: 78, assignedRoute: "11G", depot: "Anna Nagar Depot" },
+      { id: "bus-chn-901", busNumber: "TN 01 SBY 001", type: "Reserve Standby EV", capacity: 60, status: "STANDBY_READY", batteryPct: 100, assignedRoute: null, depot: "Koyambedu CMBT" },
+      { id: "bus-chn-701", busNumber: "TN 01 MN 4019", type: "Electric Low-Floor EV", capacity: 50, status: "INACTIVE", batteryPct: 40, assignedRoute: null, depot: "Adyar Depot" },
+      { id: "bus-chn-801", busNumber: "TN 02 WX 9102", type: "MTC Deluxe Express", capacity: 55, status: "MAINTENANCE", batteryPct: 28, assignedRoute: null, depot: "Central Workshop Chromepet", nextServiceDate: "2026-09-05" }
     ],
     drivers: [
       { id: "DRV-201", fullName: "Arun Kumar", name: "Arun Kumar", licenseNumber: "TN-01201700981", badge: "DRV-201", accumulatedHours: 5, status: "ASSIGNED" },
