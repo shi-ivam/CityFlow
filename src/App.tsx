@@ -6,6 +6,7 @@ import { TopNavbar } from './components/Navigation/TopNavbar';
 import { ChennaiTransitMap } from './components/Map/ChennaiTransitMap';
 import { RightSidepanel } from './components/Sidepanel/RightSidepanel';
 import { DriverPortal } from './components/Driver/DriverPortal';
+import { DriverTransitionOverlay } from './components/Map/DriverTransitionOverlay';
 
 function computeBusTelemetry(
   bus: ActiveBus,
@@ -77,6 +78,12 @@ export const App: React.FC = () => {
   const [showBuffers, setShowBuffers] = useState<boolean>(true);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [simSpeed, setSimSpeed] = useState<number>(1);
+
+  // Cinematic 3D Transition States
+  const [transitionBusId, setTransitionBusId] = useState<string | null>(null);
+  const [transitionDriverId, setTransitionDriverId] = useState<string | null>(null);
+  const [transitionStage, setTransitionStage] = useState<'idle' | 'intercept' | 'rear_zoom' | 'cockpit_warp' | 'complete'>('idle');
+  const transitionTimersRef = useRef<NodeJS.Timeout[]>([]);
 
   const lastTickRef = useRef<number>(Date.now());
 
@@ -162,17 +169,92 @@ export const App: React.FC = () => {
     setBuses(initializeBuses(INITIAL_BUSES, routes));
   };
 
+  // Clear transition timers helper
+  const clearTransitionTimers = () => {
+    transitionTimersRef.current.forEach((t) => clearTimeout(t));
+    transitionTimersRef.current = [];
+  };
+
+  const handleCancelTransition = () => {
+    clearTransitionTimers();
+    setTransitionBusId(null);
+    setTransitionDriverId(null);
+    setTransitionStage('idle');
+  };
+
+  const handleSkipTransition = () => {
+    clearTransitionTimers();
+    const targetDriver = transitionDriverId || 'DRV-7402';
+    setTransitionBusId(null);
+    setTransitionDriverId(null);
+    setTransitionStage('idle');
+    navigateTo(`/driver?driverId=${targetDriver}`);
+  };
+
+  // Trigger Cinematic 3D Rear-Zoom & Seamless Handover Sequence (Balanced 2.25s total duration)
+  const handleSelectDriverForTransition = (driverId: string, busId: string) => {
+    clearTransitionTimers();
+    setTransitionBusId(busId);
+    setTransitionDriverId(driverId);
+    setSelectedBusId(busId);
+    setTransitionStage('intercept');
+
+    // Stage 1 -> Stage 2: Rear Zoom-In (after 750ms)
+    const t1 = setTimeout(() => {
+      setTransitionStage('rear_zoom');
+    }, 750);
+
+    // Stage 2 -> Stage 3: Hyperloop Warp (after 1700ms)
+    const t2 = setTimeout(() => {
+      setTransitionStage('cockpit_warp');
+    }, 1700);
+
+    // Stage 3 -> Stage 4: Seamless Handover into Driver Portal (after 2250ms)
+    const t3 = setTimeout(() => {
+      setTransitionStage('complete');
+      navigateTo(`/driver?driverId=${driverId}`);
+      const t4 = setTimeout(() => {
+        setTransitionBusId(null);
+        setTransitionDriverId(null);
+        setTransitionStage('idle');
+      }, 400);
+      transitionTimersRef.current.push(t4);
+    }, 2250);
+
+    transitionTimersRef.current.push(t1, t2, t3);
+  };
+
+  // Global escape key to abort transition
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && transitionStage !== 'idle') {
+        handleCancelTransition();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [transitionStage]);
+
   // If path is /driver, render the dedicated Driver Portal
   if (currentPath.startsWith('/driver')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const driverIdParam = urlParams.get('driverId') || transitionDriverId || undefined;
+
     return (
       <DriverPortal
         onNavigateHome={() => navigateTo('/')}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         maptilerKey={maptilerKey}
+        initialDriverId={driverIdParam}
       />
     );
   }
+
+  const activeTransitionBus = buses.find((b) => b.id === transitionBusId);
+  const activeTransitionRoute = activeTransitionBus
+    ? routes.find((r) => r.id === activeTransitionBus.routeId)
+    : undefined;
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-background text-foreground">
@@ -196,14 +278,36 @@ export const App: React.FC = () => {
               mapProvider={mapProvider}
               onSetMapProvider={setMapProvider}
               maptilerKey={maptilerKey}
+              cinematicBusId={transitionBusId}
+              cinematicStage={transitionStage}
             />
+
+            {/* Holographic 3D Cockpit Warp & Telemetry HUD Overlay */}
+            {transitionStage !== 'idle' && activeTransitionBus && (
+              <DriverTransitionOverlay
+                bus={activeTransitionBus}
+                route={activeTransitionRoute}
+                stage={transitionStage}
+                onCancel={handleCancelTransition}
+                onSkip={handleSkipTransition}
+              />
+            )}
           </main>
 
           {/* Right Options Sidepanel */}
           <aside className="w-full lg:w-[32%] xl:w-[28%] h-[40%] lg:h-full overflow-hidden">
             <RightSidepanel
-              onNavigateDriver={() => navigateTo('/driver')}
+              activeBuses={buses}
+              onSelectDriverForTransition={handleSelectDriverForTransition}
+              onNavigateDriver={(driverId) => {
+                if (driverId) {
+                  navigateTo(`/driver?driverId=${driverId}`);
+                } else {
+                  navigateTo('/driver');
+                }
+              }}
               onNavigateAdmin={() => navigateTo('/admin')}
+              isTransitioning={transitionStage !== 'idle'}
             />
           </aside>
         </div>

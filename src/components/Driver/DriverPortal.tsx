@@ -27,6 +27,7 @@ interface DriverPortalProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   maptilerKey?: string;
+  initialDriverId?: string;
 }
 
 export const DriverPortal: React.FC<DriverPortalProps> = ({
@@ -34,9 +35,15 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
   theme,
   onToggleTheme,
   maptilerKey = 'get_your_own_OpIi9ZULNHzrESv6T2vL',
+  initialDriverId,
 }) => {
   const [drivers, setDrivers] = useState<DriverSummary[]>([]);
-  const [selectedDriverId, setSelectedDriverId] = useState<string>('DRV-7402');
+  const [selectedDriverId, setSelectedDriverId] = useState<string>(() => {
+    if (initialDriverId) return initialDriverId;
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromUrl = urlParams.get('driverId');
+    return fromUrl || 'DRV-7402';
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

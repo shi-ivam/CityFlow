@@ -18,6 +18,8 @@ interface ChennaiTransitMapProps {
   mapProvider: MapProviderId;
   onSetMapProvider: (provider: MapProviderId) => void;
   maptilerKey?: string;
+  cinematicBusId?: string | null;
+  cinematicStage?: 'idle' | 'intercept' | 'rear_zoom' | 'cockpit_warp' | 'complete';
 }
 
 function getProviderMapStyle(provider: MapProviderId, theme: 'dark' | 'light', maptilerKey = '') {
@@ -159,6 +161,8 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
   mapProvider,
   onSetMapProvider,
   maptilerKey = '',
+  cinematicBusId = null,
+  cinematicStage = 'idle',
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -166,6 +170,8 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
   const selectedBusIdRef = useRef<string | null>(selectedBusId);
   const selectedRouteIdRef = useRef<string | null>(selectedRouteId);
   const is3DRef = useRef<boolean>(true);
+  const cinematicBusIdRef = useRef<string | null>(cinematicBusId);
+  const cinematicStageRef = useRef<'idle' | 'intercept' | 'rear_zoom' | 'cockpit_warp' | 'complete'>(cinematicStage);
 
   const [is3D, setIs3D] = useState<boolean>(true);
   const [hoveredCoord, setHoveredCoord] = useState<[number, number]>(CHENNAI_CENTER);
@@ -183,6 +189,14 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
   useEffect(() => {
     selectedRouteIdRef.current = selectedRouteId;
   }, [selectedRouteId]);
+
+  useEffect(() => {
+    cinematicBusIdRef.current = cinematicBusId;
+  }, [cinematicBusId]);
+
+  useEffect(() => {
+    cinematicStageRef.current = cinematicStage;
+  }, [cinematicStage]);
 
   // Update Dynamic Buses GeoJSON for Map Markers & Hover
   useEffect(() => {
@@ -215,10 +229,59 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
   const isInitialFlyingRef = useRef<boolean>(false);
 
-  // Initial approach flight on bus selection
+  // Cinematic Flight Sequence for Driver Transition
   useEffect(() => {
-    if (!mapRef.current || !selectedBusId) {
-      isInitialFlyingRef.current = false;
+    if (!mapRef.current || !cinematicBusId || cinematicStage === 'idle') return;
+    const bus = busesRef.current.find((b) => b.id === cinematicBusId);
+    if (!bus) return;
+
+    if (cinematicStage === 'intercept') {
+      isInitialFlyingRef.current = true;
+      mapRef.current.flyTo({
+        center: bus.currentCoord,
+        zoom: 15.0,
+        pitch: 52,
+        bearing: bus.heading,
+        speed: 1.4,
+        curve: 1.1,
+        essential: true,
+      });
+
+      const timer = setTimeout(() => {
+        isInitialFlyingRef.current = false;
+      }, 750);
+      return () => clearTimeout(timer);
+    } else if (cinematicStage === 'rear_zoom') {
+      isInitialFlyingRef.current = true;
+      mapRef.current.easeTo({
+        center: bus.currentCoord,
+        zoom: 15.8,
+        pitch: 58,
+        bearing: bus.heading,
+        duration: 950,
+        essential: true,
+      });
+
+      const timer = setTimeout(() => {
+        isInitialFlyingRef.current = false;
+      }, 950);
+      return () => clearTimeout(timer);
+    } else if (cinematicStage === 'cockpit_warp') {
+      mapRef.current.easeTo({
+        center: bus.currentCoord,
+        zoom: 16.2,
+        pitch: 60,
+        bearing: bus.heading,
+        duration: 550,
+        essential: true,
+      });
+    }
+  }, [cinematicBusId, cinematicStage]);
+
+  // Standard initial approach flight on bus selection (when not in cinematic transition)
+  useEffect(() => {
+    if (!mapRef.current || !selectedBusId || cinematicBusId) {
+      if (!cinematicBusId) isInitialFlyingRef.current = false;
       return;
     }
     const bus = busesRef.current.find((b) => b.id === selectedBusId);
@@ -240,17 +303,22 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
     }, 1100);
 
     return () => clearTimeout(timer);
-  }, [selectedBusId]);
+  }, [selectedBusId, cinematicBusId]);
 
   // Buttery-smooth 60fps continuous camera tracking loop
   useEffect(() => {
-    if (!selectedBusId) return;
+    const targetBusId = cinematicBusId || selectedBusId;
+    if (!targetBusId) return;
     let animId: number;
 
     const followLoop = () => {
       const map = mapRef.current;
-      if (map && selectedBusIdRef.current && !isInitialFlyingRef.current) {
-        const bus = busesRef.current.find((b) => b.id === selectedBusIdRef.current);
+      const activeCinematic = cinematicBusIdRef.current;
+      const activeSelected = selectedBusIdRef.current;
+      const activeTargetId = activeCinematic || activeSelected;
+
+      if (map && activeTargetId && !isInitialFlyingRef.current) {
+        const bus = busesRef.current.find((b) => b.id === activeTargetId);
         if (bus) {
           const currentCenter = map.getCenter();
           const targetLng = bus.currentCoord[0];
@@ -261,11 +329,16 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
           // Follow smoothly if in range
           if (Math.abs(diffLng) < 0.1 && Math.abs(diffLat) < 0.1) {
-            const nextLng = currentCenter.lng + diffLng * 0.08;
-            const nextLat = currentCenter.lat + diffLat * 0.08;
+            const lerpFactor = activeCinematic ? 0.18 : 0.08;
+            const nextLng = currentCenter.lng + diffLng * lerpFactor;
+            const nextLat = currentCenter.lat + diffLat * lerpFactor;
 
             let nextBearing = map.getBearing();
-            if (is3DRef.current) {
+            if (activeCinematic) {
+              const targetBearing = bus.heading;
+              const angleDiff = ((targetBearing - nextBearing + 540) % 360) - 180;
+              nextBearing = nextBearing + angleDiff * 0.12; // Tight chase cam rotation
+            } else if (is3DRef.current) {
               const targetBearing = bus.heading - 15;
               const angleDiff = ((targetBearing - nextBearing + 540) % 360) - 180;
               nextBearing = nextBearing + angleDiff * 0.03; // Smooth stabilized rotation
@@ -273,7 +346,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
             map.jumpTo({
               center: [nextLng, nextLat],
-              bearing: is3DRef.current ? nextBearing : 0,
+              bearing: (is3DRef.current || activeCinematic) ? nextBearing : 0,
             });
           }
         }
@@ -283,7 +356,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
     animId = requestAnimationFrame(followLoop);
     return () => cancelAnimationFrame(animId);
-  }, [selectedBusId]);
+  }, [selectedBusId, cinematicBusId]);
 
   // Setup layers helper
   const setupMapLayers = (map: MapLibreMap) => {
@@ -671,33 +744,6 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               mesh.name = 'bus-body';
               group.add(mesh);
 
-              // Solid Inner Cabin Core (Spans Z = 0.4 to 13.2 to block all window cutouts)
-              const cabinGeo = new THREE.BoxGeometry(10.3, 29.3, 12.8);
-              cabinGeo.translate(0, 0, 6.8);
-              const cabinMat = new THREE.MeshStandardMaterial({
-                color: 0x090d16, // Dark obsidian tinted glass / solid interior
-                metalness: 0.8,
-                roughness: 0.2,
-                transparent: false,
-                opacity: 1.0,
-              });
-              const cabinMesh = new THREE.Mesh(cabinGeo, cabinMat);
-              cabinMesh.name = 'bus-cabin';
-              group.add(cabinMesh);
-
-              // Solid Undercarriage Chassis Baseplate (Spans Z = 0.1 to 1.3, sealing bottom)
-              const baseGeo = new THREE.BoxGeometry(10.6, 29.6, 1.2);
-              baseGeo.translate(0, 0, 0.7);
-              const baseMat = new THREE.MeshStandardMaterial({
-                color: 0x030712, // Dark slate undercarriage
-                roughness: 0.9,
-                transparent: false,
-                opacity: 1.0,
-              });
-              const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-              baseMesh.name = 'bus-base';
-              group.add(baseMesh);
-
               // Headlights & Taillights at bumper height (Z = 2.5)
               const lightGeo = new THREE.SphereGeometry(0.65, 8, 8);
               const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -736,11 +782,14 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
 
             if (group) {
               group.visible = isRouteMatch;
+              const isCinematic = bus.id === cinematicBusIdRef.current;
+              const isTargeted = isSelected || isCinematic;
 
               const selectionRing = group.getObjectByName('selection-ring');
               if (selectionRing) {
-                selectionRing.visible = isSelected;
-                if (isSelected) {
+                // Show selection ring on normal map click, but hide during cinematic hyperloop flight for clean visuals
+                selectionRing.visible = isSelected && !isCinematic;
+                if (selectionRing.visible) {
                   selectionRing.rotation.z += 0.04;
                 }
               }
@@ -748,8 +797,8 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
               const bodyMesh = group.getObjectByName('bus-body') as THREE.Mesh;
               if (bodyMesh && bodyMesh.material) {
                 const mat = bodyMesh.material as THREE.MeshStandardMaterial;
-                if (isSelected) {
-                  mat.color.set(0x38bdf8); // Bright electric cyan-blue when selected
+                if (isSelected || isCinematic) {
+                  mat.color.set(0x2563eb); // Solid Rich Transit Blue
                   mat.emissive.set(0x1d4ed8);
                 } else {
                   mat.color.set(0x2563eb); // Solid rich blue
@@ -876,7 +925,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Floating Tactical Reset Zoom Button (Active when a bus is zoomed into / selected) */}
-      {selectedBusId && (
+      {selectedBusId && !cinematicBusId && (
         <div className="absolute top-3 right-3 z-30 animate-in fade-in slide-in-from-top-2 duration-200">
           <button
             onClick={resetToInitialView}
@@ -975,7 +1024,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       </div>
 
       {/* Interactive Active Bus Tactical Overlay Popup (When a bus is selected) */}
-      {activeSelectedBus && (
+      {activeSelectedBus && !cinematicBusId && (
         <div className="absolute top-16 left-3 z-30 w-80 bg-card/95 backdrop-blur-md border-2 border-foreground rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between px-3 py-2 bg-foreground text-background font-mono text-xs font-bold">
             <div className="flex items-center gap-1.5">
