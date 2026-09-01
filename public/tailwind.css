@@ -555,38 +555,42 @@ video {
 }
 
 :root {
-  /* Pure Monochrome Swiss Paper Light Theme (0% Saturation) */
-  --background: 0 0% 98%;
-  --foreground: 0 0% 9%;
+  /* Custom Palette Light Theme: Soft Alabaster Sage & Slate Steel */
+  --background: 68 25% 97%;
+  --foreground: 211 40% 16%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 9%;
+  --card-foreground: 211 40% 16%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 92%;
-  --secondary-foreground: 0 0% 12%;
-  --muted: 0 0% 93%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 0 0% 90%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 0% 15%;
+  --popover-foreground: 211 40% 16%;
+  /* Primary Accent: Slate Steel #456990 */
+  --primary: 211 35% 42%;
+  --primary-foreground: 0 0% 100%;
+  /* Secondary: Opal Mist #A6CFD5 */
+  --secondary: 188 39% 88%;
+  --secondary-foreground: 211 40% 16%;
+  /* Muted: Alabaster Sage #EDF0DA */
+  --muted: 68 43% 92%;
+  --muted-foreground: 211 20% 45%;
+  /* Accent: Ice Sky #C1EEFF */
+  --accent: 196 100% 92%;
+  --accent-foreground: 211 45% 18%;
+  --destructive: 0 75% 55%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 88%;
-  --input: 0 0% 88%;
-  --ring: 0 0% 9%;
-  /* Transit Domain Tokens */
-  --duty-linked-bg: 0 0% 10%;
-  --duty-linked-border: 0 0% 9%;
-  --duty-linked-text: 0 0% 98%;
-  --duty-unlinked-bg: 0 0% 95%;
-  --duty-unlinked-border: 0 0% 40%;
-  --duty-unlinked-text: 0 0% 20%;
-  --rest-valid-bg: 0 0% 96%;
-  --rest-valid-text: 0 0% 9%;
-  --rest-violation-bg: 0 0% 9%;
-  --rest-violation-text: 0 0% 98%;
-  --radius: 0.375rem;
+  --border: 188 25% 85%;
+  --input: 188 25% 85%;
+  --ring: 211 35% 42%;
+  /* Transit Domain Tokens: Mint Frost #E4FDE1 */
+  --duty-linked-bg: 114 88% 94%;
+  --duty-linked-border: 114 45% 70%;
+  --duty-linked-text: 114 70% 20%;
+  --duty-unlinked-bg: 68 43% 90%;
+  --duty-unlinked-border: 68 30% 65%;
+  --duty-unlinked-text: 211 40% 25%;
+  --rest-valid-bg: 114 88% 94%;
+  --rest-valid-text: 114 70% 20%;
+  --rest-violation-bg: 0 85% 94%;
+  --rest-violation-text: 0 75% 35%;
+  --radius: 0.5rem;
   /* Custom Project Palette (#E4FDE1, #456990, #C1EEFF, #EDF0DA, #A6CFD5) */
   --palette-mint: #E4FDE1;
   --palette-slate: #456990;
@@ -596,37 +600,40 @@ video {
 }
 
 .dark {
-  /* Pure Tactical Pitch Radar Night Dark Theme (0% Saturation) */
-  --background: 0 0% 4%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 8%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 15%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 0 0% 18%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 0% 90%;
-  --destructive-foreground: 0 0% 4%;
-  --border: 0 0% 16%;
-  --input: 0 0% 20%;
-  --ring: 0 0% 85%;
+  /* Custom Palette Dark Theme: Deep Slate Navy & Luminous Ice/Mint Accents */
+  --background: 211 35% 10%;
+  --foreground: 68 35% 95%;
+  --card: 211 32% 14%;
+  --card-foreground: 68 35% 95%;
+  --popover: 211 34% 12%;
+  --popover-foreground: 68 35% 95%;
+  /* Primary Accent: Ice Sky #C1EEFF with high contrast */
+  --primary: 196 100% 88%;
+  --primary-foreground: 211 45% 12%;
+  /* Secondary: Slate Steel #456990 */
+  --secondary: 211 30% 22%;
+  --secondary-foreground: 68 35% 95%;
+  --muted: 211 25% 18%;
+  --muted-foreground: 188 20% 65%;
+  /* Accent: Opal Mist tinted surface */
+  --accent: 211 30% 22%;
+  --accent-foreground: 196 100% 88%;
+  --destructive: 0 65% 45%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 211 25% 20%;
+  --input: 211 25% 22%;
+  --ring: 196 100% 88%;
   /* Transit Domain Tokens */
-  --duty-linked-bg: 0 0% 90%;
-  --duty-linked-border: 0 0% 98%;
-  --duty-linked-text: 0 0% 4%;
-  --duty-unlinked-bg: 0 0% 12%;
-  --duty-unlinked-border: 0 0% 50%;
-  --duty-unlinked-text: 0 0% 80%;
-  --rest-valid-bg: 0 0% 12%;
-  --rest-valid-text: 0 0% 98%;
-  --rest-violation-bg: 0 0% 98%;
-  --rest-violation-text: 0 0% 4%;
+  --duty-linked-bg: 211 35% 24%;
+  --duty-linked-border: 188 39% 55%;
+  --duty-linked-text: 196 100% 88%;
+  --duty-unlinked-bg: 211 25% 18%;
+  --duty-unlinked-border: 211 25% 32%;
+  --duty-unlinked-text: 68 30% 80%;
+  --rest-valid-bg: 114 45% 16%;
+  --rest-valid-text: 114 88% 85%;
+  --rest-violation-bg: 0 50% 18%;
+  --rest-violation-text: 0 80% 80%;
 }
 
 * {
