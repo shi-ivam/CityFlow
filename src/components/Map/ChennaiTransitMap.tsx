@@ -1027,10 +1027,7 @@ export const ChennaiTransitMap: React.FC<ChennaiTransitMapProps> = ({
       {activeSelectedBus && !cinematicBusId && (
         <div className="absolute top-16 left-3 z-30 w-80 bg-card/95 backdrop-blur-md border-2 border-foreground rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between px-3 py-2 bg-foreground text-background font-mono text-xs font-bold">
-            <div className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5" />
-              <span>{activeSelectedBus.id}</span>
-            </div>
+            <span>{activeSelectedBus.id}</span>
             <button
               onClick={resetToInitialView}
               className="hover:opacity-75 text-sm leading-none cursor-pointer"
