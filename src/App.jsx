@@ -240,6 +240,70 @@ function AppContent() {
     showToast(`✓ DRIVER STATUS UPDATED: Status toggled.`);
   };
 
+  // MASTER MUTATION: Add New Vehicle
+  const handleAddVehicle = (newVehicle) => {
+    const updatedFleet = [...busFleet, newVehicle];
+    setBusFleet(updatedFleet);
+    persistCurrentCityStore({ buses: updatedFleet });
+    showToast(`✓ VEHICLE REGISTERED: ${newVehicle.busNumber} added to fleet!`);
+  };
+
+  // MASTER MUTATION: Update Vehicle
+  const handleUpdateVehicle = (updatedVehicle) => {
+    const updatedFleet = busFleet.map(b => b.id === updatedVehicle.id ? { ...b, ...updatedVehicle } : b);
+    setBusFleet(updatedFleet);
+    persistCurrentCityStore({ buses: updatedFleet });
+    showToast(`✓ VEHICLE UPDATED: ${updatedVehicle.busNumber} parameters saved.`);
+  };
+
+  // MASTER MUTATION: Delete / Decommission Vehicle
+  const handleDeleteVehicle = (vehicleId) => {
+    const updatedFleet = busFleet.filter(b => b.id !== vehicleId);
+    setBusFleet(updatedFleet);
+    persistCurrentCityStore({ buses: updatedFleet });
+    showToast(`✓ VEHICLE DECOMMISSIONED.`);
+  };
+
+  // MASTER MUTATION: Vehicle Assignment
+  const handleUpdateVehicleAssignment = (assignmentData) => {
+    const { vehicleId, assignedRoute, driverId, assignedDriver, depot } = assignmentData;
+    const updatedFleet = busFleet.map(b => {
+      if (b.id === vehicleId) {
+        return {
+          ...b,
+          assignedRoute,
+          driverId,
+          assignedDriver,
+          depot: depot || b.depot,
+          status: 'IN_SERVICE'
+        };
+      }
+      return b;
+    });
+    setBusFleet(updatedFleet);
+    persistCurrentCityStore({ buses: updatedFleet });
+    showToast(`✓ ASSIGNMENT UPDATED: Asset ${vehicleId} paired with Route ${assignedRoute}.`);
+  };
+
+  // MASTER MUTATION: Schedule Maintenance
+  const handleScheduleMaintenance = (maintenanceData) => {
+    const { vehicleId } = maintenanceData;
+    const updatedFleet = busFleet.map(b => {
+      if (b.id === vehicleId) {
+        return {
+          ...b,
+          status: 'MAINTENANCE',
+          maintenanceStatus: 'UNDER_REPAIR',
+          nextServiceDate: maintenanceData.estCompletion || b.nextServiceDate
+        };
+      }
+      return b;
+    });
+    setBusFleet(updatedFleet);
+    persistCurrentCityStore({ buses: updatedFleet });
+    showToast(`✓ WORK ORDER ISSUED: Asset ${vehicleId} flagged for workshop inspection.`);
+  };
+
   // Time & Simulation Scrubber
   const [operationalTime, setOperationalTime] = useState(480);
   const [isSimulating, setIsSimulating] = useState(true);
@@ -509,6 +573,13 @@ function AppContent() {
                       busFleet={busFleet}
                       dutyAssignments={dutyAssignments}
                       routes={routes}
+                      crewMembers={crewMembers}
+                      trips={trips}
+                      onAddVehicle={handleAddVehicle}
+                      onUpdateVehicle={handleUpdateVehicle}
+                      onDeleteVehicle={handleDeleteVehicle}
+                      onUpdateVehicleAssignment={handleUpdateVehicleAssignment}
+                      onScheduleMaintenance={handleScheduleMaintenance}
                     />
                   }
                 />
